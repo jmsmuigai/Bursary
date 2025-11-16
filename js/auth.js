@@ -72,6 +72,6 @@
       return;
     }
 
-    alert('❌ Invalid credentials. Please check your email/ID and password.\n\nAdmin Test: Use jmsmuigai@gmail.com or osmanmohamud60@gmail.com with password @12345');
+    alert('❌ Invalid credentials. Please check your email/ID and password.\n\nFor Admin Access:\n• Email: jmsmuigai@gmail.com or osmanmohamud60@gmail.com\n• Password: @12345\n\nFor Applicants:\n• Use the email/ID you registered with\n• If you haven\'t registered, click "Create an account"');
   });
 })();

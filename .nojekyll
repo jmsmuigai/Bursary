@@ -1,2 +1,2 @@
-
-
+# Prevent Jekyll processing
+# This file ensures GitHub Pages serves all files including those starting with underscore

@@ -2,6 +2,17 @@
 
 A comprehensive, modern, and secure bursary management system for Garissa County, Kenya. This system streamlines the entire bursary lifecycle from online application to fund allocation and reporting.
 
+## 🌐 Public Access
+
+**The system is publicly accessible via GitHub Pages:**
+👉 **https://jmsmuigai.github.io/Bursary/**
+
+Anyone with this link can:
+- ✅ View application instructions
+- ✅ Register as an applicant
+- ✅ Submit bursary applications
+- ✅ Track their application status
+
 ## ✨ Features
 
 ### Public Portal (Applicants)
@@ -45,31 +56,33 @@ A comprehensive, modern, and secure bursary management system for Garissa County
 - ✅ **Responsive Design** - Works on all devices
 - ✅ **Modern UI/UX** - Colorful, professional theme with Garissa County branding
 - ✅ **Local Storage** - Demo mode (ready for Firebase integration)
+- ✅ **Public Access** - Anyone with GitHub link can access and apply
 
 ## 🚀 Quick Start
 
-### Local Testing (No Backend Required)
+### Access the System
 
-1. **Clone or Download** this repository
-2. **Open** `index.html` in your web browser
-3. **Test Admin Login**:
-   - Email: `jmsmuigai@gmail.com` or `osmanmohamud60@gmail.com`
-   - Password: `@12345`
-4. **Test Applicant Flow**:
+1. **Visit**: https://jmsmuigai.github.io/Bursary/
+2. **For Applicants**:
    - Click "Read Instructions First"
    - Register a new account
    - Complete the application form
    - View dashboard
+3. **For Admins**:
+   - Email: `jmsmuigai@gmail.com` or `osmanmohamud60@gmail.com`
+   - Password: `@12345`
 
-### GitHub Pages (Live)
+### Local Testing (Optional)
 
-The system is deployed at: **https://jmsmuigai.github.io/Bursary/**
+1. **Clone or Download** this repository
+2. **Open** `index.html` in your web browser
+3. All features work offline (uses localStorage)
 
 ## 📁 Project Structure
 
 ```
 Bursary/
-├── index.html                 # Login page
+├── index.html                 # Login page (public access)
 ├── instructions.html          # Application instructions
 ├── register.html              # Applicant registration
 ├── application.html           # Comprehensive application form
@@ -77,6 +90,8 @@ Bursary/
 ├── admin_dashboard.html       # Admin portal
 ├── styles.css                 # Modern theme and styling
 ├── firebase_config.js         # Firebase configuration template
+├── .nojekyll                  # GitHub Pages configuration
+├── 404.html                   # Error page redirect
 ├── js/
 │   ├── data.js               # Garissa sub-counties/wards data
 │   ├── auth.js               # Authentication (2 admins + applicants)
@@ -108,6 +123,7 @@ Users can select "Other (Specify)" if their location is not listed.
 - **Duplicate Detection**: Prevents multiple registrations
 - **Data Validation**: All required fields validated before submission
 - **Secure Storage**: Ready for Firebase integration
+- **Public Access**: Open to all Garissa County residents
 
 ## 📊 Application Form Sections
 
@@ -186,23 +202,25 @@ Both admins have full access to:
 
 ### For Applicants
 
-1. **Read Instructions**: Click "Read Instructions First" on login page
-2. **Register**: Create account with email, ID/Birth Certificate number
-3. **Complete Application**: Fill all 4 parts of the form
+1. **Access System**: Visit https://jmsmuigai.github.io/Bursary/
+2. **Read Instructions**: Click "Read Instructions First" on login page
+3. **Register**: Create account with email, ID/Birth Certificate number
+4. **Complete Application**: Fill all 4 parts of the form
    - Form auto-saves every 2 seconds
    - Click "Save Progress" to manually save
    - You can continue later if incomplete
-4. **Submit**: Review and submit application
-5. **Track Status**: View your application status on dashboard
+5. **Submit**: Review and submit application
+6. **Track Status**: View your application status on dashboard
 
 ### For Administrators
 
-1. **Login**: Use admin email and password
-2. **Dashboard**: View metrics and recent applications
-3. **Filter**: Use filters to find specific applications
-4. **Review**: Click "View" to see full application details
-5. **Action**: Approve with amount or reject with reason
-6. **Reports**: Generate and download Excel/CSV reports
+1. **Access System**: Visit https://jmsmuigai.github.io/Bursary/
+2. **Login**: Use admin email and password
+3. **Dashboard**: View metrics and recent applications
+4. **Filter**: Use filters to find specific applications
+5. **Review**: Click "View" to see full application details
+6. **Action**: Approve with amount or reject with reason
+7. **Reports**: Generate and download Excel/CSV reports
 
 ## 🛠️ Development
 
@@ -211,12 +229,19 @@ Both admins have full access to:
 - **Bootstrap 5** - UI framework
 - **Vanilla JavaScript** - No dependencies
 - **Local Storage** - Demo data storage (replace with Firebase)
+- **GitHub Pages** - Free hosting
 
 ### Browser Support
 - Chrome (recommended)
 - Firefox
 - Safari
 - Edge
+
+### GitHub Pages Configuration
+- ✅ `.nojekyll` file included
+- ✅ `404.html` redirect configured
+- ✅ GitHub Actions workflow for auto-deployment
+- ✅ All paths are relative (work on GitHub Pages)
 
 ## 📄 License
 
@@ -227,6 +252,7 @@ This project is developed for Garissa County, Kenya.
 For support or questions:
 - Email: `jmsmuigai@gmail.com`
 - GitHub: https://github.com/jmsmuigai/Bursary
+- Live System: https://jmsmuigai.github.io/Bursary/
 
 ## 🎯 Future Enhancements
 
@@ -242,3 +268,5 @@ For support or questions:
 ---
 
 **Built with ❤️ for Garissa County**
+
+**Public Access**: Anyone with the GitHub link can access and use the system.
