@@ -1,19 +1,77 @@
-// Simple demo auth:
-// - If username === 'Admin' and password === '@12345' → redirect to admin dashboard
-// - Otherwise, just show an alert (replace with Firebase Auth in production)
-(function(){
+// Enhanced Authentication with Two Admin Accounts
+(function() {
   const form = document.getElementById('loginForm');
-  if(!form) return;
-  form.addEventListener('submit', function(e){
+  if (!form) return;
+
+  // Admin accounts
+  const ADMIN_ACCOUNTS = [
+    {
+      email: 'jmsmuigai@gmail.com',
+      password: '@12345',
+      name: 'James Muigai',
+      role: 'admin'
+    },
+    {
+      email: 'osmanmohamud60@gmail.com',
+      password: '@12345',
+      name: 'Osman Mohamud',
+      role: 'admin'
+    }
+  ];
+
+  // Initialize admin accounts in localStorage if not exists
+  function initializeAdmins() {
+    const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+    const adminEmails = users.filter(u => u.role === 'admin').map(u => u.email);
+    
+    ADMIN_ACCOUNTS.forEach(admin => {
+      if (!adminEmails.includes(admin.email)) {
+        users.push({
+          ...admin,
+          createdAt: new Date().toISOString()
+        });
+      }
+    });
+    
+    localStorage.setItem('mbms_users', JSON.stringify(users));
+  }
+
+  initializeAdmins();
+
+  form.addEventListener('submit', function(e) {
     e.preventDefault();
-    const u = document.getElementById('username').value.trim();
-    const p = document.getElementById('password').value;
-    if((u.toLowerCase() === 'admin' || u === 'Admin') && p === '@12345'){
-      sessionStorage.setItem('mbms_admin','Admin');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    // Check admin accounts
+    const admin = ADMIN_ACCOUNTS.find(a => 
+      a.email.toLowerCase() === username.toLowerCase() && 
+      a.password === password
+    );
+
+    if (admin) {
+      sessionStorage.setItem('mbms_admin', JSON.stringify(admin));
+      sessionStorage.setItem('mbms_current_user', JSON.stringify(admin));
       window.location.href = 'admin_dashboard.html';
       return;
     }
-    alert('Invalid credentials (demo). Use Admin / @12345 or integrate Firebase Auth.');
+
+    // Check for regular applicant
+    const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+    const user = users.find(u => 
+      (u.email?.toLowerCase() === username.toLowerCase() || 
+       u.nemisId === username || 
+       u.idNumber === username) &&
+      u.password === password &&
+      u.role === 'applicant'
+    );
+
+    if (user) {
+      sessionStorage.setItem('mbms_current_user', JSON.stringify(user));
+      window.location.href = 'applicant_dashboard.html';
+      return;
+    }
+
+    alert('❌ Invalid credentials. Please check your email/ID and password.\n\nAdmin Test: Use jmsmuigai@gmail.com or osmanmohamud60@gmail.com with password @12345');
   });
 })();
-
