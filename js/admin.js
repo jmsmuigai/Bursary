@@ -70,19 +70,31 @@
   // Render applications table
   function renderTable(applications) {
     const tbody = document.getElementById('applicationsTableBody');
+    if (!tbody) {
+      console.error('Table body not found');
+      return;
+    }
+    
     tbody.innerHTML = '';
 
-    if (applications.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No applications found</td></tr>';
+    if (!applications || applications.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No applications found. Applications will appear here once submitted.</td></tr>';
       return;
     }
 
-    applications.forEach(app => {
+    // Sort by date submitted (newest first)
+    const sortedApps = [...applications].sort((a, b) => {
+      const dateA = new Date(a.dateSubmitted || 0);
+      const dateB = new Date(b.dateSubmitted || 0);
+      return dateB - dateA;
+    });
+
+    sortedApps.forEach(app => {
       const tr = document.createElement('tr');
       const status = app.status || 'Pending Submission';
       const statusClass = getStatusBadgeClass(status);
       const amount = app.financialDetails?.amountRequested || app.amountRequested || 0;
-      const name = app.applicantName || `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`;
+      const name = app.applicantName || `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'N/A';
       const location = app.personalDetails?.subCounty || app.subCounty || 'N/A';
       const ward = app.personalDetails?.ward || app.ward || 'N/A';
       const institution = app.personalDetails?.institution || app.institution || 'N/A';
@@ -388,10 +400,31 @@
     }
   };
 
+  // Refresh applications display
+  window.refreshApplications = function() {
+    const apps = loadApplications();
+    console.log('Loaded applications:', apps.length, apps); // Debug log
+    updateMetrics();
+    renderTable(apps); // Show all applications by default
+    return apps;
+  };
+
+  // Auto-refresh every 10 seconds to catch new applications
+  setInterval(() => {
+    const apps = loadApplications();
+    if (apps.length > 0) {
+      refreshApplications();
+    }
+  }, 10000);
+
   // Initialize
   populateFilters();
+  
+  // Load and display all applications on page load
+  const allApps = loadApplications();
+  console.log('Initial applications loaded:', allApps.length);
   updateMetrics();
-  applyFilters();
+  renderTable(allApps);
 
   // Filter event listeners
   document.getElementById('applyFilters').addEventListener('click', applyFilters);

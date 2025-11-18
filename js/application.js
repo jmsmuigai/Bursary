@@ -258,6 +258,10 @@
       applicantName: `${user.firstName} ${user.lastName}`,
       status: 'Pending Submission',
       dateSubmitted: new Date().toISOString(),
+      // Include location from user registration
+      subCounty: user.subCounty || 'N/A',
+      ward: user.ward || 'N/A',
+      village: user.village || '',
       personalDetails: {
         firstNames: document.getElementById('firstNames').value,
         middleName: document.getElementById('middleName').value,
@@ -269,7 +273,10 @@
         regNumber: document.getElementById('regNumber').value,
         yearForm: document.getElementById('yearForm').value,
         courseNature: document.getElementById('courseNature').value,
-        courseDuration: document.getElementById('courseDuration').value
+        courseDuration: document.getElementById('courseDuration').value,
+        // Include location in personalDetails too for compatibility
+        subCounty: user.subCounty || 'N/A',
+        ward: user.ward || 'N/A'
       },
       familyDetails: {
         parentStatus: form.querySelector('input[name="parentStatus"]:checked')?.value,
