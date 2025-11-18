@@ -3,21 +3,23 @@
   const form = document.getElementById('loginForm');
   if (!form) return;
 
-  // Single Admin Account
+  // Single Admin Account - Hardcoded (no registration needed)
   const ADMIN_ACCOUNT = {
     email: 'fundadmin@garissa.go.ke',
     password: '@Omar.123!',
     role: 'admin'
   };
 
-  // Initialize admin account in localStorage if not exists
+  // Initialize admin account in localStorage for password changes
   function initializeAdmin() {
     const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
     const adminExists = users.some(u => u.email === ADMIN_ACCOUNT.email && u.role === 'admin');
     
     if (!adminExists) {
       users.push({
-        ...ADMIN_ACCOUNT,
+        email: ADMIN_ACCOUNT.email,
+        password: ADMIN_ACCOUNT.password,
+        role: ADMIN_ACCOUNT.role,
         createdAt: new Date().toISOString()
       });
       localStorage.setItem('mbms_users', JSON.stringify(users));
@@ -26,7 +28,7 @@
 
   initializeAdmin();
 
-  // Password reset functionality
+  // Password reset functionality for applicants
   window.resetPassword = function() {
     const email = prompt('Enter your email address:');
     if (!email) return;
@@ -58,26 +60,46 @@
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
 
-    // Check admin account (check both default and stored password)
-    const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
-    const adminUser = users.find(u => u.email === 'fundadmin@garissa.go.ke' && u.role === 'admin');
-    const adminPassword = adminUser?.password || ADMIN_ACCOUNT.password;
-
-    if (ADMIN_ACCOUNT.email.toLowerCase() === username.toLowerCase() && 
-        (password === ADMIN_ACCOUNT.password || password === adminPassword)) {
-      const adminData = {
-        email: ADMIN_ACCOUNT.email,
-        role: ADMIN_ACCOUNT.role
-      };
-      sessionStorage.setItem('mbms_admin', JSON.stringify(adminData));
-      sessionStorage.setItem('mbms_current_user', JSON.stringify(adminData));
-      window.location.href = 'admin_dashboard.html';
+    // First, check admin account (hardcoded - no registration needed)
+    // Check exact match first, then check if password was changed
+    const isAdminEmail = ADMIN_ACCOUNT.email.toLowerCase() === username.toLowerCase();
+    
+    if (isAdminEmail) {
+      // Check default password first
+      if (password === ADMIN_ACCOUNT.password) {
+        const adminData = {
+          email: ADMIN_ACCOUNT.email,
+          role: ADMIN_ACCOUNT.role
+        };
+        sessionStorage.setItem('mbms_admin', JSON.stringify(adminData));
+        sessionStorage.setItem('mbms_current_user', JSON.stringify(adminData));
+        window.location.href = 'admin_dashboard.html';
+        return;
+      }
+      
+      // Check if password was changed (stored in localStorage)
+      const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+      const adminUser = users.find(u => u.email === ADMIN_ACCOUNT.email && u.role === 'admin');
+      
+      if (adminUser && adminUser.password === password) {
+        const adminData = {
+          email: ADMIN_ACCOUNT.email,
+          role: ADMIN_ACCOUNT.role
+        };
+        sessionStorage.setItem('mbms_admin', JSON.stringify(adminData));
+        sessionStorage.setItem('mbms_current_user', JSON.stringify(adminData));
+        window.location.href = 'admin_dashboard.html';
+        return;
+      }
+      
+      // If admin email but wrong password
+      alert('❌ Incorrect password for admin account. Default password: @Omar.123!\n\nIf you changed your password, use the new password.');
       return;
     }
 
-    // Check for regular applicant
-    const allUsers = JSON.parse(localStorage.getItem('mbms_users') || '[]');
-    const user = allUsers.find(u => 
+    // Check for regular applicant (must be registered)
+    const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+    const user = users.find(u => 
       (u.email?.toLowerCase() === username.toLowerCase() || 
        u.nemisId === username || 
        u.idNumber === username) &&
@@ -91,6 +113,9 @@
       return;
     }
 
-    alert('❌ Invalid credentials. Please check your email/ID and password.\n\nIf you forgot your password, you can reset it from the login page.');
+    // No match found
+    alert('❌ Invalid credentials. Please check your email/ID and password.\n\n' +
+          'Admin: Use fundadmin@garissa.go.ke with password @Omar.123!\n\n' +
+          'Applicants: Use your registered email/ID. If you forgot your password, click "Forgot password?"');
   });
 })();
