@@ -30,12 +30,13 @@
    - Developer credit: jmsmuigai@gmail.com
    - Fund Administrator identification
 
-### 👥 System Administrators
+### 👥 System Administrator
 
-- **Primary Admin**: jmsmuigai@gmail.com
-- **Fund Administrator**: osmanmohamud60@gmail.com (Mohamud Osman)
+- **Fund Administrator**: fundadmin@garissa.go.ke
+  - Default Password: @Omar.123! (can be changed)
   - Signs all offer letters
   - Full administrative access
+  - Password reset capability
 
 ### 📋 Complete Feature List
 
@@ -63,7 +64,7 @@
 - Applicant details
 - Award amount in highlighted box
 - Professional letter content
-- Fund Administrator signature (Mohamud Osman)
+- Fund Administrator signature
 - Official stamp
 - Reference number
 - Automatic date
@@ -106,7 +107,7 @@ See `IMAGE_SETUP.md` or `MOVE_IMAGES.md` for setup instructions.
 ### 📧 Support
 
 **Developer**: jmsmuigai@gmail.com  
-**Fund Administrator**: osmanmohamud60@gmail.com (Mohamud Osman)
+**Support Email**: fundadmin@garissa.go.ke
 
 ### 🌟 Credits
 

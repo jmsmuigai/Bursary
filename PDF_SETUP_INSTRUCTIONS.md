@@ -74,8 +74,8 @@ Bursary/
 ### Step 4: Test the System
 
 1. **Login as Admin**:
-   - Email: `jmsmuigai@gmail.com`
-   - Password: `@12345`
+   - Email: `fundadmin@garissa.go.ke`
+   - Default Password: `@Omar.123!`
 
 2. **Award an Application**:
    - Go to Application Management
@@ -172,5 +172,5 @@ The generated PDF includes:
 
 Once you add the signature and stamp images, the system is complete and ready for production use. The PDF generation happens automatically whenever you award an application.
 
-**Need Help?** Contact: jmsmuigai@gmail.com
+**Need Help?** Contact: fundadmin@garissa.go.ke
 

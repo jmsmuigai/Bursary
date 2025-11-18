@@ -5,7 +5,7 @@ A comprehensive, modern, and secure bursary management system for Garissa County
 **Version:** 2.0  
 **Release Date:** January 2025  
 **Developed by:** jmsmuigai@gmail.com  
-**Fund Administrator:** Mohamud Osman (osmanmohamud60@gmail.com)
+**Support Email:** fundadmin@garissa.go.ke
 
 ## 🌐 Public Access
 
@@ -32,9 +32,9 @@ Anyone with this link can:
 - ✅ **Privacy** - Applicants cannot see other applicants' information
 
 ### Administration Dashboard
-- ✅ **Two Admin Accounts**:
-  - `jmsmuigai@gmail.com` (Password: `@12345`)
-  - `osmanmohamud60@gmail.com` (Password: `@12345`)
+- ✅ **Single Admin Account**:
+  - `fundadmin@garissa.go.ke` (Default Password: `@Omar.123!`)
+  - Password can be changed by administrator
 - ✅ **Smart Application Counter** - Real-time updates when new applications are submitted
 - ✅ **Application Management**:
   - View all applications
@@ -74,8 +74,9 @@ Anyone with this link can:
    - Complete the application form
    - View dashboard
 3. **For Admins**:
-   - Email: `jmsmuigai@gmail.com` or `osmanmohamud60@gmail.com`
-   - Password: `@12345`
+   - Email: `fundadmin@garissa.go.ke`
+   - Default Password: `@Omar.123!`
+   - Password can be changed after login
 
 ### Local Testing (Optional)
 
@@ -185,23 +186,20 @@ Users can select "Other (Specify)" if their location is not listed.
    - Notify applicants of status changes
    - Send award letters via email
 
-## 👥 Admin Accounts
+## 👥 Admin Account
 
-### Primary Admin
-- **Email**: `jmsmuigai@gmail.com`
-- **Password**: `@12345` (can be changed)
-- **Name**: James Muigai
+### Fund Administrator
+- **Email**: `fundadmin@garissa.go.ke`
+- **Default Password**: `@Omar.123!` (can be changed)
+- **Role**: Fund Administrator
 
-### Secondary Admin
-- **Email**: `osmanmohamud60@gmail.com`
-- **Password**: `@12345` (can be changed)
-- **Name**: Osman Mohamud
-
-Both admins have full access to:
+The administrator has full access to:
 - All applications
 - Filtering and reports
 - Awarding/Rejecting applications
 - Excel/CSV exports
+- PDF offer letter generation
+- Password reset for applicants
 
 ## 📝 User Manual
 
@@ -252,12 +250,13 @@ Both admins have full access to:
 
 This project is developed for Garissa County, Kenya.
 
-## 📧 Contact
+## 📧 Contact & Support
 
 For support or questions:
-- Email: `jmsmuigai@gmail.com`
-- GitHub: https://github.com/jmsmuigai/Bursary
-- Live System: https://jmsmuigai.github.io/Bursary/
+- **Support Email**: `fundadmin@garissa.go.ke`
+- **GitHub Repository**: https://github.com/jmsmuigai/Bursary
+- **Live System**: https://jmsmuigai.github.io/Bursary/
+- **System Developer**: jmsmuigai@gmail.com (for technical support only)
 
 ## 🎯 Future Enhancements
 

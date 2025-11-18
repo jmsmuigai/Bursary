@@ -194,7 +194,7 @@ async function generateOfferLetterPDF(application, awardDetails) {
   yPos += 15;
 
   // Body Paragraph 4
-  const bodyText4 = `Should you have any questions or require further clarification, please do not hesitate to contact the Scholarship Fund Office at P.O. Box 1377-70100, Garissa, or email jmsmuigai@gmail.com.`;
+  const bodyText4 = `Should you have any questions or require further clarification, please do not hesitate to contact the Scholarship Fund Office at P.O. Box 1377-70100, Garissa, or email fundadmin@garissa.go.ke.`;
   doc.setFontSize(11);
   doc.text(bodyText4, margin, yPos, { 
     maxWidth: pageWidth - (margin * 2),
@@ -220,14 +220,13 @@ async function generateOfferLetterPDF(application, awardDetails) {
     yPos += 10;
   }
 
-  addText('Mohamud Osman', margin, yPos, {
+  addText('Fund Administrator', margin, yPos, {
     fontSize: 11,
     fontStyle: 'bold'
   });
   yPos += 5;
-  addText('Fund Administrator', margin, yPos, {
-    fontSize: 11,
-    fontStyle: 'bold'
+  addText('fundadmin@garissa.go.ke', margin, yPos, {
+    fontSize: 10
   });
   yPos += 5;
   addText('Garissa County Scholarship Fund', margin, yPos, {

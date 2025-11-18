@@ -337,6 +337,57 @@
     downloadCSV(filename, rows);
   });
 
+  // Change admin password
+  window.changeAdminPassword = function() {
+    const currentPassword = prompt('Enter current password:');
+    if (!currentPassword) return;
+
+    // Verify current password
+    if (currentPassword !== '@Omar.123!') {
+      const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+      const adminUser = users.find(u => u.email === 'fundadmin@garissa.go.ke' && u.role === 'admin');
+      if (!adminUser || adminUser.password !== currentPassword) {
+        alert('❌ Current password is incorrect.');
+        return;
+      }
+    }
+
+    const newPassword = prompt('Enter new password (min 8 characters):');
+    if (!newPassword || newPassword.length < 8) {
+      alert('❌ Password must be at least 8 characters long.');
+      return;
+    }
+
+    const confirmPassword = prompt('Confirm new password:');
+    if (newPassword !== confirmPassword) {
+      alert('❌ Passwords do not match.');
+      return;
+    }
+
+    // Update password
+    const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+    const adminUser = users.find(u => u.email === 'fundadmin@garissa.go.ke' && u.role === 'admin');
+    if (adminUser) {
+      adminUser.password = newPassword;
+      localStorage.setItem('mbms_users', JSON.stringify(users));
+      alert('✅ Password changed successfully! Please login again with your new password.');
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    } else {
+      // Create admin user if doesn't exist
+      users.push({
+        email: 'fundadmin@garissa.go.ke',
+        password: newPassword,
+        role: 'admin',
+        createdAt: new Date().toISOString()
+      });
+      localStorage.setItem('mbms_users', JSON.stringify(users));
+      alert('✅ Password set successfully! Please login again.');
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    }
+  };
+
   // Initialize
   populateFilters();
   updateMetrics();
