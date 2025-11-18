@@ -215,7 +215,7 @@
   };
 
   // Approve application
-  window.approveApplication = function(appID) {
+  window.approveApplication = async function(appID) {
     const amount = document.getElementById('awardAmount').value;
     const justification = document.getElementById('awardJustification').value;
 
@@ -237,7 +237,23 @@
       localStorage.setItem('mbms_applications', JSON.stringify(apps));
       updateMetrics();
       applyFilters();
-      alert('✅ Application awarded successfully!');
+      
+      // Generate PDF offer letter
+      try {
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'alert alert-info';
+        loadingMsg.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating offer letter PDF...';
+        document.querySelector('.modal-body').appendChild(loadingMsg);
+        
+        await generateOfferLetterPDF(app, app.awardDetails);
+        
+        loadingMsg.remove();
+        alert('✅ Application awarded successfully!\n\n📄 Offer letter PDF has been generated and downloaded.');
+      } catch (error) {
+        console.error('PDF generation error:', error);
+        alert('✅ Application awarded successfully!\n\n⚠️ PDF generation failed. You can generate it later from the applications list.');
+      }
+      
       bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
     }
   };
@@ -259,10 +275,35 @@
     }
   };
 
-  // Download PDF (placeholder)
-  window.downloadPDF = function(appID) {
-    alert('PDF generation will be implemented. Application ID: ' + appID);
-    // In production, call PDF generator service
+  // Download PDF offer letter
+  window.downloadPDF = async function(appID) {
+    const apps = loadApplications();
+    const app = apps.find(a => a.appID === appID);
+    if (!app || app.status !== 'Awarded') {
+      alert('⚠️ This application has not been awarded yet. Please award it first to generate the offer letter.');
+      return;
+    }
+
+    if (!app.awardDetails) {
+      alert('⚠️ Award details not found. Please award this application first.');
+      return;
+    }
+
+    try {
+      // Show loading indicator
+      const loadingAlert = document.createElement('div');
+      loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+      loadingAlert.style.zIndex = '9999';
+      loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating offer letter PDF...';
+      document.body.appendChild(loadingAlert);
+
+      await generateOfferLetterPDF(app, app.awardDetails);
+      
+      loadingAlert.remove();
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('❌ Error generating PDF. Please try again or contact support.');
+    }
   };
 
   // Export to Excel/CSV
