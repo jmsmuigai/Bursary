@@ -13,8 +13,35 @@
 
   // Load applications from localStorage
   function loadApplications() {
-    return JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    const apps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    
+    // Ensure all applications have required fields for backward compatibility
+    return apps.map(app => {
+      // If application doesn't have location data, try to get from user registration
+      if (!app.subCounty && !app.personalDetails?.subCounty) {
+        const users = loadUsers();
+        const user = users.find(u => u.email === app.applicantEmail);
+        if (user) {
+          app.subCounty = user.subCounty || 'N/A';
+          app.ward = user.ward || 'N/A';
+          if (!app.personalDetails) app.personalDetails = {};
+          app.personalDetails.subCounty = user.subCounty || 'N/A';
+          app.personalDetails.ward = user.ward || 'N/A';
+        }
+      }
+      return app;
+    });
   }
+  
+  // Debug function to check localStorage
+  window.debugApplications = function() {
+    const apps = localStorage.getItem('mbms_applications');
+    const users = localStorage.getItem('mbms_users');
+    console.log('Applications in localStorage:', apps ? JSON.parse(apps).length : 0);
+    console.log('Users in localStorage:', users ? JSON.parse(users).length : 0);
+    console.log('Full applications:', JSON.parse(apps || '[]'));
+    alert(`Applications found: ${apps ? JSON.parse(apps).length : 0}\nCheck browser console (F12) for details.`);
+  };
 
   // Load users to get applicant details
   function loadUsers() {
