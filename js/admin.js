@@ -126,20 +126,21 @@
       const ward = app.personalDetails?.ward || app.ward || 'N/A';
       const institution = app.personalDetails?.institution || app.institution || 'N/A';
 
+      const serialNumber = app.awardDetails?.serialNumber || '';
       tr.innerHTML = `
-        <td><strong>${app.appID || 'N/A'}</strong></td>
+        <td><strong>${app.appID || 'N/A'}</strong>${serialNumber ? `<br><small class="text-muted">Serial: ${serialNumber}</small>` : ''}</td>
         <td>${name}</td>
         <td>${location} / ${ward}</td>
         <td>${institution}</td>
         <td><span class="badge ${statusClass}">${status}</span></td>
         <td>Ksh ${amount.toLocaleString()}</td>
         <td>
-          <button class="btn btn-sm btn-info me-1" onclick="viewApplication('${app.appID}')">
+          <button class="btn btn-sm btn-info me-1" onclick="viewApplication('${app.appID}')" title="View Details">
             <i class="bi bi-eye"></i> View
           </button>
           ${status === 'Awarded' ? `
-            <button class="btn btn-sm btn-success" onclick="downloadPDF('${app.appID}')">
-              <i class="bi bi-download"></i> PDF
+            <button class="btn btn-sm btn-primary" onclick="previewPDFLetter('${app.appID}')" title="Preview & Print PDF">
+              <i class="bi bi-file-earmark-pdf"></i> PDF
             </button>
           ` : ''}
         </td>
@@ -266,34 +267,36 @@
     const apps = loadApplications();
     const app = apps.find(a => a.appID === appID);
     if (app) {
+      // Get serial number before awarding
+      const serialNumber = getNextSerialNumber();
+      
       app.status = 'Awarded';
       app.awardDetails = {
         committee_amount_kes: parseInt(amount),
         date_awarded: new Date().toISOString(),
         justification: justification,
-        admin_assigned_uid: admin.email
+        admin_assigned_uid: admin.email,
+        serialNumber: serialNumber,
+        amount: parseInt(amount) // For compatibility
       };
       localStorage.setItem('mbms_applications', JSON.stringify(apps));
       updateMetrics();
       applyFilters();
       
-      // Generate PDF offer letter
-      try {
-        const loadingMsg = document.createElement('div');
-        loadingMsg.className = 'alert alert-info';
-        loadingMsg.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating offer letter PDF...';
-        document.querySelector('.modal-body').appendChild(loadingMsg);
-        
-        await generateOfferLetterPDF(app, app.awardDetails);
-        
-        loadingMsg.remove();
-        alert('✅ Application awarded successfully!\n\n📄 Offer letter PDF has been generated and downloaded.');
-      } catch (error) {
-        console.error('PDF generation error:', error);
-        alert('✅ Application awarded successfully!\n\n⚠️ PDF generation failed. You can generate it later from the applications list.');
+      // Close the view modal first
+      const viewModal = document.querySelector('.modal');
+      if (viewModal) {
+        bootstrap.Modal.getInstance(viewModal).hide();
       }
       
-      bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+      // Generate and preview PDF offer letter
+      try {
+        await previewPDF(app, app.awardDetails);
+        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n\nPDF preview is now open. You can print or download it.');
+      } catch (error) {
+        console.error('PDF generation error:', error);
+        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n\n⚠️ PDF preview failed. You can generate it later from the applications list.');
+      }
     }
   };
 
@@ -314,8 +317,8 @@
     }
   };
 
-  // Download PDF offer letter
-  window.downloadPDF = async function(appID) {
+  // Preview PDF offer letter (with print option)
+  window.previewPDFLetter = async function(appID) {
     const apps = loadApplications();
     const app = apps.find(a => a.appID === appID);
     if (!app || app.status !== 'Awarded') {
@@ -329,21 +332,21 @@
     }
 
     try {
-      // Show loading indicator
-      const loadingAlert = document.createElement('div');
-      loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
-      loadingAlert.style.zIndex = '9999';
-      loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating offer letter PDF...';
-      document.body.appendChild(loadingAlert);
-
-      await generateOfferLetterPDF(app, app.awardDetails);
+      // Use the serial number from award details if available
+      const awardDetails = {
+        ...app.awardDetails,
+        serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
+      };
       
-      loadingAlert.remove();
+      await previewPDF(app, awardDetails);
     } catch (error) {
       console.error('PDF generation error:', error);
-      alert('❌ Error generating PDF. Please try again or contact support.');
+      alert('❌ Error generating PDF preview. Please try again or contact support.\n\nError: ' + error.message);
     }
   };
+  
+  // Legacy function for backward compatibility
+  window.downloadPDF = window.previewPDFLetter;
 
   // Export to Excel/CSV
   document.getElementById('downloadReportBtn').addEventListener('click', function() {

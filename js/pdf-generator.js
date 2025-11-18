@@ -2,261 +2,414 @@
 // Uses jsPDF library for browser-based PDF generation
 
 /**
+ * Get next serial number for award letter
+ * Format: GRS/Bursary/001, GRS/Bursary/002, etc.
+ */
+function getNextSerialNumber() {
+  const lastSerial = parseInt(localStorage.getItem('mbms_last_serial') || '0');
+  const nextSerial = lastSerial + 1;
+  localStorage.setItem('mbms_last_serial', nextSerial.toString());
+  const serialStr = nextSerial.toString().padStart(3, '0');
+  return `GRS/Bursary/${serialStr}`;
+}
+
+/**
  * Generate an offer letter PDF for awarded applicants
  * @param {Object} application - The application data
  * @param {Object} awardDetails - Award information
- * @returns {Promise} - Promise that resolves when PDF is generated
+ * @param {Object} options - Options for PDF generation (preview, serialNumber, etc.)
+ * @returns {Promise} - Promise that resolves with PDF blob or filename
  */
-async function generateOfferLetterPDF(application, awardDetails) {
-  // Load jsPDF dynamically
-  if (typeof window.jsPDF === 'undefined') {
-    await loadJSPDF();
-  }
-
-  const { jsPDF } = window.jsPDF;
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
-  let yPos = margin;
-
-  // Helper function to add text with styling
-  function addText(text, x, y, options = {}) {
-    const {
-      fontSize = 12,
-      fontStyle = 'normal',
-      align = 'left',
-      color = [0, 0, 0]
-    } = options;
-    
-    doc.setFontSize(fontSize);
-    doc.setFont('helvetica', fontStyle);
-    doc.setTextColor(color[0], color[1], color[2]);
-    doc.text(text, x, y, { align });
-  }
-
-  // Helper function to add image
-  function addImage(imgSrc, x, y, width, height) {
-    try {
-      doc.addImage(imgSrc, 'PNG', x, y, width, height);
-    } catch (e) {
-      console.warn('Could not add image:', imgSrc, e);
+async function generateOfferLetterPDF(application, awardDetails, options = {}) {
+  try {
+    // Load jsPDF dynamically
+    if (typeof window.jsPDF === 'undefined') {
+      await loadJSPDF();
     }
-  }
 
-  // Load images (with fallback handling)
-  const logoImg = await loadImage('Garissa Logo.png').catch(() => null);
-  const signatureImg = await loadImage('assets/signature.png').catch(() => null);
-  const stampImg = await loadImage('assets/stamp.png').catch(() => null);
+    const { jsPDF } = window.jsPDF;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
 
-  // Header with Logo
-  if (logoImg) {
-    addImage(logoImg, margin, yPos, 25, 25);
-  }
-  
-  yPos += 5;
-  addText('THE COUNTY GOVERNMENT OF GARISSA', pageWidth - margin, yPos, {
-    fontSize: 14,
-    fontStyle: 'bold',
-    align: 'right',
-    color: [139, 69, 19] // Garissa brown
-  });
-  
-  yPos += 6;
-  addText('SCHOLARSHIP FUND', pageWidth - margin, yPos, {
-    fontSize: 12,
-    fontStyle: 'bold',
-    align: 'right',
-    color: [139, 69, 19]
-  });
-  
-  yPos += 5;
-  addText('P.O. Box 1377-70100, GARISSA', pageWidth - margin, yPos, {
-    fontSize: 10,
-    align: 'right',
-    color: [100, 100, 100]
-  });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    let yPos = margin;
 
-  yPos += 15;
+    // Get serial number (use from awardDetails if available, otherwise generate new)
+    const serialNumber = awardDetails?.serialNumber || options.serialNumber || getNextSerialNumber();
 
-  // Date
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-GB', { 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric' 
-  });
-  addText(`Date: ${dateStr}`, pageWidth - margin, yPos, {
-    fontSize: 10,
-    align: 'right'
-  });
+    // Helper function to add text with styling
+    function addText(text, x, y, options = {}) {
+      const {
+        fontSize = 12,
+        fontStyle = 'normal',
+        align = 'left',
+        color = [0, 0, 0]
+      } = options;
+      
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', fontStyle);
+      doc.setTextColor(color[0], color[1], color[2]);
+      doc.text(text, x, y, { align });
+    }
 
-  yPos += 10;
+    // Helper function to add image
+    function addImage(imgSrc, x, y, width, height) {
+      try {
+        if (imgSrc) {
+          doc.addImage(imgSrc, 'PNG', x, y, width, height);
+        }
+      } catch (e) {
+        console.warn('Could not add image:', e);
+      }
+    }
 
-  // Reference Number
-  addText(`REF: GSA/BURSARY/${application.appID}/${today.getFullYear()}`, margin, yPos, {
-    fontSize: 10,
-    fontStyle: 'bold'
-  });
+    // Load images (with fallback handling)
+    let logoImg = null;
+    let signatureImg = null;
+    let stampImg = null;
+    
+    try {
+      logoImg = await loadImage('Garissa Logo.png');
+    } catch (e) {
+      console.warn('Logo not loaded:', e);
+    }
+    
+    try {
+      signatureImg = await loadImage('assets/signature.png');
+    } catch (e) {
+      console.warn('Signature not loaded:', e);
+    }
+    
+    try {
+      stampImg = await loadImage('assets/stamp.png');
+    } catch (e) {
+      console.warn('Stamp not loaded:', e);
+    }
 
-  yPos += 10;
+    // Header with Logo
+    if (logoImg) {
+      addImage(logoImg, margin, yPos, 25, 25);
+    }
+    
+    yPos += 5;
+    addText('THE COUNTY GOVERNMENT OF GARISSA', pageWidth - margin, yPos, {
+      fontSize: 14,
+      fontStyle: 'bold',
+      align: 'right',
+      color: [139, 69, 19] // Garissa brown
+    });
+    
+    yPos += 6;
+    addText('SCHOLARSHIP FUND', pageWidth - margin, yPos, {
+      fontSize: 12,
+      fontStyle: 'bold',
+      align: 'right',
+      color: [139, 69, 19]
+    });
+    
+    yPos += 5;
+    addText('P.O. Box 1377-70100, GARISSA', pageWidth - margin, yPos, {
+      fontSize: 10,
+      align: 'right',
+      color: [100, 100, 100]
+    });
 
-  // Recipient Address
-  const applicantName = application.applicantName || 
-    `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim();
-  const institution = application.personalDetails?.institution || 'N/A';
-  const subCounty = application.personalDetails?.subCounty || application.subCounty || 'N/A';
-  const ward = application.personalDetails?.ward || application.ward || 'N/A';
+    yPos += 15;
 
-  addText(applicantName, margin, yPos, { fontSize: 11, fontStyle: 'bold' });
-  yPos += 6;
-  addText(institution, margin, yPos, { fontSize: 11 });
-  yPos += 6;
-  addText(`${subCounty} Sub-County`, margin, yPos, { fontSize: 11 });
-  yPos += 6;
-  addText(`${ward} Ward`, margin, yPos, { fontSize: 11 });
-  yPos += 6;
-  addText('Garissa County', margin, yPos, { fontSize: 11 });
+    // Date
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+    addText(`Date: ${dateStr}`, pageWidth - margin, yPos, {
+      fontSize: 10,
+      align: 'right'
+    });
 
-  yPos += 15;
-
-  // Subject
-  addText('RE: BURSARY AWARD NOTIFICATION', margin, yPos, {
-    fontSize: 12,
-    fontStyle: 'bold',
-    color: [139, 69, 19]
-  });
-
-  yPos += 10;
-
-  // Salutation
-  addText('Dear ' + applicantName + ',', margin, yPos, { fontSize: 11 });
-  yPos += 10;
-
-  // Body Paragraph 1
-  const bodyText1 = `Following your application for bursary support for the academic year ${today.getFullYear()}, I am pleased to inform you that the Garissa County Scholarship Fund Committee has reviewed your application and approved your request.`;
-  doc.setFontSize(11);
-  doc.text(bodyText1, margin, yPos, { 
-    maxWidth: pageWidth - (margin * 2),
-    align: 'justify'
-  });
-  yPos += 15;
-
-  // Award Details Box
-  const awardAmount = awardDetails.committee_amount_kes || awardDetails.amount || 0;
-  const boxY = yPos;
-  doc.setDrawColor(139, 69, 19);
-  doc.setFillColor(255, 248, 220);
-  doc.roundedRect(margin, boxY - 5, pageWidth - (margin * 2), 20, 3, 3, 'FD');
-  
-  addText('AWARD DETAILS', margin + 5, boxY + 2, {
-    fontSize: 10,
-    fontStyle: 'bold',
-    color: [139, 69, 19]
-  });
-  yPos += 5;
-  addText(`Amount Awarded: KES ${awardAmount.toLocaleString()}`, margin + 5, yPos, {
-    fontSize: 11,
-    fontStyle: 'bold'
-  });
-  yPos += 6;
-  addText(`Application Reference: ${application.appID}`, margin + 5, yPos, {
-    fontSize: 10
-  });
-  yPos += 6;
-  addText(`Academic Year: ${today.getFullYear()}`, margin + 5, yPos, {
-    fontSize: 10
-  });
-
-  yPos += 15;
-
-  // Body Paragraph 2
-  const bodyText2 = `This bursary award is intended to support your education at ${institution}. The funds will be disbursed directly to your institution upon confirmation of your enrollment and fee structure.`;
-  doc.setFontSize(11);
-  doc.text(bodyText2, margin, yPos, { 
-    maxWidth: pageWidth - (margin * 2),
-    align: 'justify'
-  });
-  yPos += 15;
-
-  // Body Paragraph 3
-  const bodyText3 = `Please note that this award is subject to your continued enrollment and good academic standing. You are required to maintain satisfactory academic performance to remain eligible for future consideration.`;
-  doc.setFontSize(11);
-  doc.text(bodyText3, margin, yPos, { 
-    maxWidth: pageWidth - (margin * 2),
-    align: 'justify'
-  });
-  yPos += 15;
-
-  // Body Paragraph 4
-  const bodyText4 = `Should you have any questions or require further clarification, please do not hesitate to contact the Scholarship Fund Office at P.O. Box 1377-70100, Garissa, or email fundadmin@garissa.go.ke.`;
-  doc.setFontSize(11);
-  doc.text(bodyText4, margin, yPos, { 
-    maxWidth: pageWidth - (margin * 2),
-    align: 'justify'
-  });
-  yPos += 15;
-
-  // Closing
-  addText('Congratulations on your award, and we wish you success in your academic pursuits.', margin, yPos, {
-    fontSize: 11,
-    fontStyle: 'italic'
-  });
-  yPos += 15;
-
-  addText('Yours sincerely,', margin, yPos, { fontSize: 11 });
-  yPos += 20;
-
-  // Signature
-  if (signatureImg) {
-    addImage(signatureImg, margin, yPos, 40, 15);
-    yPos += 18;
-  } else {
     yPos += 10;
+
+    // Serial Number (prominently displayed)
+    addText(`SERIAL NO: ${serialNumber}`, margin, yPos, {
+      fontSize: 11,
+      fontStyle: 'bold',
+      color: [139, 69, 19]
+    });
+
+    yPos += 6;
+
+    // Reference Number
+    addText(`REF: GSA/BURSARY/${application.appID}/${today.getFullYear()}`, margin, yPos, {
+      fontSize: 10,
+      fontStyle: 'bold'
+    });
+
+    yPos += 10;
+
+    // Recipient Address
+    const applicantName = application.applicantName || 
+      `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim();
+    const institution = application.personalDetails?.institution || 'N/A';
+    const subCounty = application.personalDetails?.subCounty || application.subCounty || 'N/A';
+    const ward = application.personalDetails?.ward || application.ward || 'N/A';
+
+    addText(applicantName, margin, yPos, { fontSize: 11, fontStyle: 'bold' });
+    yPos += 6;
+    addText(institution, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText(`${subCounty} Sub-County`, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText(`${ward} Ward`, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText('Garissa County', margin, yPos, { fontSize: 11 });
+
+    yPos += 15;
+
+    // Subject
+    addText('RE: BURSARY AWARD NOTIFICATION', margin, yPos, {
+      fontSize: 12,
+      fontStyle: 'bold',
+      color: [139, 69, 19]
+    });
+
+    yPos += 10;
+
+    // Salutation
+    addText('Dear ' + applicantName + ',', margin, yPos, { fontSize: 11 });
+    yPos += 10;
+
+    // Body Paragraph 1
+    const bodyText1 = `Following your application for bursary support for the academic year ${today.getFullYear()}, I am pleased to inform you that the Garissa County Scholarship Fund Committee has reviewed your application and approved your request.`;
+    doc.setFontSize(11);
+    doc.text(bodyText1, margin, yPos, { 
+      maxWidth: pageWidth - (margin * 2),
+      align: 'justify'
+    });
+    yPos += 15;
+
+    // Award Details Box
+    const awardAmount = awardDetails.committee_amount_kes || awardDetails.amount || 0;
+    const boxY = yPos;
+    doc.setDrawColor(139, 69, 19);
+    doc.setFillColor(255, 248, 220);
+    doc.roundedRect(margin, boxY - 5, pageWidth - (margin * 2), 20, 3, 3, 'FD');
+    
+    addText('AWARD DETAILS', margin + 5, boxY + 2, {
+      fontSize: 10,
+      fontStyle: 'bold',
+      color: [139, 69, 19]
+    });
+    yPos += 5;
+    addText(`Amount Awarded: KES ${awardAmount.toLocaleString()}`, margin + 5, yPos, {
+      fontSize: 11,
+      fontStyle: 'bold'
+    });
+    yPos += 6;
+    addText(`Serial Number: ${serialNumber}`, margin + 5, yPos, {
+      fontSize: 10
+    });
+    yPos += 6;
+    addText(`Application Reference: ${application.appID}`, margin + 5, yPos, {
+      fontSize: 10
+    });
+    yPos += 6;
+    addText(`Academic Year: ${today.getFullYear()}`, margin + 5, yPos, {
+      fontSize: 10
+    });
+
+    yPos += 15;
+
+    // Body Paragraph 2
+    const bodyText2 = `This bursary award is intended to support your education at ${institution}. The funds will be disbursed directly to your institution upon confirmation of your enrollment and fee structure.`;
+    doc.setFontSize(11);
+    doc.text(bodyText2, margin, yPos, { 
+      maxWidth: pageWidth - (margin * 2),
+      align: 'justify'
+    });
+    yPos += 15;
+
+    // Body Paragraph 3
+    const bodyText3 = `Please note that this award is subject to your continued enrollment and good academic standing. You are required to maintain satisfactory academic performance to remain eligible for future consideration.`;
+    doc.setFontSize(11);
+    doc.text(bodyText3, margin, yPos, { 
+      maxWidth: pageWidth - (margin * 2),
+      align: 'justify'
+    });
+    yPos += 15;
+
+    // Body Paragraph 4
+    const bodyText4 = `Should you have any questions or require further clarification, please do not hesitate to contact the Scholarship Fund Office at P.O. Box 1377-70100, Garissa, or email fundadmin@garissa.go.ke.`;
+    doc.setFontSize(11);
+    doc.text(bodyText4, margin, yPos, { 
+      maxWidth: pageWidth - (margin * 2),
+      align: 'justify'
+    });
+    yPos += 15;
+
+    // Closing
+    addText('Congratulations on your award, and we wish you success in your academic pursuits.', margin, yPos, {
+      fontSize: 11,
+      fontStyle: 'italic'
+    });
+    yPos += 15;
+
+    addText('Yours sincerely,', margin, yPos, { fontSize: 11 });
+    yPos += 20;
+
+    // Signature
+    if (signatureImg) {
+      addImage(signatureImg, margin, yPos, 40, 15);
+      yPos += 18;
+    } else {
+      yPos += 10;
+    }
+
+    addText('Fund Administrator', margin, yPos, {
+      fontSize: 11,
+      fontStyle: 'bold'
+    });
+    yPos += 5;
+    addText('fundadmin@garissa.go.ke', margin, yPos, {
+      fontSize: 10
+    });
+    yPos += 5;
+    addText('Garissa County Scholarship Fund', margin, yPos, {
+      fontSize: 10
+    });
+    yPos += 5;
+    addText('P.O. Box 1377-70100, Garissa', margin, yPos, {
+      fontSize: 10
+    });
+
+    // Stamp on the right side
+    if (stampImg) {
+      const stampX = pageWidth - margin - 40;
+      const stampY = pageHeight - 50;
+      addImage(stampImg, stampX, stampY, 40, 40);
+    }
+
+    // Footer
+    const footerY = pageHeight - 10;
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('This is a computer-generated document. No signature required.', pageWidth / 2, footerY, { align: 'center' });
+
+    // Generate filename
+    const filename = `Garissa_Bursary_Award_${serialNumber}_${application.appID}.pdf`;
+
+    // If preview mode, return blob URL
+    if (options.preview) {
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      return { blobUrl, filename, serialNumber, doc };
+    }
+
+    // Save PDF
+    doc.save(filename);
+    
+    return { filename, serialNumber };
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    throw new Error(`Error generating PDF: ${error.message}`);
   }
+}
 
-  addText('Fund Administrator', margin, yPos, {
-    fontSize: 11,
-    fontStyle: 'bold'
-  });
-  yPos += 5;
-  addText('fundadmin@garissa.go.ke', margin, yPos, {
-    fontSize: 10
-  });
-  yPos += 5;
-  addText('Garissa County Scholarship Fund', margin, yPos, {
-    fontSize: 10
-  });
-  yPos += 5;
-  addText('P.O. Box 1377-70100, Garissa', margin, yPos, {
-    fontSize: 10
-  });
+/**
+ * Preview PDF in a modal before printing
+ */
+async function previewPDF(application, awardDetails) {
+  try {
+    const loadingAlert = document.createElement('div');
+    loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+    loadingAlert.style.zIndex = '9999';
+    loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating PDF preview...';
+    document.body.appendChild(loadingAlert);
 
-  // Stamp on the right side
-  if (stampImg) {
-    const stampX = pageWidth - margin - 40;
-    const stampY = pageHeight - 50;
-    addImage(stampImg, stampX, stampY, 40, 40);
+    const result = await generateOfferLetterPDF(application, awardDetails, { preview: true });
+    
+    loadingAlert.remove();
+
+    // Create preview modal
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'pdfPreviewModal';
+    modal.innerHTML = `
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-primary-700 text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-file-earmark-pdf me-2"></i>PDF Preview - Serial: ${result.serialNumber}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-0">
+            <iframe src="${result.blobUrl}" style="width: 100%; height: 80vh; border: none;"></iframe>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-x-circle me-1"></i>Close
+            </button>
+            <button type="button" class="btn btn-primary" onclick="printPDF('${result.blobUrl}')">
+              <i class="bi bi-printer me-1"></i>Print to PDF
+            </button>
+            <button type="button" class="btn btn-success" onclick="downloadPDFFromPreview('${result.blobUrl}', '${result.filename}')">
+              <i class="bi bi-download me-1"></i>Download
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    modal.addEventListener('hidden.bs.modal', () => {
+      URL.revokeObjectURL(result.blobUrl);
+      modal.remove();
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Preview error:', error);
+    alert('Error generating PDF preview: ' + error.message);
+    throw error;
   }
+}
 
-  // Footer
-  const footerY = pageHeight - 10;
-  doc.setFontSize(8);
-  doc.setTextColor(150, 150, 150);
-  doc.text('This is a computer-generated document. No signature required.', pageWidth / 2, footerY, { align: 'center' });
-
-  // Generate filename
-  const filename = `Garissa_Bursary_Award_${application.appID}_${today.getFullYear()}.pdf`;
-
-  // Save PDF
-  doc.save(filename);
+/**
+ * Print PDF (opens print dialog)
+ */
+function printPDF(blobUrl) {
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = blobUrl;
+  document.body.appendChild(iframe);
   
-  return filename;
+  iframe.onload = () => {
+    iframe.contentWindow.print();
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+  };
+}
+
+/**
+ * Download PDF from preview
+ */
+function downloadPDFFromPreview(blobUrl, filename) {
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 /**
@@ -276,7 +429,7 @@ function loadJSPDF() {
       window.jsPDF = window.jspdf.jsPDF;
       resolve();
     };
-    script.onerror = reject;
+    script.onerror = () => reject(new Error('Failed to load jsPDF library'));
     document.head.appendChild(script);
   });
 }
@@ -292,7 +445,7 @@ function loadImage(src) {
     // Set timeout for image loading
     const timeout = setTimeout(() => {
       console.warn('Image load timeout:', src);
-      resolve(null);
+      reject(new Error('Image load timeout'));
     }, 5000);
     
     img.onload = () => {
@@ -307,20 +460,22 @@ function loadImage(src) {
         resolve(dataURL);
       } catch (e) {
         console.warn('Could not convert image to base64:', e);
-        resolve(null);
+        reject(e);
       }
     };
     
     img.onerror = () => {
       clearTimeout(timeout);
-      console.warn('Could not load image:', src);
-      resolve(null); // Resolve with null instead of reject to prevent errors
+      reject(new Error('Could not load image: ' + src));
     };
     
     img.src = src;
   });
 }
 
-// Export function for use in admin.js
+// Export functions for use in admin.js
 window.generateOfferLetterPDF = generateOfferLetterPDF;
-
+window.previewPDF = previewPDF;
+window.printPDF = printPDF;
+window.downloadPDFFromPreview = downloadPDFFromPreview;
+window.getNextSerialNumber = getNextSerialNumber;

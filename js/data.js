@@ -12,8 +12,8 @@ const GARISSA_WARDS = {
 const DEMO_APPLICATIONS = [
   {
     appID: "GSA/25/1001",
-    firstName: "James",
-    lastName: "Mukoma",
+    firstName: "Abdi",
+    lastName: "Hassan Ali",
     subCounty: "Ijara",
     ward: "Masalani",
     institution: "Garissa University",
