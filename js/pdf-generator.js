@@ -220,6 +220,11 @@ async function generateOfferLetterPDF(application, awardDetails) {
     yPos += 10;
   }
 
+  addText('Mohamud Osman', margin, yPos, {
+    fontSize: 11,
+    fontStyle: 'bold'
+  });
+  yPos += 5;
   addText('Fund Administrator', margin, yPos, {
     fontSize: 11,
     fontStyle: 'bold'
