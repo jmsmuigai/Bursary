@@ -781,35 +781,40 @@
     }
   };
 
-  // Sidebar navigation - SIMPLE AND RELIABLE
-  document.addEventListener('DOMContentLoaded', function() {
+  // Sidebar navigation - SIMPLE AND RELIABLE (works immediately)
+  function setupSidebarNavigation() {
     try {
-      // Sidebar links
-      document.querySelectorAll('.sidebar-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          const sectionId = this.getAttribute('data-section');
-          if (sectionId) {
-            const section = document.getElementById(sectionId);
-            if (section) {
-              // Simple scroll - no animation
-              section.scrollIntoView({ behavior: 'auto', block: 'start' });
-              
-              // Update active state
-              document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-              this.classList.add('active');
+      // Sidebar links - use event delegation for reliability
+      const sidebarNav = document.getElementById('sidebarNav');
+      if (sidebarNav) {
+        sidebarNav.addEventListener('click', function(e) {
+          const link = e.target.closest('.sidebar-link');
+          if (link) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const sectionId = link.getAttribute('data-section');
+            if (sectionId) {
+              const section = document.getElementById(sectionId);
+              if (section) {
+                // Simple scroll - no animation to prevent blocking
+                section.scrollIntoView({ behavior: 'auto', block: 'start' });
+                
+                // Update active state
+                document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+              }
             }
           }
         });
-      });
+      }
       
       // Change Password link
       const changePasswordLink = document.getElementById('changePasswordLink');
       if (changePasswordLink) {
         changePasswordLink.addEventListener('click', function(e) {
           e.preventDefault();
+          e.stopPropagation();
           if (typeof changeAdminPassword === 'function') {
             changeAdminPassword();
           }
@@ -827,7 +832,14 @@
     } catch (error) {
       console.error('Sidebar navigation setup error:', error);
     }
-  });
+  }
+  
+  // Setup immediately if DOM is ready, otherwise wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupSidebarNavigation);
+  } else {
+    setupSidebarNavigation();
+  }
 
   // Filter event listeners with error handling
   try {
