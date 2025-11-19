@@ -731,6 +731,7 @@ function loadImage(src) {
 window.generateOfferLetterPDF = generateOfferLetterPDF;
 window.previewPDF = previewPDF;
 window.printPDFFromModal = printPDFFromModal;
+window.printViaIframe = printViaIframe;
 window.downloadPDFFromModal = downloadPDFFromModal;
 window.downloadPDFDirect = downloadPDFDirect;
 window.getNextSerialNumber = getNextSerialNumber;
