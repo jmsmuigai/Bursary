@@ -11,26 +11,38 @@
   const admin = JSON.parse(adminStr);
   document.getElementById('adminEmail').textContent = admin.email;
 
-  // Load applications from localStorage
+  // Load applications from localStorage (all applications, no filtering)
   function loadApplications() {
-    const apps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-    
-    // Ensure all applications have required fields for backward compatibility
-    return apps.map(app => {
-      // If application doesn't have location data, try to get from user registration
-      if (!app.subCounty && !app.personalDetails?.subCounty) {
-        const users = loadUsers();
-        const user = users.find(u => u.email === app.applicantEmail);
-        if (user) {
-          app.subCounty = user.subCounty || 'N/A';
-          app.ward = user.ward || 'N/A';
-          if (!app.personalDetails) app.personalDetails = {};
-          app.personalDetails.subCounty = user.subCounty || 'N/A';
-          app.personalDetails.ward = user.ward || 'N/A';
-        }
+    try {
+      const appsStr = localStorage.getItem('mbms_applications');
+      if (!appsStr) {
+        console.log('No applications in localStorage');
+        return [];
       }
-      return app;
-    });
+      
+      const apps = JSON.parse(appsStr);
+      console.log('Loaded applications from localStorage:', apps.length);
+      
+      // Ensure all applications have required fields for backward compatibility
+      return apps.map(app => {
+        // If application doesn't have location data, try to get from user registration
+        if (!app.subCounty && !app.personalDetails?.subCounty) {
+          const users = loadUsers();
+          const user = users.find(u => u.email === app.applicantEmail);
+          if (user) {
+            app.subCounty = user.subCounty || 'N/A';
+            app.ward = user.ward || 'N/A';
+            if (!app.personalDetails) app.personalDetails = {};
+            app.personalDetails.subCounty = user.subCounty || 'N/A';
+            app.personalDetails.ward = user.ward || 'N/A';
+          }
+        }
+        return app;
+      });
+    } catch (error) {
+      console.error('Error loading applications:', error);
+      return [];
+    }
   }
   
   // Debug function to check localStorage
@@ -584,12 +596,42 @@
     }
   };
 
-  // Refresh applications display
+  // Refresh applications display (force reload from localStorage)
   window.refreshApplications = function() {
+    console.log('Refreshing applications...');
+    
+    // Force reload from localStorage
     const apps = loadApplications();
-    console.log('Loaded applications:', apps.length, apps); // Debug log
+    console.log('Loaded applications:', apps.length);
+    
+    if (apps.length > 0) {
+      console.log('Sample application:', apps[0]);
+    }
+    
+    // Sync budget
+    if (typeof syncBudgetWithAwards !== 'undefined') {
+      syncBudgetWithAwards();
+    }
+    
+    // Update everything
     updateMetrics();
+    updateBudgetDisplay();
     renderTable(apps); // Show all applications by default
+    
+    // Show refresh confirmation
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+      const originalText = refreshBtn.innerHTML;
+      refreshBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Refreshed!';
+      refreshBtn.classList.add('btn-success');
+      refreshBtn.classList.remove('btn-outline-primary');
+      setTimeout(() => {
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.classList.remove('btn-success');
+        refreshBtn.classList.add('btn-outline-primary');
+      }, 2000);
+    }
+    
     return apps;
   };
 
@@ -621,6 +663,11 @@
   // Load and display all applications on page load
   const allApps = loadApplications();
   console.log('Initial applications loaded:', allApps.length);
+  
+  if (allApps.length > 0) {
+    console.log('Applications found:', allApps.map(a => ({ id: a.appID, status: a.status, name: a.applicantName })));
+  }
+  
   updateMetrics();
   renderTable(allApps);
   
@@ -637,6 +684,17 @@
       }, 1000);
     }
   }
+  
+  // Add visibility to window for debugging
+  window.debugAdmin = function() {
+    const apps = loadApplications();
+    const budget = getBudgetBalance();
+    console.log('=== ADMIN DEBUG ===');
+    console.log('Applications:', apps.length, apps);
+    console.log('Budget:', budget);
+    console.log('localStorage keys:', Object.keys(localStorage).filter(k => k.startsWith('mbms')));
+    alert(`Applications: ${apps.length}\nBudget Allocated: Ksh ${budget.allocated.toLocaleString()}\nBudget Balance: Ksh ${budget.balance.toLocaleString()}\n\nCheck console (F12) for details.`);
+  };
 
   // Filter event listeners
   document.getElementById('applyFilters').addEventListener('click', applyFilters);
