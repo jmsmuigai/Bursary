@@ -339,6 +339,8 @@ async function previewPDF(application, awardDetails) {
     const modal = document.createElement('div');
     modal.className = 'modal fade';
     modal.id = 'pdfPreviewModal';
+    modal.setAttribute('data-blob-url', result.blobUrl);
+    modal.setAttribute('data-filename', result.filename);
     modal.innerHTML = `
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -355,10 +357,10 @@ async function previewPDF(application, awardDetails) {
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               <i class="bi bi-x-circle me-1"></i>Close
             </button>
-            <button type="button" class="btn btn-primary" onclick="window.printPDFFromModal('${result.blobUrl}')">
+            <button type="button" class="btn btn-primary" id="printPDFBtn">
               <i class="bi bi-printer me-1"></i>Print to PDF
             </button>
-            <button type="button" class="btn btn-success" onclick="window.downloadPDFFromModal('${result.blobUrl}', '${result.filename}')">
+            <button type="button" class="btn btn-success" id="downloadPDFBtn">
               <i class="bi bi-download me-1"></i>Download PDF
             </button>
           </div>
@@ -367,6 +369,19 @@ async function previewPDF(application, awardDetails) {
     `;
     
     document.body.appendChild(modal);
+    
+    // Add event listeners for buttons
+    const printBtn = modal.querySelector('#printPDFBtn');
+    const downloadBtn = modal.querySelector('#downloadPDFBtn');
+    
+    printBtn.addEventListener('click', () => {
+      printPDFFromModal(result.blobUrl);
+    });
+    
+    downloadBtn.addEventListener('click', () => {
+      downloadPDFFromModal(result.blobUrl, result.filename);
+    });
+    
     const bsModal = new bootstrap.Modal(modal);
     bsModal.show();
     
@@ -429,14 +444,53 @@ function downloadPDFFromModal(blobUrl, filename) {
     link.href = blobUrl;
     link.download = filename;
     link.style.display = 'none';
+    link.setAttribute('download', filename); // Ensure download attribute is set
+    
+    // For iOS Safari
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      const reader = new FileReader();
+      fetch(blobUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }, 100);
+          showDownloadSuccess(filename);
+        })
+        .catch(err => {
+          console.error('Download error:', err);
+          window.open(blobUrl, '_blank');
+          alert('✅ PDF opened in new tab. Please use your browser\'s download option.');
+        });
+      return;
+    }
+    
+    // For Android and other platforms
     document.body.appendChild(link);
     
     // Trigger download
-    link.click();
+    if (link.click) {
+      link.click();
+    } else {
+      // Fallback for older browsers
+      const event = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true
+      });
+      link.dispatchEvent(event);
+    }
     
     // Clean up
     setTimeout(() => {
-      document.body.removeChild(link);
+      if (link.parentNode) {
+        document.body.removeChild(link);
+      }
     }, 100);
     
     // Show success message
@@ -455,7 +509,7 @@ function downloadPDFFromModal(blobUrl, filename) {
 }
 
 /**
- * Direct download PDF (without preview)
+ * Direct download PDF (without preview) - Cross-platform compatible
  */
 async function downloadPDFDirect(application, awardDetails) {
   try {
@@ -465,12 +519,57 @@ async function downloadPDFDirect(application, awardDetails) {
     loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating PDF...';
     document.body.appendChild(loadingAlert);
 
-    const result = await generateOfferLetterPDF(application, awardDetails);
+    // Generate PDF as blob
+    const result = await generateOfferLetterPDF(application, awardDetails, { preview: true });
     
     loadingAlert.remove();
     
-    // Show success message
-    showDownloadSuccess(result.filename);
+    // Download the blob
+    try {
+      const link = document.createElement('a');
+      link.href = result.blobUrl;
+      link.download = result.filename;
+      link.style.display = 'none';
+      link.setAttribute('download', result.filename);
+      
+      document.body.appendChild(link);
+      
+      // Trigger download
+      if (link.click) {
+        link.click();
+      } else {
+        const event = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true
+        });
+        link.dispatchEvent(event);
+      }
+      
+      // Clean up
+      setTimeout(() => {
+        if (link.parentNode) {
+          document.body.removeChild(link);
+        }
+        URL.revokeObjectURL(result.blobUrl);
+      }, 100);
+      
+      // Show success message
+      showDownloadSuccess(result.filename);
+      
+    } catch (downloadError) {
+      console.error('Download trigger error:', downloadError);
+      // Fallback: use doc.save
+      const { jsPDF } = window.jsPDF;
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      // Regenerate and save directly
+      const directResult = await generateOfferLetterPDF(application, awardDetails);
+      showDownloadSuccess(directResult.filename);
+    }
     
     return result;
   } catch (error) {
