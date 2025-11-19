@@ -695,61 +695,9 @@
     }
   };
 
-  // Auto-refresh with error handling and debouncing
-  let refreshInterval = null;
-  let isRefreshing = false;
-  
-  function safeAutoRefresh() {
-    if (isRefreshing) {
-      console.log('Refresh already in progress, skipping...');
-      return;
-    }
-    
-    try {
-      isRefreshing = true;
-      
-      // Sync budget with awarded applications
-      if (typeof syncBudgetWithAwards !== 'undefined') {
-        try {
-          syncBudgetWithAwards();
-        } catch (e) {
-          console.error('Budget sync error:', e);
-        }
-      }
-      
-      // Refresh applications display (only if needed)
-      const apps = loadApplications();
-      if (apps.length > 0) {
-        // Only refresh if we're on the applications section
-        const appsSection = document.getElementById('apps');
-        if (appsSection && appsSection.offsetParent !== null) {
-          try {
-            updateMetrics();
-            updateBudgetDisplay();
-          } catch (e) {
-            console.error('Metrics update error:', e);
-          }
-        }
-      } else {
-        // Even if no apps, update budget display
-        try {
-          updateBudgetDisplay();
-        } catch (e) {
-          console.error('Budget display update error:', e);
-        }
-      }
-    } catch (error) {
-      console.error('Auto-refresh error:', error);
-    } finally {
-      isRefreshing = false;
-    }
-  }
-  
-  // Auto-refresh every 10 seconds (reduced frequency to prevent freezing)
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-  }
-  refreshInterval = setInterval(safeAutoRefresh, 10000);
+  // DISABLED: Auto-refresh to prevent page freezing
+  // Manual refresh available via Refresh button
+  // Auto-refresh can be re-enabled if needed, but currently disabled for stability
 
   // Initialize budget
   if (typeof initializeBudget !== 'undefined') {
@@ -795,25 +743,91 @@
     alert(`Applications: ${apps.length}\nBudget Allocated: Ksh ${budget.allocated.toLocaleString()}\nBudget Balance: Ksh ${budget.balance.toLocaleString()}\n\nCheck console (F12) for details.`);
   };
 
-  // Smooth scroll function for sidebar navigation
+  // Smooth scroll function for sidebar navigation - SIMPLIFIED
   window.scrollToSection = function(sectionId) {
     try {
+      // Prevent default behavior
+      event?.preventDefault();
+      
+      // Find the section
       const section = document.getElementById(sectionId);
-      if (section) {
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Update active nav link
-        document.querySelectorAll('.nav-link').forEach(link => {
-          link.classList.remove('active');
-        });
-        const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
-        if (activeLink) {
-          activeLink.classList.add('active');
-        }
+      if (!section) {
+        console.warn('Section not found:', sectionId);
+        return false;
       }
+      
+      // Simple scroll - no animation to prevent blocking
+      section.scrollIntoView({ behavior: 'auto', block: 'start' });
+      
+      // Update active nav link
+      setTimeout(() => {
+        try {
+          document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+          });
+          const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+          if (activeLink) {
+            activeLink.classList.add('active');
+          }
+        } catch (e) {
+          // Ignore nav update errors
+        }
+      }, 100);
+      
+      return false;
     } catch (error) {
       console.error('Scroll error:', error);
+      return false;
     }
   };
+
+  // Sidebar navigation - SIMPLE AND RELIABLE
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      // Sidebar links
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const sectionId = this.getAttribute('data-section');
+          if (sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+              // Simple scroll - no animation
+              section.scrollIntoView({ behavior: 'auto', block: 'start' });
+              
+              // Update active state
+              document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+              this.classList.add('active');
+            }
+          }
+        });
+      });
+      
+      // Change Password link
+      const changePasswordLink = document.getElementById('changePasswordLink');
+      if (changePasswordLink) {
+        changePasswordLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (typeof changeAdminPassword === 'function') {
+            changeAdminPassword();
+          }
+        });
+      }
+      
+      // Sign Out link
+      const signOutLink = document.getElementById('signOutLink');
+      if (signOutLink) {
+        signOutLink.addEventListener('click', function(e) {
+          sessionStorage.clear();
+          // Let the link navigate naturally
+        });
+      }
+    } catch (error) {
+      console.error('Sidebar navigation setup error:', error);
+    }
+  });
 
   // Filter event listeners with error handling
   try {
@@ -821,6 +835,7 @@
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener('click', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         try {
           applyFilters();
         } catch (error) {

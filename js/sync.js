@@ -43,18 +43,9 @@
     }
   });
   
-  // Trigger custom event when data changes
-  const originalSetItem = Storage.prototype.setItem;
-  Storage.prototype.setItem = function(key, value) {
-    originalSetItem.apply(this, arguments);
-    
-    if (key === 'mbms_applications' || key === 'mbms_budget_allocated') {
-      // Dispatch custom event for same-tab updates
-      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
-        detail: { key, value }
-      }));
-    }
-  };
+  // DISABLED: Storage.prototype.setItem override to prevent conflicts
+  // This was causing page freezing issues
+  // Real-time sync can be handled via manual refresh button
 })();
 
 /**
