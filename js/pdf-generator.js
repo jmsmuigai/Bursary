@@ -39,7 +39,7 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
     const margin = 20;
     let yPos = margin;
 
-    // Get serial number (use from awardDetails if available, otherwise generate new)
+    // Get serial number
     const serialNumber = awardDetails?.serialNumber || options.serialNumber || getNextSerialNumber();
 
     // Helper function to add text with styling
@@ -101,7 +101,7 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
       fontSize: 14,
       fontStyle: 'bold',
       align: 'right',
-      color: [139, 69, 19] // Garissa brown
+      color: [139, 69, 19]
     });
     
     yPos += 6;
@@ -310,7 +310,7 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
       return { blobUrl, filename, serialNumber, doc };
     }
 
-    // Save PDF
+    // Save PDF directly (for direct download)
     doc.save(filename);
     
     return { filename, serialNumber };
@@ -355,11 +355,11 @@ async function previewPDF(application, awardDetails) {
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               <i class="bi bi-x-circle me-1"></i>Close
             </button>
-            <button type="button" class="btn btn-primary" onclick="printPDF('${result.blobUrl}')">
+            <button type="button" class="btn btn-primary" onclick="printPDFFromModal('${result.blobUrl}')">
               <i class="bi bi-printer me-1"></i>Print to PDF
             </button>
-            <button type="button" class="btn btn-success" onclick="downloadPDFFromPreview('${result.blobUrl}', '${result.filename}')">
-              <i class="bi bi-download me-1"></i>Download
+            <button type="button" class="btn btn-success" onclick="downloadPDFFromModal('${result.blobUrl}', '${result.filename}')">
+              <i class="bi bi-download me-1"></i>Download PDF
             </button>
           </div>
         </div>
@@ -384,32 +384,131 @@ async function previewPDF(application, awardDetails) {
 }
 
 /**
- * Print PDF (opens print dialog)
+ * Print PDF (cross-platform compatible)
  */
-function printPDF(blobUrl) {
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  iframe.src = blobUrl;
-  document.body.appendChild(iframe);
-  
-  iframe.onload = () => {
-    iframe.contentWindow.print();
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-    }, 1000);
-  };
+function printPDFFromModal(blobUrl) {
+  try {
+    // Create a new window for printing
+    const printWindow = window.open(blobUrl, '_blank');
+    
+    if (printWindow) {
+      printWindow.onload = function() {
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
+      };
+    } else {
+      // Fallback: create iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = blobUrl;
+      document.body.appendChild(iframe);
+      
+      iframe.onload = function() {
+        setTimeout(() => {
+          iframe.contentWindow.print();
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 1000);
+        }, 250);
+      };
+    }
+  } catch (error) {
+    console.error('Print error:', error);
+    alert('Error printing PDF. Please try downloading instead.');
+  }
 }
 
 /**
- * Download PDF from preview
+ * Download PDF (cross-platform compatible)
  */
-function downloadPDFFromPreview(blobUrl, filename) {
-  const link = document.createElement('a');
-  link.href = blobUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+function downloadPDFFromModal(blobUrl, filename) {
+  try {
+    // Method 1: Create download link (works on all platforms)
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    // Trigger download
+    link.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(link);
+    }, 100);
+    
+    // Show success message
+    showDownloadSuccess(filename);
+    
+  } catch (error) {
+    console.error('Download error:', error);
+    // Fallback: open in new tab
+    try {
+      window.open(blobUrl, '_blank');
+      alert('✅ PDF opened in new tab. Please use your browser\'s download option (right-click → Save As).');
+    } catch (e) {
+      alert('❌ Error downloading PDF. Please try again or contact support.');
+    }
+  }
+}
+
+/**
+ * Direct download PDF (without preview)
+ */
+async function downloadPDFDirect(application, awardDetails) {
+  try {
+    const loadingAlert = document.createElement('div');
+    loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+    loadingAlert.style.zIndex = '9999';
+    loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating PDF...';
+    document.body.appendChild(loadingAlert);
+
+    const result = await generateOfferLetterPDF(application, awardDetails);
+    
+    loadingAlert.remove();
+    
+    // Show success message
+    showDownloadSuccess(result.filename);
+    
+    return result;
+  } catch (error) {
+    console.error('Download error:', error);
+    const loadingAlert = document.querySelector('.alert-info');
+    if (loadingAlert) loadingAlert.remove();
+    alert('❌ Error generating PDF: ' + error.message);
+    throw error;
+  }
+}
+
+/**
+ * Show download success message
+ */
+function showDownloadSuccess(filename) {
+  // Create success alert
+  const successAlert = document.createElement('div');
+  successAlert.className = 'alert alert-success position-fixed top-0 start-50 translate-middle-x mt-3';
+  successAlert.style.zIndex = '10000';
+  successAlert.style.minWidth = '300px';
+  successAlert.style.textAlign = 'center';
+  successAlert.innerHTML = `
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <strong>Downloaded Successfully!</strong><br>
+    <small>${filename}</small>
+  `;
+  document.body.appendChild(successAlert);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    successAlert.style.transition = 'opacity 0.5s';
+    successAlert.style.opacity = '0';
+    setTimeout(() => {
+      if (successAlert.parentNode) {
+        successAlert.parentNode.removeChild(successAlert);
+      }
+    }, 500);
+  }, 3000);
 }
 
 /**
@@ -473,9 +572,15 @@ function loadImage(src) {
   });
 }
 
-// Export functions for use in admin.js
+// Export functions for use in admin.js and applicant_dashboard.html
 window.generateOfferLetterPDF = generateOfferLetterPDF;
 window.previewPDF = previewPDF;
-window.printPDF = printPDF;
-window.downloadPDFFromPreview = downloadPDFFromPreview;
+window.printPDFFromModal = printPDFFromModal;
+window.downloadPDFFromModal = downloadPDFFromModal;
+window.downloadPDFDirect = downloadPDFDirect;
 window.getNextSerialNumber = getNextSerialNumber;
+window.showDownloadSuccess = showDownloadSuccess;
+
+// Legacy function names for backward compatibility
+window.printPDF = printPDFFromModal;
+window.downloadPDFFromPreview = downloadPDFFromModal;

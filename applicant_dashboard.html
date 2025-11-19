@@ -265,7 +265,7 @@
         // Auto-trigger print after preview opens
         setTimeout(() => {
           if (result && result.blobUrl) {
-            printPDF(result.blobUrl);
+            printPDFFromModal(result.blobUrl);
           }
         }, 1000);
       } catch (error) {
@@ -285,18 +285,9 @@
       }
 
       try {
-        const loadingAlert = document.createElement('div');
-        loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
-        loadingAlert.style.zIndex = '9999';
-        loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating PDF...';
-        document.body.appendChild(loadingAlert);
-
-        const result = await generateOfferLetterPDF(app, app.awardDetails);
-        
-        loadingAlert.remove();
+        await downloadPDFDirect(app, app.awardDetails);
       } catch (error) {
         console.error('Error generating PDF:', error);
-        loadingAlert.remove();
         alert('Error generating award letter: ' + error.message);
       }
     };

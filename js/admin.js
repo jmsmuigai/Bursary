@@ -139,8 +139,11 @@
             <i class="bi bi-eye"></i> View
           </button>
           ${status === 'Awarded' ? `
-            <button class="btn btn-sm btn-primary" onclick="previewPDFLetter('${app.appID}')" title="Preview & Print PDF">
-              <i class="bi bi-file-earmark-pdf"></i> PDF
+            <button class="btn btn-sm btn-primary me-1" onclick="previewPDFLetter('${app.appID}')" title="Preview & Print PDF">
+              <i class="bi bi-eye"></i> Preview
+            </button>
+            <button class="btn btn-sm btn-success" onclick="downloadPDFDirect('${app.appID}')" title="Download PDF">
+              <i class="bi bi-download"></i> Download
             </button>
           ` : ''}
         </td>
@@ -374,6 +377,33 @@
     } catch (error) {
       console.error('PDF generation error:', error);
       alert('❌ Error generating PDF preview. Please try again or contact support.\n\nError: ' + error.message);
+    }
+  };
+  
+  // Direct download PDF (without preview)
+  window.downloadPDFDirect = async function(appID) {
+    const apps = loadApplications();
+    const app = apps.find(a => a.appID === appID);
+    if (!app || app.status !== 'Awarded') {
+      alert('⚠️ This application has not been awarded yet. Please award it first to generate the offer letter.');
+      return;
+    }
+
+    if (!app.awardDetails) {
+      alert('⚠️ Award details not found. Please award this application first.');
+      return;
+    }
+
+    try {
+      const awardDetails = {
+        ...app.awardDetails,
+        serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
+      };
+      
+      await downloadPDFDirect(app, awardDetails);
+    } catch (error) {
+      console.error('PDF download error:', error);
+      alert('❌ Error downloading PDF. Please try again or contact support.\n\nError: ' + error.message);
     }
   };
   
