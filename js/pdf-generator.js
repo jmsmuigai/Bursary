@@ -403,34 +403,90 @@ async function previewPDF(application, awardDetails) {
  */
 function printPDFFromModal(blobUrl) {
   try {
-    // Create a new window for printing
+    // Method 1: Try opening in new window (works on most platforms)
     const printWindow = window.open(blobUrl, '_blank');
     
     if (printWindow) {
       printWindow.onload = function() {
         setTimeout(() => {
-          printWindow.print();
-        }, 250);
+          try {
+            printWindow.print();
+          } catch (e) {
+            console.warn('Print window error:', e);
+            // Fallback to iframe
+            printWindow.close();
+            printViaIframe(blobUrl);
+          }
+        }, 500);
       };
-    } else {
-      // Fallback: create iframe
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = blobUrl;
-      document.body.appendChild(iframe);
       
-      iframe.onload = function() {
-        setTimeout(() => {
-          iframe.contentWindow.print();
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 1000);
-        }, 250);
-      };
+      // Fallback if onload doesn't fire
+      setTimeout(() => {
+        if (printWindow && !printWindow.closed) {
+          try {
+            printWindow.print();
+          } catch (e) {
+            printWindow.close();
+            printViaIframe(blobUrl);
+          }
+        }
+      }, 1000);
+    } else {
+      // Popup blocked or not supported - use iframe
+      printViaIframe(blobUrl);
     }
   } catch (error) {
     console.error('Print error:', error);
-    alert('Error printing PDF. Please try downloading instead.');
+    printViaIframe(blobUrl);
+  }
+}
+
+/**
+ * Print via iframe (fallback method)
+ */
+function printViaIframe(blobUrl) {
+  try {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    iframe.src = blobUrl;
+    document.body.appendChild(iframe);
+    
+    iframe.onload = function() {
+      setTimeout(() => {
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        } catch (e) {
+          console.error('Iframe print error:', e);
+          alert('⚠️ Print dialog could not open automatically. Please download the PDF and print it manually, or use your browser\'s print option on the preview.');
+        }
+        // Clean up after print dialog closes
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+        }, 2000);
+      }, 500);
+    };
+    
+    // Fallback timeout
+    setTimeout(() => {
+      if (iframe.parentNode && iframe.contentWindow) {
+        try {
+          iframe.contentWindow.print();
+        } catch (e) {
+          console.error('Iframe print timeout error:', e);
+        }
+      }
+    }, 2000);
+  } catch (error) {
+    console.error('Iframe creation error:', error);
+    alert('⚠️ Print dialog could not open. Please download the PDF and print it manually.');
   }
 }
 
@@ -559,16 +615,16 @@ async function downloadPDFDirect(application, awardDetails) {
       
     } catch (downloadError) {
       console.error('Download trigger error:', downloadError);
-      // Fallback: use doc.save
-      const { jsPDF } = window.jsPDF;
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      // Regenerate and save directly
-      const directResult = await generateOfferLetterPDF(application, awardDetails);
-      showDownloadSuccess(directResult.filename);
+      // Fallback: regenerate without preview and use doc.save
+      try {
+        const directResult = await generateOfferLetterPDF(application, awardDetails);
+        showDownloadSuccess(directResult.filename);
+      } catch (fallbackError) {
+        console.error('Fallback download error:', fallbackError);
+        // Last resort: open in new tab
+        window.open(result.blobUrl, '_blank');
+        alert('✅ PDF opened in new tab. Please use your browser\'s download option (right-click → Save As).');
+      }
     }
     
     return result;
