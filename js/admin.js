@@ -264,24 +264,56 @@
       return;
     }
 
+    const awardAmount = parseInt(amount);
+    
+    // Check budget availability
+    if (typeof checkBudgetAvailable !== 'undefined') {
+      if (!checkBudgetAvailable(awardAmount)) {
+        const budget = getBudgetBalance();
+        alert(`❌ Insufficient Budget!\n\nAvailable: Ksh ${budget.balance.toLocaleString()}\nRequested: Ksh ${awardAmount.toLocaleString()}\n\nPlease reduce the award amount or contact finance department.`);
+        return;
+      }
+    }
+
     const apps = loadApplications();
     const app = apps.find(a => a.appID === appID);
     if (app) {
       // Get serial number before awarding
       const serialNumber = getNextSerialNumber();
       
+      // Allocate budget
+      let budgetStatus = null;
+      if (typeof allocateBudget !== 'undefined') {
+        try {
+          budgetStatus = allocateBudget(awardAmount);
+        } catch (error) {
+          alert('❌ Budget Allocation Error: ' + error.message);
+          return;
+        }
+      }
+      
       app.status = 'Awarded';
       app.awardDetails = {
-        committee_amount_kes: parseInt(amount),
+        committee_amount_kes: awardAmount,
         date_awarded: new Date().toISOString(),
         justification: justification,
         admin_assigned_uid: admin.email,
         serialNumber: serialNumber,
-        amount: parseInt(amount) // For compatibility
+        amount: awardAmount // For compatibility
       };
       localStorage.setItem('mbms_applications', JSON.stringify(apps));
       updateMetrics();
       applyFilters();
+      
+      // Check if budget is exhausted or low
+      if (typeof getBudgetStatus !== 'undefined') {
+        const status = getBudgetStatus();
+        if (status.isExhausted) {
+          alert('⚠️ BUDGET EXHAUSTED!\n\nNo more budget available. Please contact finance department to replenish funds.');
+        } else if (status.isLow) {
+          alert('⚠️ LOW BUDGET WARNING!\n\nOnly ' + status.percentage.toFixed(1) + '% budget remaining.\nRemaining: Ksh ' + status.balance.toLocaleString());
+        }
+      }
       
       // Close the view modal first
       const viewModal = document.querySelector('.modal');
@@ -292,10 +324,10 @@
       // Generate and preview PDF offer letter
       try {
         await previewPDF(app, app.awardDetails);
-        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n\nPDF preview is now open. You can print or download it.');
+        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + (budgetStatus ? budgetStatus.balance.toLocaleString() : 'N/A') + '\n\nPDF preview is now open. You can print or download it.');
       } catch (error) {
         console.error('PDF generation error:', error);
-        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n\n⚠️ PDF preview failed. You can generate it later from the applications list.');
+        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + (budgetStatus ? budgetStatus.balance.toLocaleString() : 'N/A') + '\n\n⚠️ PDF preview failed. You can generate it later from the applications list.');
       }
     }
   };
@@ -447,6 +479,11 @@
     }
   }, 10000);
 
+  // Initialize budget
+  if (typeof initializeBudget !== 'undefined') {
+    initializeBudget();
+  }
+  
   // Initialize
   populateFilters();
   
@@ -455,6 +492,20 @@
   console.log('Initial applications loaded:', allApps.length);
   updateMetrics();
   renderTable(allApps);
+  
+  // Check budget status on load
+  if (typeof getBudgetStatus !== 'undefined') {
+    const status = getBudgetStatus();
+    if (status.isExhausted) {
+      setTimeout(() => {
+        alert('⚠️ BUDGET EXHAUSTED!\n\nNo more budget available. Please contact finance department.');
+      }, 1000);
+    } else if (status.isLow) {
+      setTimeout(() => {
+        alert('⚠️ LOW BUDGET WARNING!\n\nOnly ' + status.percentage.toFixed(1) + '% budget remaining.\nRemaining: Ksh ' + status.balance.toLocaleString());
+      }, 1000);
+    }
+  }
 
   // Filter event listeners
   document.getElementById('applyFilters').addEventListener('click', applyFilters);
