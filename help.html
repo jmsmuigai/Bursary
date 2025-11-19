@@ -129,6 +129,48 @@
                   </div>
                 </div>
               </div>
+
+              <div class="step-card">
+                <div class="d-flex align-items-start">
+                  <span class="step-number">7</span>
+                  <div>
+                    <h5>View Awarded Amount (If Approved)</h5>
+                    <p class="mb-0">When your application is awarded:
+                      <ul>
+                        <li>A new card will appear showing <strong>"Amount Awarded"</strong> in green</li>
+                        <li>You'll see the exact amount you've been awarded</li>
+                        <li>The award serial number (GRS/Bursary/001, etc.) will be displayed</li>
+                        <li>You can print or download your award letter PDF</li>
+                      </ul>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="d-flex align-items-start">
+                  <span class="step-number">8</span>
+                  <div>
+                    <h5>Print or Download Award Letter</h5>
+                    <p class="mb-0">If your application is awarded, you'll see two buttons:
+                      <ul>
+                        <li><strong>"Print Award Letter"</strong> - Opens PDF preview and print dialog</li>
+                        <li><strong>"Download PDF"</strong> - Downloads the award letter directly</li>
+                      </ul>
+                      <div class="alert alert-success mt-2 mb-0">
+                        The award letter includes:
+                        <ul class="mb-0">
+                          <li>Your name and institution details</li>
+                          <li>Award amount in a highlighted box</li>
+                          <li>Unique serial number (GRS/Bursary/001, etc.)</li>
+                          <li>Official signature and stamp</li>
+                          <li>Contact information for inquiries</li>
+                        </ul>
+                      </div>
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -220,9 +262,20 @@
                         <li>Enter the <strong>Award Amount (KES)</strong> in the input field</li>
                         <li>Enter a <strong>Recommendation/Justification</strong> (mandatory)</li>
                         <li>Click <strong>"Approve/Award"</strong></li>
-                        <li>The system will automatically generate and download a PDF offer letter with signature and stamp</li>
+                        <li>The system will:
+                          <ul>
+                            <li>Check budget availability (Total Budget: KSH 50,000,000)</li>
+                            <li>Generate a unique serial number (GRS/Bursary/001, 002, etc.)</li>
+                            <li>Deduct the amount from available budget</li>
+                            <li>Open PDF preview modal for review</li>
+                            <li>Allow you to print or download the award letter</li>
+                          </ul>
+                        </li>
                       </ol>
-                      <strong>Note:</strong> The PDF is signed by the Fund Administrator.
+                      <div class="alert alert-info mt-2 mb-0">
+                        <strong>Budget Management:</strong> The system tracks a total budget of KSH 50,000,000. When you award an application, the amount is automatically deducted from the budget. You'll receive alerts when budget is low (80% used) or exhausted.
+                      </div>
+                      <strong>Note:</strong> The PDF includes serial number, signature, and stamp from the Fund Administrator.
                     </p>
                   </div>
                 </div>
@@ -258,8 +311,41 @@
                 <div class="d-flex align-items-start">
                   <span class="step-number">8</span>
                   <div>
-                    <h5>Download Offer Letters</h5>
-                    <p class="mb-0">For already-awarded applications, click the "PDF" button to regenerate and download the offer letter anytime.</p>
+                    <h5>Preview and Download Offer Letters</h5>
+                    <p class="mb-0">For already-awarded applications:
+                      <ul>
+                        <li>Click the <strong>"PDF"</strong> button in the applications table</li>
+                        <li>A preview modal will open showing the complete award letter</li>
+                        <li>You can <strong>Print to PDF</strong> (opens system print dialog)</li>
+                        <li>Or <strong>Download</strong> the PDF directly</li>
+                        <li>Each letter includes a unique serial number (GRS/Bursary/001, 002, etc.)</li>
+                      </ul>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="d-flex align-items-start">
+                  <span class="step-number">9</span>
+                  <div>
+                    <h5>Budget Management</h5>
+                    <p class="mb-0">The dashboard shows a colorful budget card displaying:
+                      <ul>
+                        <li><strong>Total Budget:</strong> KSH 50,000,000</li>
+                        <li><strong>Allocated:</strong> Amount awarded so far</li>
+                        <li><strong>Remaining Balance:</strong> Available budget</li>
+                        <li><strong>Utilization %:</strong> Percentage of budget used</li>
+                      </ul>
+                      <div class="alert alert-warning mt-2 mb-0">
+                        <strong>Budget Alerts:</strong>
+                        <ul class="mb-0">
+                          <li>Low Budget Warning: When 80% or more is used</li>
+                          <li>Budget Exhausted: When balance reaches zero (no more awards possible)</li>
+                          <li>Insufficient Budget: Prevents awarding if requested amount exceeds available balance</li>
+                        </ul>
+                      </div>
+                    </p>
                   </div>
                 </div>
               </div>

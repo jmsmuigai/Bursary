@@ -29,30 +29,50 @@ Anyone with this link can:
   - Manual save button
   - Draft applications tracking
 - ✅ **Applicant Dashboard** - View own application status only
+  - View awarded amount when application is approved
+  - Print Award Letter (PDF preview and print)
+  - Download Award Letter PDF
+  - View serial number for awarded applications
 - ✅ **Privacy** - Applicants cannot see other applicants' information
 
 ### Administration Dashboard
 - ✅ **Single Admin Account**:
   - `fundadmin@garissa.go.ke` (Default Password: `@Omar.123!`)
   - Password can be changed by administrator
+- ✅ **Budget Management System**:
+  - Total Budget: KSH 50,000,000
+  - Real-time budget tracking and deduction
+  - Colorful budget display card (Total, Allocated, Balance, Utilization %)
+  - Budget alerts (Low budget warning at 80%, Exhausted alert at 0%)
+  - Prevents awarding when budget is insufficient
+  - Auto-syncs with existing awarded applications
 - ✅ **Smart Application Counter** - Real-time updates when new applications are submitted
 - ✅ **Application Management**:
-  - View all applications
+  - View all applications with smart scrolling
   - Filter by Sub-County, Ward, and Status
   - Review individual applications
   - Approve/Award applications with amount and justification
+  - Automatic serial number generation (GRS/Bursary/001, 002, 003...)
   - Reject applications
+- ✅ **PDF Offer Letter Generation**:
+  - Automatic PDF generation when awarding
+  - Preview before printing/downloading
+  - Print to PDF functionality
+  - Download award letter with all details
+  - Professional design with Garissa County branding
+  - Includes serial number, signature, and stamp
 - ✅ **Smart Reports**:
   - Filterable data export
   - Download Excel/CSV reports
   - Beneficiary lists
-  - Financial allocation summaries
+  - Financial allocation summaries (includes budget tracking)
   - Demographics reports
 - ✅ **Dashboard Metrics**:
   - Total Applications
   - Pending Review
   - Total Awarded
   - Funds Allocated (YTD)
+  - Budget Status (Total, Allocated, Remaining, Utilization %)
 
 ### Technical Features
 - ✅ **Duplicate Registration Detection** - Prevents multiple registrations with same email/ID
@@ -60,6 +80,11 @@ Anyone with this link can:
 - ✅ **Data Validation** - Clean data only saved
 - ✅ **Responsive Design** - Works on all devices
 - ✅ **Modern UI/UX** - Colorful, professional theme with Garissa County branding
+- ✅ **Enhanced Table Scrolling** - Smart scrolling with sticky headers
+- ✅ **PDF Generation** - Client-side PDF generation using jsPDF
+- ✅ **Serial Number System** - Auto-incrementing serial numbers (GRS/Bursary/001...)
+- ✅ **Budget Tracking** - Real-time budget management and alerts
+- ✅ **Password Reset** - For applicants (admin password change in dashboard)
 - ✅ **Local Storage** - Demo mode (ready for Firebase integration)
 - ✅ **Public Access** - Anyone with GitHub link can access and apply
 
