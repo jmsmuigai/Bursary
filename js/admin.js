@@ -1,15 +1,32 @@
 // Enhanced Admin Dashboard with Full Functionality
 (function() {
+  // Prevent multiple initializations
+  if (window.adminDashboardInitialized) {
+    console.warn('Admin dashboard already initialized');
+    return;
+  }
+  window.adminDashboardInitialized = true;
+
   // Check admin access
-  const adminStr = sessionStorage.getItem('mbms_admin');
-  if (!adminStr) {
-    alert('Access denied. Admin login required.');
+  try {
+    const adminStr = sessionStorage.getItem('mbms_admin');
+    if (!adminStr) {
+      alert('Access denied. Admin login required.');
+      window.location.href = 'index.html';
+      return;
+    }
+
+    const admin = JSON.parse(adminStr);
+    const adminEmailEl = document.getElementById('adminEmail');
+    if (adminEmailEl) {
+      adminEmailEl.textContent = admin.email;
+    }
+  } catch (error) {
+    console.error('Admin access check error:', error);
+    alert('Error loading admin session. Please login again.');
     window.location.href = 'index.html';
     return;
   }
-
-  const admin = JSON.parse(adminStr);
-  document.getElementById('adminEmail').textContent = admin.email;
 
   // Load applications from localStorage (all applications, no filtering)
   function loadApplications() {
@@ -514,36 +531,53 @@
   // Legacy function for backward compatibility
   window.downloadPDF = window.previewPDFLetter;
 
-  // Export to Excel/CSV
-  document.getElementById('downloadReportBtn').addEventListener('click', function() {
-    const reportType = document.getElementById('reportType').value;
-    const reportStatus = document.getElementById('reportStatus').value;
-    const apps = loadApplications();
-    
-    let filtered = apps;
-    if (reportStatus === 'Awarded') {
-      filtered = apps.filter(a => a.status === 'Awarded');
+  // Export to Excel/CSV with error handling
+  try {
+    const downloadReportBtn = document.getElementById('downloadReportBtn');
+    if (downloadReportBtn) {
+      downloadReportBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        try {
+          const reportType = document.getElementById('reportType')?.value || 'beneficiary';
+          const reportStatus = document.getElementById('reportStatus')?.value || 'all';
+          const apps = loadApplications();
+          
+          let filtered = apps;
+          if (reportStatus === 'Awarded') {
+            filtered = apps.filter(a => a.status === 'Awarded');
+          }
+
+          const rows = [['App ID', 'Applicant Name', 'Sub-County', 'Ward', 'Institution', 'Status', 'Amount Requested', 'Awarded Amount', 'Date Submitted']];
+          
+          filtered.forEach(app => {
+            rows.push([
+              app.appID || 'N/A',
+              app.applicantName || 'N/A',
+              app.personalDetails?.subCounty || app.subCounty || 'N/A',
+              app.personalDetails?.ward || app.ward || 'N/A',
+              app.personalDetails?.institution || app.institution || 'N/A',
+              app.status || 'N/A',
+              (app.financialDetails?.amountRequested || 0).toString(),
+              (app.awardDetails?.committee_amount_kes || 0).toString(),
+              new Date(app.dateSubmitted).toLocaleDateString()
+            ]);
+          });
+
+          const filename = `garissa_bursary_${reportType}_${new Date().toISOString().split('T')[0]}.csv`;
+          if (typeof downloadCSV === 'function') {
+            downloadCSV(filename, rows);
+          } else {
+            alert('CSV download function not available. Please refresh the page.');
+          }
+        } catch (error) {
+          console.error('Report download error:', error);
+          alert('Error generating report. Please try again.');
+        }
+      });
     }
-
-    const rows = [['App ID', 'Applicant Name', 'Sub-County', 'Ward', 'Institution', 'Status', 'Amount Requested', 'Awarded Amount', 'Date Submitted']];
-    
-    filtered.forEach(app => {
-      rows.push([
-        app.appID || 'N/A',
-        app.applicantName || 'N/A',
-        app.personalDetails?.subCounty || app.subCounty || 'N/A',
-        app.personalDetails?.ward || app.ward || 'N/A',
-        app.personalDetails?.institution || app.institution || 'N/A',
-        app.status || 'N/A',
-        (app.financialDetails?.amountRequested || 0).toString(),
-        (app.awardDetails?.committee_amount_kes || 0).toString(),
-        new Date(app.dateSubmitted).toLocaleDateString()
-      ]);
-    });
-
-    const filename = `garissa_bursary_${reportType}_${new Date().toISOString().split('T')[0]}.csv`;
-    downloadCSV(filename, rows);
-  });
+  } catch (error) {
+    console.error('Report button setup error:', error);
+  }
 
   // Change admin password
   window.changeAdminPassword = function() {
@@ -598,59 +632,124 @@
 
   // Refresh applications display (force reload from localStorage)
   window.refreshApplications = function() {
-    console.log('Refreshing applications...');
-    
-    // Force reload from localStorage
-    const apps = loadApplications();
-    console.log('Loaded applications:', apps.length);
-    
-    if (apps.length > 0) {
-      console.log('Sample application:', apps[0]);
+    try {
+      console.log('Refreshing applications...');
+      
+      // Force reload from localStorage
+      const apps = loadApplications();
+      console.log('Loaded applications:', apps.length);
+      
+      if (apps.length > 0) {
+        console.log('Sample application:', apps[0]);
+      }
+      
+      // Sync budget
+      if (typeof syncBudgetWithAwards !== 'undefined') {
+        try {
+          syncBudgetWithAwards();
+        } catch (e) {
+          console.error('Budget sync error:', e);
+        }
+      }
+      
+      // Update everything with error handling
+      try {
+        updateMetrics();
+      } catch (e) {
+        console.error('Metrics update error:', e);
+      }
+      
+      try {
+        updateBudgetDisplay();
+      } catch (e) {
+        console.error('Budget display update error:', e);
+      }
+      
+      try {
+        renderTable(apps); // Show all applications by default
+      } catch (e) {
+        console.error('Table render error:', e);
+      }
+      
+      // Show refresh confirmation
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (refreshBtn) {
+        const originalText = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Refreshed!';
+        refreshBtn.classList.add('btn-success');
+        refreshBtn.classList.remove('btn-outline-primary');
+        setTimeout(() => {
+          if (refreshBtn) {
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.classList.remove('btn-success');
+            refreshBtn.classList.add('btn-outline-primary');
+          }
+        }, 2000);
+      }
+      
+      return apps;
+    } catch (error) {
+      console.error('Refresh error:', error);
+      alert('Error refreshing applications. Please try again.');
+      return [];
     }
-    
-    // Sync budget
-    if (typeof syncBudgetWithAwards !== 'undefined') {
-      syncBudgetWithAwards();
-    }
-    
-    // Update everything
-    updateMetrics();
-    updateBudgetDisplay();
-    renderTable(apps); // Show all applications by default
-    
-    // Show refresh confirmation
-    const refreshBtn = document.getElementById('refreshBtn');
-    if (refreshBtn) {
-      const originalText = refreshBtn.innerHTML;
-      refreshBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Refreshed!';
-      refreshBtn.classList.add('btn-success');
-      refreshBtn.classList.remove('btn-outline-primary');
-      setTimeout(() => {
-        refreshBtn.innerHTML = originalText;
-        refreshBtn.classList.remove('btn-success');
-        refreshBtn.classList.add('btn-outline-primary');
-      }, 2000);
-    }
-    
-    return apps;
   };
 
-  // Auto-refresh every 5 seconds to catch new applications and sync data
-  setInterval(() => {
-    // Sync budget with awarded applications
-    if (typeof syncBudgetWithAwards !== 'undefined') {
-      syncBudgetWithAwards();
+  // Auto-refresh with error handling and debouncing
+  let refreshInterval = null;
+  let isRefreshing = false;
+  
+  function safeAutoRefresh() {
+    if (isRefreshing) {
+      console.log('Refresh already in progress, skipping...');
+      return;
     }
     
-    // Refresh applications display
-    const apps = loadApplications();
-    if (apps.length > 0) {
-      refreshApplications();
-    } else {
-      // Even if no apps, update budget display
-      updateBudgetDisplay();
+    try {
+      isRefreshing = true;
+      
+      // Sync budget with awarded applications
+      if (typeof syncBudgetWithAwards !== 'undefined') {
+        try {
+          syncBudgetWithAwards();
+        } catch (e) {
+          console.error('Budget sync error:', e);
+        }
+      }
+      
+      // Refresh applications display (only if needed)
+      const apps = loadApplications();
+      if (apps.length > 0) {
+        // Only refresh if we're on the applications section
+        const appsSection = document.getElementById('apps');
+        if (appsSection && appsSection.offsetParent !== null) {
+          try {
+            updateMetrics();
+            updateBudgetDisplay();
+          } catch (e) {
+            console.error('Metrics update error:', e);
+          }
+        }
+      } else {
+        // Even if no apps, update budget display
+        try {
+          updateBudgetDisplay();
+        } catch (e) {
+          console.error('Budget display update error:', e);
+        }
+      }
+    } catch (error) {
+      console.error('Auto-refresh error:', error);
+    } finally {
+      isRefreshing = false;
     }
-  }, 5000);
+  }
+  
+  // Auto-refresh every 10 seconds (reduced frequency to prevent freezing)
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+  refreshInterval = setInterval(safeAutoRefresh, 10000);
 
   // Initialize budget
   if (typeof initializeBudget !== 'undefined') {
@@ -696,13 +795,58 @@
     alert(`Applications: ${apps.length}\nBudget Allocated: Ksh ${budget.allocated.toLocaleString()}\nBudget Balance: Ksh ${budget.balance.toLocaleString()}\n\nCheck console (F12) for details.`);
   };
 
-  // Filter event listeners
-  document.getElementById('applyFilters').addEventListener('click', applyFilters);
-  document.getElementById('filterSubCounty').addEventListener('change', function() {
-    const wardSel = document.getElementById('filterWard');
-    wardSel.innerHTML = '<option value="">All Wards</option>';
-    const wards = GARISSA_WARDS[this.value] || [];
-    wards.forEach(w => wardSel.add(new Option(w, w)));
-    wardSel.add(new Option('Other', 'Other'));
-  });
+  // Smooth scroll function for sidebar navigation
+  window.scrollToSection = function(sectionId) {
+    try {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Update active nav link
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.classList.remove('active');
+        });
+        const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+        if (activeLink) {
+          activeLink.classList.add('active');
+        }
+      }
+    } catch (error) {
+      console.error('Scroll error:', error);
+    }
+  };
+
+  // Filter event listeners with error handling
+  try {
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        try {
+          applyFilters();
+        } catch (error) {
+          console.error('Filter error:', error);
+          alert('Error applying filters. Please try again.');
+        }
+      });
+    }
+    
+    const filterSubCounty = document.getElementById('filterSubCounty');
+    if (filterSubCounty) {
+      filterSubCounty.addEventListener('change', function() {
+        try {
+          const wardSel = document.getElementById('filterWard');
+          if (wardSel) {
+            wardSel.innerHTML = '<option value="">All Wards</option>';
+            const wards = GARISSA_WARDS[this.value] || [];
+            wards.forEach(w => wardSel.add(new Option(w, w)));
+            wardSel.add(new Option('Other', 'Other'));
+          }
+        } catch (error) {
+          console.error('Filter ward update error:', error);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Event listener setup error:', error);
+  }
 })();
