@@ -80,6 +80,41 @@
                 </div>
               </div>
             </div>
+            
+            <!-- Budget Display Card -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="card border-0 shadow-lg" id="budgetCard" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                  <div class="card-body text-white p-4">
+                    <div class="row align-items-center">
+                      <div class="col-md-3 text-center">
+                        <i class="bi bi-wallet2 fs-1 mb-2"></i>
+                        <h5>Total Budget</h5>
+                        <h3 class="fw-bold" id="budgetTotal">Ksh 50,000,000</h3>
+                      </div>
+                      <div class="col-md-3 text-center">
+                        <i class="bi bi-cash-stack fs-1 mb-2"></i>
+                        <h5>Allocated</h5>
+                        <h3 class="fw-bold" id="budgetAllocated">Ksh 0</h3>
+                      </div>
+                      <div class="col-md-3 text-center">
+                        <i class="bi bi-piggy-bank fs-1 mb-2"></i>
+                        <h5>Remaining Balance</h5>
+                        <h3 class="fw-bold" id="budgetBalance">Ksh 50,000,000</h3>
+                      </div>
+                      <div class="col-md-3 text-center">
+                        <i class="bi bi-percent fs-1 mb-2"></i>
+                        <h5>Utilization</h5>
+                        <h3 class="fw-bold" id="budgetPercentage">0%</h3>
+                        <div class="progress mt-2" style="height: 8px;">
+                          <div class="progress-bar bg-warning" role="progressbar" id="budgetProgressBar" style="width: 0%"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
