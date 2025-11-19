@@ -36,35 +36,67 @@ function syncBudgetWithAwards() {
 
 /**
  * Get current budget balance
+ * Formula: Balance = Total Budget - Allocated Amount
  */
 function getBudgetBalance() {
   initializeBudget();
+  
+  // Get values from localStorage
   const total = parseInt(localStorage.getItem('mbms_budget_total') || TOTAL_BUDGET.toString());
+  
+  // Recalculate allocated from actual awarded applications (most accurate)
+  syncBudgetWithAwards();
+  
   const allocated = parseInt(localStorage.getItem('mbms_budget_allocated') || '0');
+  
+  // Calculate balance using formula: Balance = Total - Allocated
+  const balance = total - allocated;
+  
   return {
     total: total,
     allocated: allocated,
-    balance: total - allocated
+    balance: Math.max(0, balance) // Ensure balance is never negative
   };
 }
 
 /**
  * Allocate budget (when awarding)
+ * Formula: New Allocated = Current Allocated + Award Amount
+ *          New Balance = Total Budget - New Allocated
  */
 function allocateBudget(amount) {
   initializeBudget();
-  const current = parseInt(localStorage.getItem('mbms_budget_allocated') || '0');
-  const newAllocated = current + amount;
-  const balance = TOTAL_BUDGET - newAllocated;
   
-  if (balance < 0) {
-    throw new Error('Insufficient budget! Available: KSH ' + (TOTAL_BUDGET - current).toLocaleString());
+  // Get current allocated amount
+  const currentAllocated = parseInt(localStorage.getItem('mbms_budget_allocated') || '0');
+  
+  // Calculate new allocated amount
+  const newAllocated = currentAllocated + amount;
+  
+  // Calculate new balance using formula: Balance = Total - Allocated
+  const newBalance = TOTAL_BUDGET - newAllocated;
+  
+  // Validate: balance cannot be negative
+  if (newBalance < 0) {
+    const available = TOTAL_BUDGET - currentAllocated;
+    throw new Error('Insufficient budget! Available: KSH ' + available.toLocaleString() + ', Requested: KSH ' + amount.toLocaleString());
   }
   
+  // Save new allocated amount
   localStorage.setItem('mbms_budget_allocated', newAllocated.toString());
+  
+  console.log('Budget Allocation:', {
+    currentAllocated: currentAllocated,
+    awardAmount: amount,
+    newAllocated: newAllocated,
+    newBalance: newBalance,
+    formula: `${TOTAL_BUDGET} - ${newAllocated} = ${newBalance}`
+  });
+  
   return {
     allocated: newAllocated,
-    balance: balance
+    balance: newBalance,
+    previousAllocated: currentAllocated
   };
 }
 

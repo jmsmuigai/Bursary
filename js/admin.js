@@ -67,9 +67,75 @@
       a.status === 'Awarded'
     ).length;
     
-    const awarded = apps.filter(a => a.status === 'Awarded');
-    const totalFunds = awarded.reduce((sum, a) => sum + (a.financialDetails?.amountRequested || a.awardDetails?.committee_amount_kes || 0), 0);
-    document.getElementById('metricFunds').textContent = toCurrencyKES(totalFunds);
+    // Calculate total funds allocated (use awarded amounts, not requested)
+    const awarded = apps.filter(a => a.status === 'Awarded' && a.awardDetails);
+    const totalFunds = awarded.reduce((sum, app) => {
+      const amount = app.awardDetails?.committee_amount_kes || app.awardDetails?.amount || 0;
+      return sum + amount;
+    }, 0);
+    document.getElementById('metricFunds').textContent = `Ksh ${totalFunds.toLocaleString()}`;
+    
+    // Update budget display immediately
+    updateBudgetDisplay();
+  }
+  
+  // Update budget display with accurate calculations
+  function updateBudgetDisplay() {
+    if (typeof getBudgetBalance === 'undefined') return;
+    
+    // Recalculate budget from actual awarded applications (most accurate)
+    if (typeof syncBudgetWithAwards !== 'undefined') {
+      syncBudgetWithAwards();
+    }
+    
+    const budget = getBudgetBalance();
+    const status = getBudgetStatus();
+    
+    // Formula: Balance = Total Budget - Allocated Amount
+    const calculatedBalance = budget.total - budget.allocated;
+    
+    // Update budget card with accurate values
+    const budgetTotalEl = document.getElementById('budgetTotal');
+    const budgetAllocatedEl = document.getElementById('budgetAllocated');
+    const budgetBalanceEl = document.getElementById('budgetBalance');
+    const budgetPercentageEl = document.getElementById('budgetPercentage');
+    
+    if (budgetTotalEl) budgetTotalEl.textContent = `Ksh ${budget.total.toLocaleString()}`;
+    if (budgetAllocatedEl) budgetAllocatedEl.textContent = `Ksh ${budget.allocated.toLocaleString()}`;
+    if (budgetBalanceEl) budgetBalanceEl.textContent = `Ksh ${calculatedBalance.toLocaleString()}`;
+    if (budgetPercentageEl) budgetPercentageEl.textContent = status.percentage.toFixed(1) + '%';
+    
+    // Update progress bar
+    const progressBar = document.getElementById('budgetProgressBar');
+    if (progressBar) {
+      progressBar.style.width = Math.min(status.percentage, 100) + '%';
+      progressBar.setAttribute('aria-valuenow', status.percentage);
+      progressBar.setAttribute('aria-valuemin', 0);
+      progressBar.setAttribute('aria-valuemax', 100);
+      
+      // Change color based on utilization
+      if (status.isExhausted || calculatedBalance <= 0) {
+        progressBar.className = 'progress-bar bg-danger';
+        const budgetCard = document.getElementById('budgetCard');
+        if (budgetCard) budgetCard.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+      } else if (status.isLow) {
+        progressBar.className = 'progress-bar bg-warning';
+        const budgetCard = document.getElementById('budgetCard');
+        if (budgetCard) budgetCard.style.background = 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)';
+      } else {
+        progressBar.className = 'progress-bar bg-success';
+        const budgetCard = document.getElementById('budgetCard');
+        if (budgetCard) budgetCard.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      }
+    }
+    
+    console.log('Budget Updated:', {
+      total: budget.total,
+      allocated: budget.allocated,
+      balance: calculatedBalance,
+      percentage: status.percentage.toFixed(2) + '%',
+      formula: `${budget.total} - ${budget.allocated} = ${calculatedBalance}`
+    });
   }
 
   // Populate filters
@@ -269,11 +335,18 @@
 
     const awardAmount = parseInt(amount);
     
-    // Check budget availability
+    if (isNaN(awardAmount) || awardAmount <= 0) {
+      alert('Please enter a valid award amount greater than 0');
+      return;
+    }
+    
+    // Check budget availability (recalculate first)
     if (typeof checkBudgetAvailable !== 'undefined') {
+      syncBudgetWithAwards(); // Sync before checking
       if (!checkBudgetAvailable(awardAmount)) {
         const budget = getBudgetBalance();
-        alert(`❌ Insufficient Budget!\n\nAvailable: Ksh ${budget.balance.toLocaleString()}\nRequested: Ksh ${awardAmount.toLocaleString()}\n\nPlease reduce the award amount or contact finance department.`);
+        const available = budget.total - budget.allocated;
+        alert(`❌ Insufficient Budget!\n\nTotal Budget: Ksh ${budget.total.toLocaleString()}\nAlready Allocated: Ksh ${budget.allocated.toLocaleString()}\nAvailable: Ksh ${available.toLocaleString()}\nRequested: Ksh ${awardAmount.toLocaleString()}\n\nPlease reduce the award amount or contact finance department.`);
         return;
       }
     }
@@ -284,17 +357,19 @@
       // Get serial number before awarding
       const serialNumber = getNextSerialNumber();
       
-      // Allocate budget
+      // Allocate budget FIRST (before updating application)
       let budgetStatus = null;
       if (typeof allocateBudget !== 'undefined') {
         try {
           budgetStatus = allocateBudget(awardAmount);
+          console.log('Budget allocated:', budgetStatus);
         } catch (error) {
           alert('❌ Budget Allocation Error: ' + error.message);
           return;
         }
       }
       
+      // Update application status
       app.status = 'Awarded';
       app.awardDetails = {
         committee_amount_kes: awardAmount,
@@ -304,18 +379,35 @@
         serialNumber: serialNumber,
         amount: awardAmount // For compatibility
       };
+      
+      // Save applications
       localStorage.setItem('mbms_applications', JSON.stringify(apps));
+      
+      // Force budget sync to ensure accuracy
+      if (typeof syncBudgetWithAwards !== 'undefined') {
+        syncBudgetWithAwards();
+      }
+      
+      // Update metrics and budget display IMMEDIATELY
       updateMetrics();
+      updateBudgetDisplay();
       applyFilters();
       
+      // Trigger storage event for multi-device sync
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { key: 'mbms_applications', action: 'awarded', appID: appID }
+      }));
+      
+      // Get updated budget status
+      const updatedBudget = getBudgetBalance();
+      const updatedStatus = getBudgetStatus();
+      const remainingBalance = updatedBudget.total - updatedBudget.allocated;
+      
       // Check if budget is exhausted or low
-      if (typeof getBudgetStatus !== 'undefined') {
-        const status = getBudgetStatus();
-        if (status.isExhausted) {
-          alert('⚠️ BUDGET EXHAUSTED!\n\nNo more budget available. Please contact finance department to replenish funds.');
-        } else if (status.isLow) {
-          alert('⚠️ LOW BUDGET WARNING!\n\nOnly ' + status.percentage.toFixed(1) + '% budget remaining.\nRemaining: Ksh ' + status.balance.toLocaleString());
-        }
+      if (updatedStatus.isExhausted || remainingBalance <= 0) {
+        alert('⚠️ BUDGET EXHAUSTED!\n\nNo more budget available. Please contact finance department to replenish funds.');
+      } else if (updatedStatus.isLow) {
+        alert('⚠️ LOW BUDGET WARNING!\n\nOnly ' + updatedStatus.percentage.toFixed(1) + '% budget remaining.\nRemaining: Ksh ' + remainingBalance.toLocaleString());
       }
       
       // Close the view modal first
@@ -327,10 +419,10 @@
       // Generate and preview PDF offer letter
       try {
         await previewPDF(app, app.awardDetails);
-        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + (budgetStatus ? budgetStatus.balance.toLocaleString() : 'N/A') + '\n\nPDF preview is now open. You can print or download it.');
+        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n\nPDF preview is now open. You can print or download it.');
       } catch (error) {
         console.error('PDF generation error:', error);
-        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + (budgetStatus ? budgetStatus.balance.toLocaleString() : 'N/A') + '\n\n⚠️ PDF preview failed. You can generate it later from the applications list.');
+        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n\n⚠️ PDF preview failed. You can generate it later from the applications list.');
       }
     }
   };
@@ -501,13 +593,22 @@
     return apps;
   };
 
-  // Auto-refresh every 10 seconds to catch new applications
+  // Auto-refresh every 5 seconds to catch new applications and sync data
   setInterval(() => {
+    // Sync budget with awarded applications
+    if (typeof syncBudgetWithAwards !== 'undefined') {
+      syncBudgetWithAwards();
+    }
+    
+    // Refresh applications display
     const apps = loadApplications();
     if (apps.length > 0) {
       refreshApplications();
+    } else {
+      // Even if no apps, update budget display
+      updateBudgetDisplay();
     }
-  }, 10000);
+  }, 5000);
 
   // Initialize budget
   if (typeof initializeBudget !== 'undefined') {
