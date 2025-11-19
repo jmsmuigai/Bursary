@@ -355,10 +355,10 @@ async function previewPDF(application, awardDetails) {
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               <i class="bi bi-x-circle me-1"></i>Close
             </button>
-            <button type="button" class="btn btn-primary" onclick="printPDFFromModal('${result.blobUrl}')">
+            <button type="button" class="btn btn-primary" onclick="window.printPDFFromModal('${result.blobUrl}')">
               <i class="bi bi-printer me-1"></i>Print to PDF
             </button>
-            <button type="button" class="btn btn-success" onclick="downloadPDFFromModal('${result.blobUrl}', '${result.filename}')">
+            <button type="button" class="btn btn-success" onclick="window.downloadPDFFromModal('${result.blobUrl}', '${result.filename}')">
               <i class="bi bi-download me-1"></i>Download PDF
             </button>
           </div>

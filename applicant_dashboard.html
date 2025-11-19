@@ -211,10 +211,10 @@
         <hr>
         <div class="text-center">
           ${userApp.status === 'Awarded' ? `
-            <button class="btn btn-primary me-2" onclick="printAwardLetter('${userApp.appID}')">
+            <button class="btn btn-primary me-2" onclick="printAwardLetter('${userApp.appID}')" style="min-width: 180px;">
               <i class="bi bi-printer me-2"></i>Print Award Letter
             </button>
-            <button class="btn btn-success" onclick="downloadAwardLetter('${userApp.appID}')">
+            <button class="btn btn-success" onclick="downloadAwardLetter('${userApp.appID}')" style="min-width: 180px;">
               <i class="bi bi-download me-2"></i>Download PDF
             </button>
           ` : `
