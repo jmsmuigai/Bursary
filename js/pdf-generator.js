@@ -801,6 +801,371 @@ function loadImage(src) {
   });
 }
 
+/**
+ * Generate rejection letter PDF
+ */
+async function generateRejectionLetterPDF(application) {
+  try {
+    if (typeof window.jsPDF === 'undefined') {
+      await loadJSPDF();
+    }
+
+    const { jsPDF } = window.jsPDF;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    let yPos = margin;
+
+    // Helper functions
+    function addText(text, x, y, options = {}) {
+      const { fontSize = 12, fontStyle = 'normal', align = 'left', color = [0, 0, 0] } = options;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', fontStyle);
+      doc.setTextColor(color[0], color[1], color[2]);
+      doc.text(text, x, y, { align });
+    }
+
+    // Header
+    try {
+      const logoImg = await loadImage('Garissa Logo.png');
+      if (logoImg) {
+        doc.addImage(logoImg, 'PNG', margin, yPos, 25, 25);
+      }
+    } catch (e) {
+      console.warn('Logo not loaded:', e);
+    }
+
+    yPos += 5;
+    addText('THE COUNTY GOVERNMENT OF GARISSA', pageWidth - margin, yPos, {
+      fontSize: 14,
+      fontStyle: 'bold',
+      align: 'right',
+      color: [139, 69, 19]
+    });
+
+    yPos += 6;
+    addText('SCHOLARSHIP FUND', pageWidth - margin, yPos, {
+      fontSize: 12,
+      fontStyle: 'bold',
+      align: 'right',
+      color: [139, 69, 19]
+    });
+
+    yPos += 5;
+    addText('P.O. Box 1377-70100, GARISSA', pageWidth - margin, yPos, {
+      fontSize: 10,
+      align: 'right',
+      color: [100, 100, 100]
+    });
+
+    yPos += 15;
+
+    // Date
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    addText(`Date: ${dateStr}`, pageWidth - margin, yPos, { fontSize: 10, align: 'right' });
+
+    yPos += 10;
+
+    // Reference
+    addText(`REF: GSA/BURSARY/${application.appID}/${today.getFullYear()}`, margin, yPos, {
+      fontSize: 10,
+      fontStyle: 'bold'
+    });
+
+    yPos += 10;
+
+    // Recipient
+    const applicantName = application.applicantName || 
+      `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim();
+    const institution = application.personalDetails?.institution || 'N/A';
+    const subCounty = application.personalDetails?.subCounty || application.subCounty || 'N/A';
+    const ward = application.personalDetails?.ward || application.ward || 'N/A';
+
+    addText(applicantName, margin, yPos, { fontSize: 11, fontStyle: 'bold' });
+    yPos += 6;
+    addText(institution, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText(`${subCounty} Sub-County`, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText(`${ward} Ward`, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText('Garissa County', margin, yPos, { fontSize: 11 });
+
+    yPos += 15;
+
+    // Subject
+    addText('RE: BURSARY APPLICATION - NOT APPROVED', margin, yPos, {
+      fontSize: 12,
+      fontStyle: 'bold',
+      color: [220, 53, 69]
+    });
+
+    yPos += 10;
+
+    // Salutation
+    addText('Dear ' + applicantName + ',', margin, yPos, { fontSize: 11 });
+    yPos += 10;
+
+    // Body
+    const bodyText1 = `Thank you for your application for bursary support for the academic year ${today.getFullYear()}. After careful review by the Garissa County Scholarship Fund Committee, we regret to inform you that your application has not been approved at this time.`;
+    doc.setFontSize(11);
+    doc.text(bodyText1, margin, yPos, { maxWidth: pageWidth - (margin * 2), align: 'justify' });
+    yPos += 15;
+
+    const rejectionReason = application.rejectionReason || 'Your application did not meet the minimum requirements for bursary allocation at this time.';
+    const bodyText2 = `Reason: ${rejectionReason}`;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Reason for Rejection:', margin, yPos, { maxWidth: pageWidth - (margin * 2) });
+    yPos += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.text(rejectionReason, margin, yPos, { maxWidth: pageWidth - (margin * 2), align: 'justify' });
+    yPos += 15;
+
+    const bodyText3 = `We encourage you to reapply in future application cycles. Should you have any questions or require further clarification, please contact the Scholarship Fund Office at P.O. Box 1377-70100, Garissa, or email fundadmin@garissa.go.ke.`;
+    doc.setFontSize(11);
+    doc.text(bodyText3, margin, yPos, { maxWidth: pageWidth - (margin * 2), align: 'justify' });
+    yPos += 15;
+
+    addText('Yours sincerely,', margin, yPos, { fontSize: 11 });
+    yPos += 20;
+
+    // Signature
+    try {
+      const signatureImg = await loadImage('assets/signature.png');
+      if (signatureImg) {
+        doc.addImage(signatureImg, 'PNG', margin, yPos, 40, 15);
+        yPos += 18;
+      } else {
+        yPos += 10;
+      }
+    } catch (e) {
+      yPos += 10;
+    }
+
+    addText('Fund Administrator', margin, yPos, { fontSize: 11, fontStyle: 'bold' });
+    yPos += 5;
+    addText('fundadmin@garissa.go.ke', margin, yPos, { fontSize: 10 });
+    yPos += 5;
+    addText('Garissa County Scholarship Fund', margin, yPos, { fontSize: 10 });
+
+    // Generate filename and save
+    const filename = `Garissa_Bursary_Rejection_${application.appID}.pdf`;
+    doc.save(filename);
+    
+    return { filename };
+  } catch (error) {
+    console.error('Rejection letter generation error:', error);
+    throw new Error(`Error generating rejection letter: ${error.message}`);
+  }
+}
+
+/**
+ * Generate status letter PDF for pending applications
+ */
+async function generateStatusLetterPDF(application) {
+  try {
+    if (typeof window.jsPDF === 'undefined') {
+      await loadJSPDF();
+    }
+
+    const { jsPDF } = window.jsPDF;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    let yPos = margin;
+
+    function addText(text, x, y, options = {}) {
+      const { fontSize = 12, fontStyle = 'normal', align = 'left', color = [0, 0, 0] } = options;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', fontStyle);
+      doc.setTextColor(color[0], color[1], color[2]);
+      doc.text(text, x, y, { align });
+    }
+
+    // Header (same as award letter)
+    try {
+      const logoImg = await loadImage('Garissa Logo.png');
+      if (logoImg) {
+        doc.addImage(logoImg, 'PNG', margin, yPos, 25, 25);
+      }
+    } catch (e) {
+      console.warn('Logo not loaded:', e);
+    }
+
+    yPos += 5;
+    addText('THE COUNTY GOVERNMENT OF GARISSA', pageWidth - margin, yPos, {
+      fontSize: 14,
+      fontStyle: 'bold',
+      align: 'right',
+      color: [139, 69, 19]
+    });
+
+    yPos += 6;
+    addText('SCHOLARSHIP FUND', pageWidth - margin, yPos, {
+      fontSize: 12,
+      fontStyle: 'bold',
+      align: 'right',
+      color: [139, 69, 19]
+    });
+
+    yPos += 5;
+    addText('P.O. Box 1377-70100, GARISSA', pageWidth - margin, yPos, {
+      fontSize: 10,
+      align: 'right',
+      color: [100, 100, 100]
+    });
+
+    yPos += 15;
+
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    addText(`Date: ${dateStr}`, pageWidth - margin, yPos, { fontSize: 10, align: 'right' });
+
+    yPos += 10;
+
+    addText(`REF: GSA/BURSARY/${application.appID}/${today.getFullYear()}`, margin, yPos, {
+      fontSize: 10,
+      fontStyle: 'bold'
+    });
+
+    yPos += 10;
+
+    const applicantName = application.applicantName || 
+      `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim();
+    const institution = application.personalDetails?.institution || 'N/A';
+    const subCounty = application.personalDetails?.subCounty || application.subCounty || 'N/A';
+    const ward = application.personalDetails?.ward || application.ward || 'N/A';
+
+    addText(applicantName, margin, yPos, { fontSize: 11, fontStyle: 'bold' });
+    yPos += 6;
+    addText(institution, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText(`${subCounty} Sub-County`, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText(`${ward} Ward`, margin, yPos, { fontSize: 11 });
+    yPos += 6;
+    addText('Garissa County', margin, yPos, { fontSize: 11 });
+
+    yPos += 15;
+
+    addText('RE: BURSARY APPLICATION STATUS UPDATE', margin, yPos, {
+      fontSize: 12,
+      fontStyle: 'bold',
+      color: [139, 69, 19]
+    });
+
+    yPos += 10;
+
+    addText('Dear ' + applicantName + ',', margin, yPos, { fontSize: 11 });
+    yPos += 10;
+
+    const statusText = application.status || 'Pending';
+    const bodyText1 = `This letter is to inform you of the current status of your bursary application (Reference: ${application.appID}) submitted for the academic year ${today.getFullYear()}.`;
+    doc.setFontSize(11);
+    doc.text(bodyText1, margin, yPos, { maxWidth: pageWidth - (margin * 2), align: 'justify' });
+    yPos += 15;
+
+    const bodyText2 = `Current Status: ${statusText}\n\nYour application is currently under review by the Garissa County Scholarship Fund Committee. We will notify you once a decision has been made.`;
+    doc.setFontSize(11);
+    doc.text(bodyText2, margin, yPos, { maxWidth: pageWidth - (margin * 2), align: 'justify' });
+    yPos += 20;
+
+    const bodyText3 = `Should you have any questions or require further clarification, please contact the Scholarship Fund Office at P.O. Box 1377-70100, Garissa, or email fundadmin@garissa.go.ke.`;
+    doc.setFontSize(11);
+    doc.text(bodyText3, margin, yPos, { maxWidth: pageWidth - (margin * 2), align: 'justify' });
+    yPos += 15;
+
+    addText('Yours sincerely,', margin, yPos, { fontSize: 11 });
+    yPos += 20;
+
+    try {
+      const signatureImg = await loadImage('assets/signature.png');
+      if (signatureImg) {
+        doc.addImage(signatureImg, 'PNG', margin, yPos, 40, 15);
+        yPos += 18;
+      } else {
+        yPos += 10;
+      }
+    } catch (e) {
+      yPos += 10;
+    }
+
+    addText('Fund Administrator', margin, yPos, { fontSize: 11, fontStyle: 'bold' });
+    yPos += 5;
+    addText('fundadmin@garissa.go.ke', margin, yPos, { fontSize: 10 });
+
+    const filename = `Garissa_Bursary_Status_${application.appID}.pdf`;
+    doc.save(filename);
+    
+    return { filename };
+  } catch (error) {
+    console.error('Status letter generation error:', error);
+    throw new Error(`Error generating status letter: ${error.message}`);
+  }
+}
+
+/**
+ * Download rejection letter
+ */
+async function downloadRejectionLetter(application) {
+  try {
+    const loadingAlert = document.createElement('div');
+    loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+    loadingAlert.style.zIndex = '9999';
+    loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating rejection letter...';
+    document.body.appendChild(loadingAlert);
+
+    const result = await generateRejectionLetterPDF(application);
+    loadingAlert.remove();
+    showDownloadSuccess(result.filename);
+    return result;
+  } catch (error) {
+    console.error('Download rejection letter error:', error);
+    const loadingAlert = document.querySelector('.alert-info');
+    if (loadingAlert) loadingAlert.remove();
+    alert('❌ Error generating rejection letter: ' + error.message);
+    throw error;
+  }
+}
+
+/**
+ * Download status letter
+ */
+async function downloadStatusLetter(application) {
+  try {
+    const loadingAlert = document.createElement('div');
+    loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+    loadingAlert.style.zIndex = '9999';
+    loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating status letter...';
+    document.body.appendChild(loadingAlert);
+
+    const result = await generateStatusLetterPDF(application);
+    loadingAlert.remove();
+    showDownloadSuccess(result.filename);
+    return result;
+  } catch (error) {
+    console.error('Download status letter error:', error);
+    const loadingAlert = document.querySelector('.alert-info');
+    if (loadingAlert) loadingAlert.remove();
+    alert('❌ Error generating status letter: ' + error.message);
+    throw error;
+  }
+}
+
 // Export functions for use in admin.js and applicant_dashboard.html
 window.generateOfferLetterPDF = generateOfferLetterPDF;
 window.previewPDF = previewPDF;
@@ -810,6 +1175,10 @@ window.downloadPDFFromModal = downloadPDFFromModal;
 window.downloadPDFDirect = downloadPDFDirect;
 window.getNextSerialNumber = getNextSerialNumber;
 window.showDownloadSuccess = showDownloadSuccess;
+window.generateRejectionLetterPDF = generateRejectionLetterPDF;
+window.generateStatusLetterPDF = generateStatusLetterPDF;
+window.downloadRejectionLetter = downloadRejectionLetter;
+window.downloadStatusLetter = downloadStatusLetter;
 
 // Legacy function names for backward compatibility
 window.printPDF = printPDFFromModal;

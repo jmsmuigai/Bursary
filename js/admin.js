@@ -230,17 +230,12 @@
         <td><span class="badge ${statusClass}">${status}</span></td>
         <td>Ksh ${amount.toLocaleString()}</td>
         <td>
-          <button class="btn btn-sm btn-info me-1" onclick="viewApplication('${app.appID}')" title="View Details">
+          <button class="btn btn-sm btn-info me-1" onclick="viewApplication('${app.appID}')" title="View Application Details">
             <i class="bi bi-eye"></i> View
           </button>
-          ${status === 'Awarded' ? `
-            <button class="btn btn-sm btn-primary me-1" onclick="previewPDFLetter('${app.appID}')" title="Preview & Print PDF">
-              <i class="bi bi-eye"></i> Preview
-            </button>
-            <button class="btn btn-sm btn-success" onclick="downloadPDFDirect('${app.appID}')" title="Download PDF">
-              <i class="bi bi-download"></i> Download
-            </button>
-          ` : ''}
+          <button class="btn btn-sm btn-success" onclick="downloadApplicationLetter('${app.appID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter">
+            <i class="bi bi-download"></i> Download
+          </button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -473,63 +468,60 @@
     }
   };
 
-  // Preview PDF offer letter (with print option)
-  window.previewPDFLetter = async function(appID) {
+  // Download application letter (works for all statuses: Awarded, Rejected, Pending)
+  window.downloadApplicationLetter = async function(appID) {
     const apps = loadApplications();
     const app = apps.find(a => a.appID === appID);
-    if (!app || app.status !== 'Awarded') {
-      alert('⚠️ This application has not been awarded yet. Please award it first to generate the offer letter.');
-      return;
-    }
-
-    if (!app.awardDetails) {
-      alert('⚠️ Award details not found. Please award this application first.');
+    
+    if (!app) {
+      alert('⚠️ Application not found.');
       return;
     }
 
     try {
-      // Use the serial number from award details if available
-      const awardDetails = {
-        ...app.awardDetails,
-        serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
-      };
-      
-      await previewPDF(app, awardDetails);
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      alert('❌ Error generating PDF preview. Please try again or contact support.\n\nError: ' + error.message);
-    }
-  };
-  
-  // Direct download PDF (without preview)
-  window.downloadPDFDirect = async function(appID) {
-    const apps = loadApplications();
-    const app = apps.find(a => a.appID === appID);
-    if (!app || app.status !== 'Awarded') {
-      alert('⚠️ This application has not been awarded yet. Please award it first to generate the offer letter.');
-      return;
-    }
-
-    if (!app.awardDetails) {
-      alert('⚠️ Award details not found. Please award this application first.');
-      return;
-    }
-
-    try {
-      const awardDetails = {
-        ...app.awardDetails,
-        serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
-      };
-      
-      await downloadPDFDirect(app, awardDetails);
+      if (app.status === 'Awarded') {
+        // Download award letter
+        if (!app.awardDetails) {
+          alert('⚠️ Award details not found. Please award this application first.');
+          return;
+        }
+        
+        const awardDetails = {
+          ...app.awardDetails,
+          serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
+        };
+        
+        await downloadPDFDirect(app, awardDetails);
+      } else if (app.status === 'Rejected') {
+        // Download rejection letter
+        await downloadRejectionLetter(app);
+      } else {
+        // Download status letter for pending applications
+        await downloadStatusLetter(app);
+      }
     } catch (error) {
       console.error('PDF download error:', error);
       alert('❌ Error downloading PDF. Please try again or contact support.\n\nError: ' + error.message);
     }
   };
   
-  // Legacy function for backward compatibility
-  window.downloadPDF = window.previewPDFLetter;
+  // Legacy functions for backward compatibility
+  window.previewPDFLetter = async function(appID) {
+    // Redirect to download for awarded applications
+    const apps = loadApplications();
+    const app = apps.find(a => a.appID === appID);
+    if (app && app.status === 'Awarded') {
+      await downloadApplicationLetter(appID);
+    } else {
+      alert('⚠️ Preview is only available for awarded applications. Use Download instead.');
+    }
+  };
+  
+  window.downloadPDFDirect = async function(appID) {
+    await downloadApplicationLetter(appID);
+  };
+  
+  window.downloadPDF = window.downloadApplicationLetter;
 
   // Generate comprehensive summary report
   window.generateSummaryReport = function() {
