@@ -1,9 +1,10 @@
-# 🌟 Garissa County Modern Bursary Management System (MBMS) v2.0
+# 🌟 Garissa County Modern Bursary Management System (MBMS) v2.1
 
 A comprehensive, modern, and secure bursary management system for Garissa County, Kenya. This system streamlines the entire bursary lifecycle from online application to fund allocation and reporting.
 
-**Version:** 2.0  
+**Version:** 2.1  
 **Release Date:** January 2025  
+**Status:** ✅ **PRODUCTION READY**  
 **Developed by:** jmsmuigai@gmail.com  
 **Support Email:** fundadmin@garissa.go.ke
 
@@ -54,19 +55,28 @@ Anyone with this link can:
   - Approve/Award applications with amount and justification
   - Automatic serial number generation (GRS/Bursary/001, 002, 003...)
   - Reject applications
-- ✅ **PDF Offer Letter Generation**:
+- ✅ **PDF Award Letter Generation** (Receipt-Style Format):
   - Automatic PDF generation when awarding
+  - **Professional receipt-style format** matching official document standards
+  - **Amount in words** conversion
+  - **Detailed award table** with all information
   - Preview before printing/downloading
   - Print to PDF functionality
   - Download award letter with all details
   - Professional design with Garissa County branding
-  - Includes serial number, signature, and stamp
-- ✅ **Smart Reports**:
-  - Filterable data export
-  - Download Excel/CSV reports
-  - Beneficiary lists
-  - Financial allocation summaries (includes budget tracking)
-  - Demographics reports
+  - Includes serial number, signature, and stamp placeholders
+- ✅ **Smart Reports & Analytics Dashboard**:
+  - **Summary Report** with comprehensive analytics
+    - Total applications, awarded count, and budget utilization
+    - Sub-county allocation breakdown with percentages
+    - Gender distribution statistics
+    - Average award amounts and ranges
+  - **Filterable Data Export**:
+    - Beneficiary List (CSV/Excel)
+    - Financial Allocation Summary
+    - Demographics Report (Sub-County/Gender/Level)
+    - Budget Utilization Report
+  - One-click "Summary Report" button for instant insights
 - ✅ **Dashboard Metrics**:
   - Total Applications
   - Pending Review
@@ -85,12 +95,17 @@ Anyone with this link can:
 - ✅ **Serial Number System** - Auto-incrementing serial numbers (GRS/Bursary/001...)
 - ✅ **Budget Tracking** - Real-time budget management and alerts
 - ✅ **Password Reset** - For applicants (admin password change in dashboard)
+- ✅ **Demo Data System** - 10 realistic dummy records with different statuses (load via admin dashboard)
 - ✅ **Local Storage** - Demo mode (ready for Firebase integration)
 - ✅ **Public Access** - Anyone with GitHub link can access and apply
+- ✅ **Responsive Design** - Fully responsive on mobile, tablet, and desktop
 
 ## 🚀 Quick Start
 
 ### Access the System
+
+**🌐 Live System URL:**  
+👉 **https://jmsmuigai.github.io/Bursary/**
 
 1. **Visit**: https://jmsmuigai.github.io/Bursary/
 2. **For Applicants**:
@@ -98,10 +113,12 @@ Anyone with this link can:
    - Register a new account
    - Complete the application form
    - View dashboard
+   - Print/Download award letter when approved
 3. **For Admins**:
    - Email: `fundadmin@garissa.go.ke`
    - Default Password: `@Omar.123!`
    - Password can be changed after login
+   - **Load Demo Data**: Click "Load Demo Data" button in Reports section to see 10 sample applications
 
 ### Local Testing (Optional)
 

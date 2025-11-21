@@ -531,6 +531,129 @@
   // Legacy function for backward compatibility
   window.downloadPDF = window.previewPDFLetter;
 
+  // Generate comprehensive summary report
+  window.generateSummaryReport = function() {
+    const apps = loadApplications();
+    const budget = getBudgetBalance();
+    
+    // Calculate statistics
+    const totalApps = apps.length;
+    const pendingApps = apps.filter(a => a.status?.includes('Pending') || a.status === 'Pending Submission').length;
+    const awardedApps = apps.filter(a => a.status === 'Awarded').length;
+    const rejectedApps = apps.filter(a => a.status === 'Rejected').length;
+    
+    const awarded = apps.filter(a => a.status === 'Awarded' && a.awardDetails);
+    const totalAwarded = awarded.reduce((sum, app) => {
+      return sum + (app.awardDetails?.committee_amount_kes || app.awardDetails?.amount || 0);
+    }, 0);
+    
+    const avgAward = awarded.length > 0 ? totalAwarded / awarded.length : 0;
+    const maxAward = Math.max(...awarded.map(a => a.awardDetails?.committee_amount_kes || a.awardDetails?.amount || 0), 0);
+    const minAward = Math.min(...awarded.map(a => a.awardDetails?.committee_amount_kes || a.awardDetails?.amount || 0), totalAwarded);
+    
+    // Sub-county breakdown
+    const subCountyBreakdown = {};
+    awarded.forEach(app => {
+      const sc = app.personalDetails?.subCounty || app.subCounty || 'N/A';
+      if (!subCountyBreakdown[sc]) {
+        subCountyBreakdown[sc] = { count: 0, total: 0 };
+      }
+      subCountyBreakdown[sc].count++;
+      subCountyBreakdown[sc].total += (app.awardDetails?.committee_amount_kes || app.awardDetails?.amount || 0);
+    });
+    
+    // Gender breakdown
+    const genderBreakdown = { Male: 0, Female: 0, 'N/A': 0 };
+    awarded.forEach(app => {
+      const gender = app.personalDetails?.gender || 'N/A';
+      genderBreakdown[gender] = (genderBreakdown[gender] || 0) + 1;
+    });
+    
+    // Display summary cards
+    const summaryCards = document.getElementById('summaryCards');
+    if (summaryCards) {
+      summaryCards.innerHTML = `
+        <div class="col-md-3">
+          <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="card-body text-center">
+              <h6 class="mb-2">Total Applications</h6>
+              <h2 class="fw-bold">${totalApps}</h2>
+              <small>Pending: ${pendingApps} | Awarded: ${awardedApps} | Rejected: ${rejectedApps}</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+            <div class="card-body text-center">
+              <h6 class="mb-2">Total Awarded</h6>
+              <h2 class="fw-bold">Ksh ${totalAwarded.toLocaleString()}</h2>
+              <small>Avg: Ksh ${Math.round(avgAward).toLocaleString()} | Range: ${minAward.toLocaleString()} - ${maxAward.toLocaleString()}</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+            <div class="card-body text-center">
+              <h6 class="mb-2">Budget Utilization</h6>
+              <h2 class="fw-bold">${((budget.allocated / budget.total) * 100).toFixed(1)}%</h2>
+              <small>Remaining: Ksh ${(budget.total - budget.allocated).toLocaleString()}</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+            <div class="card-body text-center">
+              <h6 class="mb-2">Awarded Beneficiaries</h6>
+              <h2 class="fw-bold">${awardedApps}</h2>
+              <small>Male: ${genderBreakdown.Male} | Female: ${genderBreakdown.Female}</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 mt-3">
+          <div class="card shadow-sm">
+            <div class="card-header bg-primary-700 text-white">
+              <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Sub-County Allocation Breakdown</h6>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Sub-County</th>
+                      <th class="text-end">Beneficiaries</th>
+                      <th class="text-end">Total Amount</th>
+                      <th class="text-end">Average Award</th>
+                      <th class="text-end">% of Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${Object.entries(subCountyBreakdown).map(([sc, data]) => `
+                      <tr>
+                        <td><strong>${sc}</strong></td>
+                        <td class="text-end">${data.count}</td>
+                        <td class="text-end">Ksh ${data.total.toLocaleString()}</td>
+                        <td class="text-end">Ksh ${Math.round(data.total / data.count).toLocaleString()}</td>
+                        <td class="text-end">${((data.total / totalAwarded) * 100).toFixed(1)}%</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Scroll to reports section
+    setTimeout(() => {
+      const reportsSection = document.getElementById('reports');
+      if (reportsSection) {
+        reportsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
   // Export to Excel/CSV with error handling
   try {
     const downloadReportBtn = document.getElementById('downloadReportBtn');
@@ -545,27 +668,91 @@
           let filtered = apps;
           if (reportStatus === 'Awarded') {
             filtered = apps.filter(a => a.status === 'Awarded');
+          } else if (reportStatus === 'Pending') {
+            filtered = apps.filter(a => a.status?.includes('Pending') || a.status === 'Pending Submission');
+          } else if (reportStatus === 'Rejected') {
+            filtered = apps.filter(a => a.status === 'Rejected');
           }
 
-          const rows = [['App ID', 'Applicant Name', 'Sub-County', 'Ward', 'Institution', 'Status', 'Amount Requested', 'Awarded Amount', 'Date Submitted']];
+          let rows = [];
+          let filename = '';
           
-          filtered.forEach(app => {
-            rows.push([
-              app.appID || 'N/A',
-              app.applicantName || 'N/A',
-              app.personalDetails?.subCounty || app.subCounty || 'N/A',
-              app.personalDetails?.ward || app.ward || 'N/A',
-              app.personalDetails?.institution || app.institution || 'N/A',
-              app.status || 'N/A',
-              (app.financialDetails?.amountRequested || 0).toString(),
-              (app.awardDetails?.committee_amount_kes || 0).toString(),
-              new Date(app.dateSubmitted).toLocaleDateString()
-            ]);
-          });
+          if (reportType === 'beneficiaries') {
+            rows = [['Serial No', 'App ID', 'Applicant Name', 'Sub-County', 'Ward', 'Institution', 'Status', 'Amount Requested', 'Awarded Amount', 'Date Submitted', 'Date Awarded']];
+            filtered.forEach(app => {
+              rows.push([
+                app.awardDetails?.serialNumber || 'N/A',
+                app.appID || 'N/A',
+                app.applicantName || 'N/A',
+                app.personalDetails?.subCounty || app.subCounty || 'N/A',
+                app.personalDetails?.ward || app.ward || 'N/A',
+                app.personalDetails?.institution || app.institution || 'N/A',
+                app.status || 'N/A',
+                (app.financialDetails?.amountRequested || 0).toString(),
+                (app.awardDetails?.committee_amount_kes || 0).toString(),
+                new Date(app.dateSubmitted).toLocaleDateString(),
+                app.awardDetails?.date_awarded ? new Date(app.awardDetails.date_awarded).toLocaleDateString() : 'N/A'
+              ]);
+            });
+            filename = `garissa_bursary_beneficiaries_${new Date().toISOString().split('T')[0]}.csv`;
+          } else if (reportType === 'allocation') {
+            rows = [['Sub-County', 'Ward', 'Applicant Name', 'Institution', 'Amount Requested', 'Amount Awarded', 'Serial Number', 'Date Awarded']];
+            const awarded = filtered.filter(a => a.status === 'Awarded');
+            awarded.forEach(app => {
+              rows.push([
+                app.personalDetails?.subCounty || app.subCounty || 'N/A',
+                app.personalDetails?.ward || app.ward || 'N/A',
+                app.applicantName || 'N/A',
+                app.personalDetails?.institution || app.institution || 'N/A',
+                (app.financialDetails?.amountRequested || 0).toString(),
+                (app.awardDetails?.committee_amount_kes || 0).toString(),
+                app.awardDetails?.serialNumber || 'N/A',
+                app.awardDetails?.date_awarded ? new Date(app.awardDetails.date_awarded).toLocaleDateString() : 'N/A'
+              ]);
+            });
+            filename = `garissa_bursary_allocation_${new Date().toISOString().split('T')[0]}.csv`;
+          } else if (reportType === 'demographics') {
+            rows = [['Sub-County', 'Ward', 'Applicant Name', 'Gender', 'Education Level', 'Institution', 'Status', 'Amount Awarded']];
+            filtered.forEach(app => {
+              rows.push([
+                app.personalDetails?.subCounty || app.subCounty || 'N/A',
+                app.personalDetails?.ward || app.ward || 'N/A',
+                app.applicantName || 'N/A',
+                app.personalDetails?.gender || 'N/A',
+                app.personalDetails?.courseNature || app.personalDetails?.yearForm || 'N/A',
+                app.personalDetails?.institution || app.institution || 'N/A',
+                app.status || 'N/A',
+                (app.awardDetails?.committee_amount_kes || 0).toString()
+              ]);
+            });
+            filename = `garissa_bursary_demographics_${new Date().toISOString().split('T')[0]}.csv`;
+          } else if (reportType === 'budget') {
+            const budget = getBudgetBalance();
+            rows = [
+              ['Budget Report', ''],
+              ['Total Budget', budget.total.toString()],
+              ['Total Allocated', budget.allocated.toString()],
+              ['Remaining Balance', (budget.total - budget.allocated).toString()],
+              ['Utilization Percentage', ((budget.allocated / budget.total) * 100).toFixed(2) + '%'],
+              ['', ''],
+              ['Awarded Applications Breakdown', ''],
+              ['Serial No', 'Applicant Name', 'Amount Awarded', 'Date Awarded']
+            ];
+            const awarded = apps.filter(a => a.status === 'Awarded' && a.awardDetails);
+            awarded.forEach(app => {
+              rows.push([
+                app.awardDetails?.serialNumber || 'N/A',
+                app.applicantName || 'N/A',
+                (app.awardDetails?.committee_amount_kes || 0).toString(),
+                app.awardDetails?.date_awarded ? new Date(app.awardDetails.date_awarded).toLocaleDateString() : 'N/A'
+              ]);
+            });
+            filename = `garissa_bursary_budget_${new Date().toISOString().split('T')[0]}.csv`;
+          }
 
-          const filename = `garissa_bursary_${reportType}_${new Date().toISOString().split('T')[0]}.csv`;
           if (typeof downloadCSV === 'function') {
             downloadCSV(filename, rows);
+            alert(`✅ Report downloaded successfully!\n\nFile: ${filename}`);
           } else {
             alert('CSV download function not available. Please refresh the page.');
           }
@@ -711,8 +898,15 @@
   const allApps = loadApplications();
   console.log('Initial applications loaded:', allApps.length);
   
+  // Auto-generate summary report on load if there are applications
   if (allApps.length > 0) {
     console.log('Applications found:', allApps.map(a => ({ id: a.appID, status: a.status, name: a.applicantName })));
+    // Generate summary report after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      if (typeof generateSummaryReport === 'function') {
+        generateSummaryReport();
+      }
+    }, 500);
   }
   
   updateMetrics();

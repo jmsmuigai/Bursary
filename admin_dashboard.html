@@ -175,7 +175,23 @@
         </section>
 
         <section id="reports" class="mb-4">
-          <h4 class="fw-semibold">Smart Reports</h4>
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h4 class="fw-semibold mb-0">Smart Reports & Analytics</h4>
+            <div>
+              <button class="btn btn-outline-success btn-sm me-2" onclick="generateSummaryReport();">
+                <i class="bi bi-graph-up me-1"></i>Summary Report
+              </button>
+              <button class="btn btn-outline-warning btn-sm" onclick="initializeDummyData(); location.reload();" title="Initialize 10 dummy records for testing">
+                <i class="bi bi-database-add me-1"></i>Load Demo Data
+              </button>
+            </div>
+          </div>
+          
+          <!-- Summary Cards -->
+          <div class="row g-3 mb-4" id="summaryCards">
+            <!-- Will be populated by generateSummaryReport() -->
+          </div>
+          
           <div class="card p-3 shadow-sm">
             <div class="row g-2 align-items-end">
               <div class="col-md-4">
@@ -184,6 +200,7 @@
                   <option value="beneficiaries">Beneficiary List</option>
                   <option value="allocation">Financial Allocation Summary</option>
                   <option value="demographics">Demographics (Sub-County/Gender/Level)</option>
+                  <option value="budget">Budget Utilization Report</option>
                 </select>
               </div>
               <div class="col-md-4">
@@ -191,6 +208,8 @@
                 <select id="reportStatus" class="form-select">
                   <option value="Awarded">Awarded Only</option>
                   <option value="All">All Applications</option>
+                  <option value="Pending">Pending Only</option>
+                  <option value="Rejected">Rejected Only</option>
                 </select>
               </div>
               <div class="col-md-4">
@@ -210,6 +229,7 @@
   <script src="js/budget.js"></script>
   <script src="js/sync.js"></script>
   <script src="js/pdf-generator.js"></script>
+  <script src="js/dummy-data.js"></script>
   <script src="js/admin.js"></script>
   
   <!-- Footer -->

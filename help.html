@@ -295,13 +295,18 @@
                 <div class="d-flex align-items-start">
                   <span class="step-number">7</span>
                   <div>
-                    <h5>Generate Reports</h5>
-                    <p class="mb-0">Go to "Smart Reports" section:
+                    <h5>Load Demo Data (For Testing)</h5>
+                    <p class="mb-0">To see sample applications:
                       <ul>
-                        <li>Select report type (Beneficiary List, Financial Summary, Demographics)</li>
-                        <li>Choose status filter (Awarded Only or All Applications)</li>
-                        <li>Click "Download Excel/CSV" to export data</li>
+                        <li>Go to "Reports" section in the admin dashboard</li>
+                        <li>Click <strong>"Load Demo Data"</strong> button</li>
+                        <li>This creates 10 realistic applications with different statuses</li>
+                        <li>5 Awarded, 3 Pending, 1 Rejected, 1 Pending Submission</li>
+                        <li>Total awarded: Ksh 1,850,000 (demonstrates budget tracking)</li>
                       </ul>
+                      <div class="alert alert-info mt-2 mb-0">
+                        <strong>Note:</strong> Demo data is for demonstration purposes only. You can replace it with real applications later.
+                      </div>
                     </p>
                   </div>
                 </div>
@@ -311,14 +316,25 @@
                 <div class="d-flex align-items-start">
                   <span class="step-number">8</span>
                   <div>
-                    <h5>Preview and Download Offer Letters</h5>
-                    <p class="mb-0">For already-awarded applications:
+                    <h5>Generate Smart Reports</h5>
+                    <p class="mb-0">Go to "Smart Reports & Analytics" section:
                       <ul>
-                        <li>Click the <strong>"PDF"</strong> button in the applications table</li>
-                        <li>A preview modal will open showing the complete award letter</li>
-                        <li>You can <strong>Print to PDF</strong> (opens system print dialog)</li>
-                        <li>Or <strong>Download</strong> the PDF directly</li>
-                        <li>Each letter includes a unique serial number (GRS/Bursary/001, 002, etc.)</li>
+                        <li><strong>Summary Report:</strong> Click "Summary Report" button for instant analytics
+                          <ul>
+                            <li>Total applications count</li>
+                            <li>Total awarded amount and average</li>
+                            <li>Budget utilization percentage</li>
+                            <li>Sub-county breakdown with percentages</li>
+                            <li>Gender distribution</li>
+                          </ul>
+                        </li>
+                        <li><strong>Export Reports:</strong>
+                          <ul>
+                            <li>Select report type (Beneficiary List, Financial Summary, Demographics, Budget Utilization)</li>
+                            <li>Choose status filter (Awarded Only, All Applications, Pending, Rejected)</li>
+                            <li>Click "Download Excel/CSV" to export data</li>
+                          </ul>
+                        </li>
                       </ul>
                     </p>
                   </div>
@@ -328,6 +344,32 @@
               <div class="step-card">
                 <div class="d-flex align-items-start">
                   <span class="step-number">9</span>
+                  <div>
+                    <h5>Preview and Download Award Letters</h5>
+                    <p class="mb-0">For already-awarded applications:
+                      <ul>
+                        <li>Click the <strong>"Preview"</strong> or <strong>"Download"</strong> button in the applications table</li>
+                        <li>A preview modal will open showing the complete award letter in receipt-style format</li>
+                        <li>You can <strong>Print to PDF</strong> (opens system print dialog)</li>
+                        <li>Or <strong>Download</strong> the PDF directly</li>
+                        <li>The award letter includes:
+                          <ul>
+                            <li>Professional receipt-style format</li>
+                            <li>Amount in words (e.g., "TWO HUNDRED THOUSAND")</li>
+                            <li>Detailed award information table</li>
+                            <li>Unique serial number (GRS/Bursary/001, 002, etc.)</li>
+                            <li>Official signature and stamp placeholders</li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="d-flex align-items-start">
+                  <span class="step-number">10</span>
                   <div>
                     <h5>Budget Management</h5>
                     <p class="mb-0">The dashboard shows a colorful budget card displaying:

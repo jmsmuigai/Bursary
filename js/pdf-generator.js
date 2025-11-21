@@ -2,6 +2,39 @@
 // Uses jsPDF library for browser-based PDF generation
 
 /**
+ * Convert number to words (for amount in words)
+ */
+function numberToWords(num) {
+  const ones = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN',
+    'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN', 'SIXTEEN', 'SEVENTEEN', 'EIGHTEEN', 'NINETEEN'];
+  const tens = ['', '', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY', 'EIGHTY', 'NINETY'];
+  
+  if (num === 0) return 'ZERO';
+  if (num < 20) return ones[num];
+  if (num < 100) {
+    const ten = Math.floor(num / 10);
+    const one = num % 10;
+    return tens[ten] + (one > 0 ? ' ' + ones[one] : '');
+  }
+  if (num < 1000) {
+    const hundred = Math.floor(num / 100);
+    const remainder = num % 100;
+    return ones[hundred] + ' HUNDRED' + (remainder > 0 ? ' AND ' + numberToWords(remainder) : '');
+  }
+  if (num < 1000000) {
+    const thousand = Math.floor(num / 1000);
+    const remainder = num % 1000;
+    return numberToWords(thousand) + ' THOUSAND' + (remainder > 0 ? ' ' + numberToWords(remainder) : '');
+  }
+  if (num < 1000000000) {
+    const million = Math.floor(num / 1000000);
+    const remainder = num % 1000000;
+    return numberToWords(million) + ' MILLION' + (remainder > 0 ? ' ' + numberToWords(remainder) : '');
+  }
+  return 'AMOUNT TOO LARGE';
+}
+
+/**
  * Get next serial number for award letter
  * Format: GRS/Bursary/001, GRS/Bursary/002, etc.
  */
@@ -193,35 +226,76 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
     });
     yPos += 15;
 
-    // Award Details Box
+    // Award Details Box (Receipt-style table)
     const awardAmount = awardDetails.committee_amount_kes || awardDetails.amount || 0;
     const boxY = yPos;
-    doc.setDrawColor(139, 69, 19);
-    doc.setFillColor(255, 248, 220);
-    doc.roundedRect(margin, boxY - 5, pageWidth - (margin * 2), 20, 3, 3, 'FD');
+    const boxWidth = pageWidth - (margin * 2);
+    const boxHeight = 45;
     
+    // Draw box with border
+    doc.setDrawColor(139, 69, 19);
+    doc.setLineWidth(0.5);
+    doc.setFillColor(255, 248, 220);
+    doc.roundedRect(margin, boxY - 5, boxWidth, boxHeight, 3, 3, 'FD');
+    
+    // Table header
     addText('AWARD DETAILS', margin + 5, boxY + 2, {
-      fontSize: 10,
+      fontSize: 11,
       fontStyle: 'bold',
       color: [139, 69, 19]
     });
-    yPos += 5;
-    addText(`Amount Awarded: KES ${awardAmount.toLocaleString()}`, margin + 5, yPos, {
-      fontSize: 11,
+    
+    // Draw table lines
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.2);
+    const tableStartY = boxY + 6;
+    const rowHeight = 6;
+    
+    // Table rows
+    const tableData = [
+      ['Description', `${applicantName} - Bursary Award`],
+      ['Application ID', application.appID],
+      ['Serial Number', serialNumber],
+      ['Academic Year', today.getFullYear().toString()],
+      ['Amount Awarded', `KES ${awardAmount.toLocaleString()}`]
+    ];
+    
+    let currentY = tableStartY;
+    tableData.forEach((row, index) => {
+      // Draw horizontal line
+      if (index > 0) {
+        doc.line(margin + 5, currentY - 2, pageWidth - margin - 5, currentY - 2);
+      }
+      
+      // Left column (label)
+      addText(row[0] + ':', margin + 8, currentY, {
+        fontSize: 9,
+        fontStyle: 'bold'
+      });
+      
+      // Right column (value)
+      addText(row[1], margin + 50, currentY, {
+        fontSize: 9
+      });
+      
+      currentY += rowHeight;
+    });
+    
+    // Amount in words
+    const amountInWords = numberToWords(awardAmount);
+    currentY += 2;
+    doc.line(margin + 5, currentY - 2, pageWidth - margin - 5, currentY - 2);
+    addText('Amount in words:', margin + 8, currentY, {
+      fontSize: 9,
       fontStyle: 'bold'
     });
-    yPos += 6;
-    addText(`Serial Number: ${serialNumber}`, margin + 5, yPos, {
-      fontSize: 10
+    currentY += 4;
+    addText(amountInWords, margin + 8, currentY, {
+      fontSize: 9,
+      fontStyle: 'italic'
     });
-    yPos += 6;
-    addText(`Application Reference: ${application.appID}`, margin + 5, yPos, {
-      fontSize: 10
-    });
-    yPos += 6;
-    addText(`Academic Year: ${today.getFullYear()}`, margin + 5, yPos, {
-      fontSize: 10
-    });
+    
+    yPos = boxY + boxHeight;
 
     yPos += 15;
 
