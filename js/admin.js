@@ -986,28 +986,63 @@
   console.log('Initial applications loaded:', allApps.length);
   
   // Auto-load demo data on first visit if no applications exist
-  if (allApps.length === 0 && typeof initializeDummyData === 'function') {
-    // Check if user has seen the auto-load prompt before
-    const hasSeenPrompt = sessionStorage.getItem('mbms_auto_load_prompt');
-    if (!hasSeenPrompt) {
-      // Show prompt after a short delay
-      setTimeout(() => {
-        const shouldLoad = confirm('👋 Welcome to Garissa Bursary Management System!\n\nNo applications found. Would you like to load demo data?\n\nThis will create 10 sample applications (5 Awarded, 3 Pending, 1 Rejected, 1 Pending Submission) for testing.\n\nYou can also load it later using the "Load Demo Data" button.');
-        if (shouldLoad) {
-          loadDemoDataAndRefresh();
-          // Reload applications after data is loaded
+  // Check localStorage flag to see if we should auto-load
+  const autoLoadFlag = localStorage.getItem('mbms_auto_load_demo');
+  if (allApps.length === 0 && typeof initializeDummyData === 'function' && autoLoadFlag !== 'disabled') {
+    // Auto-load demo data immediately (for testing/demo purposes)
+    console.log('No applications found. Auto-loading demo data...');
+    setTimeout(() => {
+      try {
+        // Generate and save dummy data
+        if (typeof generateDummyApplications === 'function') {
+          const dummyApps = generateDummyApplications();
+          localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
+          localStorage.setItem('mbms_application_counter', '10');
+          localStorage.setItem('mbms_last_serial', '10');
+          
+          // Initialize budget
+          if (typeof initializeBudget !== 'undefined') {
+            initializeBudget();
+          }
+          if (typeof syncBudgetWithAwards !== 'undefined') {
+            syncBudgetWithAwards();
+          }
+          
+          // Reload and refresh display
+          const newApps = loadApplications();
+          console.log('Demo data auto-loaded:', newApps.length, 'applications');
+          
+          updateMetrics();
+          updateBudgetDisplay();
+          renderTable(newApps);
+          applyFilters();
+          
+          // Generate summary report
+          if (typeof generateSummaryReport === 'function') {
+            setTimeout(() => generateSummaryReport(), 500);
+          }
+          
+          // Show notification
+          const notification = document.createElement('div');
+          notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+          notification.style.zIndex = '9999';
+          notification.style.minWidth = '400px';
+          notification.innerHTML = `
+            <strong>✅ Demo Data Auto-Loaded!</strong><br>
+            10 sample applications created (5 Awarded, 3 Pending, 1 Rejected, 1 Pending Submission)
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          `;
+          document.body.appendChild(notification);
           setTimeout(() => {
-            allApps = loadApplications();
-            updateMetrics();
-            renderTable(allApps);
-            if (typeof generateSummaryReport === 'function') {
-              setTimeout(() => generateSummaryReport(), 500);
+            if (notification.parentNode) {
+              notification.remove();
             }
-          }, 200);
+          }, 5000);
         }
-        sessionStorage.setItem('mbms_auto_load_prompt', 'true');
-      }, 1000);
-    }
+      } catch (error) {
+        console.error('Error auto-loading demo data:', error);
+      }
+    }, 500);
   }
   
   // Auto-generate summary report on load if there are applications
