@@ -828,6 +828,20 @@
       
       if (apps.length > 0) {
         console.log('Sample application:', apps[0]);
+        console.log('All applications:', apps);
+      } else {
+        console.log('No applications found in localStorage');
+        // Check if data exists in localStorage
+        const rawData = localStorage.getItem('mbms_applications');
+        console.log('Raw localStorage data:', rawData ? 'exists' : 'missing');
+        if (rawData) {
+          try {
+            const parsed = JSON.parse(rawData);
+            console.log('Parsed data:', parsed.length, 'items');
+          } catch (e) {
+            console.error('Error parsing localStorage data:', e);
+          }
+        }
       }
       
       // Sync budget
@@ -842,20 +856,30 @@
       // Update everything with error handling
       try {
         updateMetrics();
+        console.log('Metrics updated');
       } catch (e) {
         console.error('Metrics update error:', e);
       }
       
       try {
         updateBudgetDisplay();
+        console.log('Budget display updated');
       } catch (e) {
         console.error('Budget display update error:', e);
       }
       
       try {
         renderTable(apps); // Show all applications by default
+        console.log('Table rendered with', apps.length, 'applications');
       } catch (e) {
         console.error('Table render error:', e);
+      }
+      
+      // Apply filters to show all
+      try {
+        applyFilters();
+      } catch (e) {
+        console.error('Filter apply error:', e);
       }
       
       // Show refresh confirmation
@@ -877,7 +901,7 @@
       return apps;
     } catch (error) {
       console.error('Refresh error:', error);
-      alert('Error refreshing applications. Please try again.');
+      alert('Error refreshing applications. Please try again.\n\nError: ' + error.message);
       return [];
     }
   };
@@ -893,25 +917,64 @@
   
   // Function to load demo data and refresh display
   window.loadDemoDataAndRefresh = function() {
-    if (typeof initializeDummyData === 'function') {
-      const loaded = initializeDummyData();
-      if (loaded) {
-        // Force refresh all displays
-        const allApps = loadApplications();
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(allApps);
-        applyFilters();
-        
-        // Generate summary report
-        setTimeout(() => {
-          if (typeof generateSummaryReport === 'function') {
-            generateSummaryReport();
-          }
-        }, 500);
+    try {
+      console.log('Loading demo data...');
+      
+      if (typeof initializeDummyData === 'function') {
+        const loaded = initializeDummyData();
+        if (loaded) {
+          console.log('Demo data loaded, refreshing display...');
+          
+          // Wait a moment for localStorage to be updated
+          setTimeout(() => {
+            // Force refresh all displays
+            const allApps = loadApplications();
+            console.log('Applications loaded after demo data:', allApps.length);
+            
+            // Update metrics
+            if (typeof updateMetrics === 'function') {
+              updateMetrics();
+            }
+            
+            // Update budget display
+            if (typeof updateBudgetDisplay === 'function') {
+              updateBudgetDisplay();
+            }
+            
+            // Render table with all applications
+            if (typeof renderTable === 'function') {
+              renderTable(allApps);
+              console.log('Table rendered with', allApps.length, 'applications');
+            }
+            
+            // Apply filters (this will show all by default)
+            if (typeof applyFilters === 'function') {
+              applyFilters();
+            }
+            
+            // Generate summary report
+            setTimeout(() => {
+              if (typeof generateSummaryReport === 'function') {
+                generateSummaryReport();
+              }
+            }, 500);
+            
+            // Scroll to applications section
+            const appsSection = document.getElementById('apps');
+            if (appsSection) {
+              appsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
+        } else {
+          console.log('Demo data not loaded (user cancelled or error)');
+        }
+      } else {
+        console.error('initializeDummyData function not found');
+        alert('❌ Demo data function not available. Please refresh the page and try again.');
       }
-    } else {
-      alert('Demo data function not available. Please refresh the page.');
+    } catch (error) {
+      console.error('Error loading demo data:', error);
+      alert('❌ Error loading demo data: ' + error.message);
     }
   };
 
@@ -919,7 +982,7 @@
   populateFilters();
   
   // Load and display all applications on page load
-  const allApps = loadApplications();
+  let allApps = loadApplications();
   console.log('Initial applications loaded:', allApps.length);
   
   // Auto-load demo data on first visit if no applications exist
@@ -932,6 +995,15 @@
         const shouldLoad = confirm('👋 Welcome to Garissa Bursary Management System!\n\nNo applications found. Would you like to load demo data?\n\nThis will create 10 sample applications (5 Awarded, 3 Pending, 1 Rejected, 1 Pending Submission) for testing.\n\nYou can also load it later using the "Load Demo Data" button.');
         if (shouldLoad) {
           loadDemoDataAndRefresh();
+          // Reload applications after data is loaded
+          setTimeout(() => {
+            allApps = loadApplications();
+            updateMetrics();
+            renderTable(allApps);
+            if (typeof generateSummaryReport === 'function') {
+              setTimeout(() => generateSummaryReport(), 500);
+            }
+          }, 200);
         }
         sessionStorage.setItem('mbms_auto_load_prompt', 'true');
       }, 1000);
@@ -951,6 +1023,21 @@
   
   updateMetrics();
   renderTable(allApps);
+  
+  // Expose a global function to manually refresh everything
+  window.forceRefreshAll = function() {
+    console.log('Force refreshing all displays...');
+    const apps = loadApplications();
+    console.log('Loaded', apps.length, 'applications');
+    updateMetrics();
+    updateBudgetDisplay();
+    renderTable(apps);
+    applyFilters();
+    if (typeof generateSummaryReport === 'function') {
+      setTimeout(() => generateSummaryReport(), 500);
+    }
+    alert(`✅ Display refreshed!\n\nFound ${apps.length} applications in the system.`);
+  };
   
   // Check budget status on load
   if (typeof getBudgetStatus !== 'undefined') {
