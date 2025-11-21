@@ -244,45 +244,59 @@
       return colors[status] || 'secondary';
     }
 
-    // Print award letter
-    window.printAwardLetter = async function(appID) {
+    // View application details
+    window.viewMyApplication = function(appID) {
       const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
       const app = applications.find(a => a.appID === appID);
       
-      if (!app || app.status !== 'Awarded' || !app.awardDetails) {
-        alert('Award letter not available. Application must be awarded first.');
+      if (!app) {
+        alert('Application not found.');
         return;
       }
 
-      try {
-        const result = await previewPDF(app, app.awardDetails);
-        // Auto-trigger print after preview opens
-        setTimeout(() => {
-          if (result && result.blobUrl) {
-            printPDFFromModal(result.blobUrl);
-          }
-        }, 1000);
-      } catch (error) {
-        console.error('Error generating PDF:', error);
-        alert('Error generating award letter: ' + error.message);
+      // Show application details in an alert or modal
+      let details = `Application ID: ${app.appID}\n`;
+      details += `Status: ${app.status}\n`;
+      details += `Institution: ${app.personalDetails?.institution || 'N/A'}\n`;
+      details += `Amount Requested: Ksh ${(app.financialDetails?.amountRequested || 0).toLocaleString()}\n`;
+      
+      if (app.status === 'Awarded' && app.awardDetails) {
+        details += `Amount Awarded: Ksh ${(app.awardDetails.committee_amount_kes || app.awardDetails.amount || 0).toLocaleString()}\n`;
+        details += `Serial Number: ${app.awardDetails.serialNumber || 'N/A'}\n`;
       }
+      
+      if (app.status === 'Rejected' && app.rejectionReason) {
+        details += `\nReason: ${app.rejectionReason}\n`;
+      }
+      
+      alert(details);
     };
 
-    // Download award letter
-    window.downloadAwardLetter = async function(appID) {
+    // Download application letter (works for all statuses)
+    window.downloadMyApplicationLetter = async function(appID) {
       const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
       const app = applications.find(a => a.appID === appID);
       
-      if (!app || app.status !== 'Awarded' || !app.awardDetails) {
-        alert('Award letter not available. Application must be awarded first.');
+      if (!app) {
+        alert('Application not found.');
         return;
       }
 
       try {
-        await downloadPDFDirect(app, app.awardDetails);
+        if (app.status === 'Awarded') {
+          if (!app.awardDetails) {
+            alert('Award details not available. Please contact the administrator.');
+            return;
+          }
+          await downloadPDFDirect(app, app.awardDetails);
+        } else if (app.status === 'Rejected') {
+          await downloadRejectionLetter(app);
+        } else {
+          await downloadStatusLetter(app);
+        }
       } catch (error) {
-        console.error('Error generating PDF:', error);
-        alert('Error generating award letter: ' + error.message);
+        console.error('Error downloading PDF:', error);
+        alert('Error downloading letter: ' + error.message);
       }
     };
   </script>
