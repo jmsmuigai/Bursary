@@ -891,12 +891,52 @@
     initializeBudget();
   }
   
+  // Function to load demo data and refresh display
+  window.loadDemoDataAndRefresh = function() {
+    if (typeof initializeDummyData === 'function') {
+      const loaded = initializeDummyData();
+      if (loaded) {
+        // Force refresh all displays
+        const allApps = loadApplications();
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(allApps);
+        applyFilters();
+        
+        // Generate summary report
+        setTimeout(() => {
+          if (typeof generateSummaryReport === 'function') {
+            generateSummaryReport();
+          }
+        }, 500);
+      }
+    } else {
+      alert('Demo data function not available. Please refresh the page.');
+    }
+  };
+
   // Initialize
   populateFilters();
   
   // Load and display all applications on page load
   const allApps = loadApplications();
   console.log('Initial applications loaded:', allApps.length);
+  
+  // Auto-load demo data on first visit if no applications exist
+  if (allApps.length === 0 && typeof initializeDummyData === 'function') {
+    // Check if user has seen the auto-load prompt before
+    const hasSeenPrompt = sessionStorage.getItem('mbms_auto_load_prompt');
+    if (!hasSeenPrompt) {
+      // Show prompt after a short delay
+      setTimeout(() => {
+        const shouldLoad = confirm('👋 Welcome to Garissa Bursary Management System!\n\nNo applications found. Would you like to load demo data?\n\nThis will create 10 sample applications (5 Awarded, 3 Pending, 1 Rejected, 1 Pending Submission) for testing.\n\nYou can also load it later using the "Load Demo Data" button.');
+        if (shouldLoad) {
+          loadDemoDataAndRefresh();
+        }
+        sessionStorage.setItem('mbms_auto_load_prompt', 'true');
+      }, 1000);
+    }
+  }
   
   // Auto-generate summary report on load if there are applications
   if (allApps.length > 0) {

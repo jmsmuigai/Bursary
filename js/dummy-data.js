@@ -169,7 +169,22 @@ function initializeDummyData() {
     }
     
     console.log('✅ Dummy data initialized:', dummyApps.length, 'applications');
-    alert('✅ Demo data loaded successfully!\n\n10 applications created:\n- 5 Awarded\n- 3 Pending\n- 1 Rejected\n- 1 Pending Submission\n\nTotal Awarded: Ksh 1,850,000\n\nRefresh the page to see the data.');
+    
+    // Refresh the display immediately if we're in admin dashboard
+    if (typeof refreshApplications !== 'undefined') {
+      refreshApplications();
+    }
+    if (typeof updateMetrics !== 'undefined') {
+      updateMetrics();
+    }
+    if (typeof updateBudgetDisplay !== 'undefined') {
+      updateBudgetDisplay();
+    }
+    if (typeof generateSummaryReport !== 'undefined') {
+      setTimeout(() => generateSummaryReport(), 500);
+    }
+    
+    alert('✅ Demo data loaded successfully!\n\n10 applications created:\n- 5 Awarded\n- 3 Pending\n- 1 Rejected\n- 1 Pending Submission\n\nTotal Awarded: Ksh 1,850,000\n\nThe data is now visible in the table below.');
     return true;
   } else {
     const confirmLoad = confirm('Applications already exist. Do you want to replace them with demo data?\n\n⚠️ This will delete all existing applications!');
@@ -186,7 +201,21 @@ function initializeDummyData() {
         syncBudgetWithAwards();
       }
       
-      alert('✅ Demo data loaded successfully! Refresh the page to see the changes.');
+      // Refresh the display immediately
+      if (typeof refreshApplications !== 'undefined') {
+        refreshApplications();
+      }
+      if (typeof updateMetrics !== 'undefined') {
+        updateMetrics();
+      }
+      if (typeof updateBudgetDisplay !== 'undefined') {
+        updateBudgetDisplay();
+      }
+      if (typeof generateSummaryReport !== 'undefined') {
+        setTimeout(() => generateSummaryReport(), 500);
+      }
+      
+      alert('✅ Demo data loaded successfully! The data is now visible in the table below.');
       return true;
     }
     return false;
