@@ -38,10 +38,26 @@
       }
       
       const apps = JSON.parse(appsStr);
-      console.log('Loaded applications from localStorage:', apps.length);
+      
+      // Validate apps array
+      if (!Array.isArray(apps)) {
+        console.error('Applications data is not an array:', apps);
+        return [];
+      }
+      
+      console.log('✅ Loaded', apps.length, 'applications from localStorage');
       
       // Ensure all applications have required fields for backward compatibility
-      return apps.map(app => {
+      return apps.map((app, index) => {
+        // Ensure appID exists
+        if (!app.appID) {
+          app.appID = `GSA/${new Date().getFullYear()}/${(index + 1).toString().padStart(4, '0')}`;
+        }
+        
+        // Ensure status exists
+        if (!app.status) {
+          app.status = 'Pending Submission';
+        }
         // If application doesn't have location data, try to get from user registration
         if (!app.subCounty && !app.personalDetails?.subCounty) {
           const users = loadUsers();
@@ -579,15 +595,33 @@
       app.rejectionReason = rejectionReason.trim();
       localStorage.setItem('mbms_applications', JSON.stringify(apps));
       
+      // Budget remains unchanged when rejecting (only changes when awarding)
+      // No need to update budget - it stays the same
+      const budget = getBudgetBalance();
+      const remainingBalance = budget.total - budget.allocated;
+      
       // Notify admin via email
       if (typeof notifyAdminRejected !== 'undefined') {
         notifyAdminRejected(app);
       }
       
+      // Update metrics and display (budget stays same)
       updateMetrics();
+      updateBudgetDisplay(); // Refresh display but budget unchanged
       applyFilters();
-      alert('✅ Application rejected successfully!\n\n📧 Email notification sent to fundadmin@garissa.go.ke\n\nRejection letter can be downloaded from the applications list.');
-      bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+      refreshApplications();
+      
+      // Trigger update event
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { key: 'mbms_applications', action: 'rejected', appID: appID }
+      }));
+      
+      alert('✅ Application rejected successfully!\n\n💰 Budget remains unchanged (Ksh ' + remainingBalance.toLocaleString() + ' available)\n📧 Email notification sent to fundadmin@garissa.go.ke\n\nRejection letter can be downloaded from the applications list.');
+      
+      const viewModal = document.querySelector('.modal');
+      if (viewModal) {
+        bootstrap.Modal.getInstance(viewModal).hide();
+      }
     }
   };
 
