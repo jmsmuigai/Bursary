@@ -863,57 +863,65 @@ function showDownloadSuccess(filename) {
 }
 
 /**
- * Load jsPDF library dynamically
+ * Load jsPDF library dynamically - FIXED VERSION
  */
 function loadJSPDF() {
   return new Promise((resolve, reject) => {
-    // Check if already loaded (multiple ways it might be available)
-    if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF !== 'undefined') {
-      resolve();
-      return;
-    }
-    if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
+    // Check if already loaded and accessible
+    if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF === 'function') {
       window.jsPDF = window.jspdf;
       resolve();
       return;
     }
-    if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF === 'undefined') {
-      // Try to use directly
-      if (typeof window.jsPDF === 'function') {
-        resolve();
-        return;
-      }
+    if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF === 'function') {
+      resolve();
+      return;
+    }
+    if (typeof window.jsPDF === 'function') {
+      resolve();
+      return;
     }
 
     // Check if script already exists
     const existingScript = document.querySelector('script[src*="jspdf"]');
     if (existingScript) {
-      // Wait a bit for it to load
-      setTimeout(() => {
-        if (typeof window.jspdf !== 'undefined') {
+      // Wait for it to load
+      let attempts = 0;
+      const checkLoaded = setInterval(() => {
+        attempts++;
+        if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF === 'function') {
           window.jsPDF = window.jspdf;
+          clearInterval(checkLoaded);
           resolve();
-        } else if (typeof window.jsPDF !== 'undefined') {
+        } else if (typeof window.jsPDF === 'function') {
+          clearInterval(checkLoaded);
           resolve();
-        } else {
-          reject(new Error('jsPDF library failed to load'));
+        } else if (attempts > 20) {
+          clearInterval(checkLoaded);
+          reject(new Error('jsPDF library failed to load after timeout'));
         }
-      }, 500);
+      }, 100);
       return;
     }
 
+    // Load the library
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
     script.onload = () => {
-      // Wait a moment for library to initialize
-      setTimeout(() => {
-        if (typeof window.jspdf !== 'undefined') {
+      // Wait for library to initialize
+      let attempts = 0;
+      const checkInit = setInterval(() => {
+        attempts++;
+        if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF === 'function') {
           window.jsPDF = window.jspdf;
+          clearInterval(checkInit);
           resolve();
-        } else if (typeof window.jsPDF !== 'undefined') {
+        } else if (typeof window.jsPDF === 'function') {
+          clearInterval(checkInit);
           resolve();
-        } else {
-          reject(new Error('jsPDF library loaded but not accessible'));
+        } else if (attempts > 30) {
+          clearInterval(checkInit);
+          reject(new Error('jsPDF library loaded but constructor not accessible'));
         }
       }, 100);
     };
