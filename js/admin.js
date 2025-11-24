@@ -497,11 +497,13 @@
       updateMetrics();
       updateBudgetDisplay();
       applyFilters();
+      refreshApplications(); // Force table refresh
       
       // Force immediate UI refresh
       setTimeout(() => {
         updateMetrics();
         updateBudgetDisplay();
+        refreshApplications(); // Ensure table is updated
       }, 100);
       
       // Trigger storage event for multi-device sync
@@ -837,7 +839,9 @@
           
           if (reportType === 'beneficiaries') {
             rows = [['Serial No', 'App ID', 'Applicant Name', 'Sub-County', 'Ward', 'Institution', 'Status', 'Amount Requested', 'Awarded Amount', 'Date Submitted', 'Date Awarded']];
-          filtered.forEach(app => {
+          // Include ALL applications, not just filtered
+          const allAppsForExport = reportStatus === 'all' ? apps : filtered;
+          allAppsForExport.forEach(app => {
             rows.push([
                 app.awardDetails?.serialNumber || 'N/A',
               app.appID || 'N/A',
@@ -853,6 +857,7 @@
             ]);
           });
             filename = `garissa_bursary_beneficiaries_${new Date().toISOString().split('T')[0]}.csv`;
+            console.log(`✅ CSV Export: ${allAppsForExport.length} applications exported`);
           } else if (reportType === 'allocation') {
             rows = [['Sub-County', 'Ward', 'Applicant Name', 'Institution', 'Amount Requested', 'Amount Awarded', 'Serial Number', 'Date Awarded']];
             const awarded = filtered.filter(a => a.status === 'Awarded');
@@ -1226,8 +1231,15 @@
     }, 500);
   }
   
+  // Initial display - ensure applications are shown
   updateMetrics();
+  updateBudgetDisplay();
   renderTable(allApps);
+  
+  // Store initial count for comparison
+  sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
+  
+  console.log('Admin dashboard initialized with', allApps.length, 'applications');
   
   // Expose a global function to manually refresh everything
   window.forceRefreshAll = function() {
@@ -1266,20 +1278,33 @@
   
   // Real-time update interval (every 2 seconds) for multi-tab sync and new submissions
   setInterval(function() {
-    const apps = loadApplications();
-    const currentCount = apps.length;
-    const lastCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
-    
-    if (currentCount !== lastCount) {
-      console.log('New application detected! Count changed from', lastCount, 'to', currentCount);
-      sessionStorage.setItem('mbms_last_app_count', currentCount.toString());
-      updateMetrics();
-      updateBudgetDisplay();
-      refreshApplications();
-    } else {
-      // Still update metrics and budget periodically
-      updateMetrics();
-      updateBudgetDisplay();
+    try {
+      const apps = loadApplications();
+      const currentCount = apps.length;
+      const lastCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
+      
+      if (currentCount !== lastCount) {
+        console.log('🔄 New application detected! Count changed from', lastCount, 'to', currentCount);
+        sessionStorage.setItem('mbms_last_app_count', currentCount.toString());
+        
+        // Force full refresh
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(apps); // Render all applications
+        applyFilters(); // Apply current filters
+        
+        // Show notification if new applications added
+        if (currentCount > lastCount) {
+          const newCount = currentCount - lastCount;
+          console.log(`✅ ${newCount} new application(s) detected and displayed!`);
+        }
+      } else {
+        // Still update metrics and budget periodically (for budget changes)
+        updateMetrics();
+        updateBudgetDisplay();
+      }
+    } catch (error) {
+      console.error('Error in real-time update interval:', error);
     }
   }, 2000);
   
