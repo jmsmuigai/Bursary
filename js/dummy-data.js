@@ -118,9 +118,10 @@ function generateDummyApplications() {
     // Add award details for awarded applications (3 awarded)
     if (status === 'Awarded') {
       const awardAmounts = [150000, 200000, 180000];
-      const awardIndex = ['Awarded', 'Awarded', 'Awarded'].indexOf(status, i - statuses.slice(0, i).filter(s => s === 'Awarded').length);
-      const awardAmount = awardAmounts[awardIndex] || 150000;
-      const serialNumber = `GRS/Bursary/${String(1000 + i).padStart(3, '0')}`;
+      // Count how many awarded we've seen so far
+      const awardedSoFar = statuses.slice(0, i).filter(s => s === 'Awarded').length;
+      const awardAmount = awardAmounts[awardedSoFar] || 150000;
+      const serialNumber = `GRS/Bursary/${String(1000 + awardedSoFar + 1).padStart(3, '0')}`;
       
       app.awardDetails = {
         committee_amount_kes: awardAmount,
@@ -138,9 +139,10 @@ function generateDummyApplications() {
         'Application did not meet the minimum academic requirements for bursary allocation.',
         'Incomplete documentation provided. Missing required supporting documents.'
       ];
-      const rejectionIndex = ['Rejected', 'Rejected'].indexOf(status, i - statuses.slice(0, i).filter(s => s === 'Rejected').length);
+      // Count how many rejected we've seen so far
+      const rejectedSoFar = statuses.slice(0, i).filter(s => s === 'Rejected').length;
       app.rejectionDate = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)).toISOString();
-      app.rejectionReason = rejectionReasons[rejectionIndex] || 'Application did not meet the minimum requirements for bursary allocation.';
+      app.rejectionReason = rejectionReasons[rejectedSoFar] || 'Application did not meet the minimum requirements for bursary allocation.';
     }
     
     applications.push(app);
@@ -157,7 +159,7 @@ function initializeDummyData() {
     const existingApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     
     if (existingApps.length === 0) {
-      console.log('🔄 Initializing dummy data (10 records: 5 Rejected, 5 Pending Review)...');
+      console.log('🔄 Initializing dummy data (10 records with various statuses)...');
       const dummyApps = generateDummyApplications();
       
       // Save to localStorage
@@ -177,13 +179,17 @@ function initializeDummyData() {
       
       // Verify save
       const verify = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-      const rejectedCount = verify.filter(a => a.status === 'Rejected').length;
+      const awardedCount = verify.filter(a => a.status === 'Awarded').length;
       const pendingCount = verify.filter(a => a.status?.includes('Pending')).length;
+      const rejectedCount = verify.filter(a => a.status === 'Rejected').length;
+      const totalAwarded = verify.filter(a => a.status === 'Awarded' && a.awardDetails)
+        .reduce((sum, a) => sum + (a.awardDetails?.committee_amount_kes || 0), 0);
       
       console.log('✅ Dummy data initialized:', verify.length, 'applications');
+      console.log(`   - Awarded: ${awardedCount} (Total: KSH ${totalAwarded.toLocaleString()})`);
+      console.log(`   - Pending: ${pendingCount}`);
       console.log(`   - Rejected: ${rejectedCount}`);
-      console.log(`   - Pending Review: ${pendingCount}`);
-      console.log(`   - Budget: KSH 50,000,000 (unchanged - no awards)`);
+      console.log(`   - Budget: KSH 50,000,000 (Allocated: KSH ${totalAwarded.toLocaleString()})`);
       console.log('Sample applications:', verify.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
       
       return true;
