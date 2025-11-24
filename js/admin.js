@@ -239,13 +239,16 @@
   function renderTable(applications) {
     const tbody = document.getElementById('applicationsTableBody');
     if (!tbody) {
-      console.error('Table body not found');
+      console.error('❌ Table body not found - element ID: applicationsTableBody');
       return;
     }
+    
+    console.log('🔄 Rendering table with', applications?.length || 0, 'applications');
     
     tbody.innerHTML = '';
 
     if (!applications || applications.length === 0) {
+      console.log('⚠️ No applications to render');
       tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No applications found. Applications will appear here once submitted.</td></tr>';
       return;
     }
@@ -257,7 +260,9 @@
       return dateB - dateA;
     });
 
-    sortedApps.forEach(app => {
+    console.log('✅ Rendering', sortedApps.length, 'sorted applications');
+
+    sortedApps.forEach((app, index) => {
       const tr = document.createElement('tr');
       const status = app.status || 'Pending Submission';
       const statusClass = getStatusBadgeClass(status);
@@ -292,6 +297,9 @@
       `;
       tbody.appendChild(tr);
     });
+    
+    console.log('✅ Table rendered successfully with', sortedApps.length, 'rows');
+    console.log('Table body now has', tbody.children.length, 'child elements');
   }
 
   function getStatusBadgeClass(status) {
@@ -1333,6 +1341,29 @@
   }, 1500);
   
   // Removed duplicate refresh - single refresh is enough
+  
+  // Force reload dummy data (for testing)
+  window.forceReloadDummyData = function() {
+    console.log('🔄 Force reloading dummy data...');
+    
+    // Clear existing data
+    localStorage.removeItem('mbms_applications');
+    localStorage.removeItem('mbms_application_counter');
+    localStorage.removeItem('mbms_last_serial');
+    
+    // Reload dummy data
+    if (typeof initializeDummyData === 'function') {
+      if (initializeDummyData()) {
+        const apps = loadApplications();
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(apps);
+        applyFilters();
+        sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
+        alert('✅ Dummy data reloaded! ' + apps.length + ' applications now visible.');
+      }
+    }
+  };
   
   // Expose a global function to manually refresh everything
   window.forceRefreshAll = function() {
