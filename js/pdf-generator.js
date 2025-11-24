@@ -393,10 +393,16 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
       return { blobUrl, filename, serialNumber, doc };
     }
 
+    // If directSave option, save directly and return doc for further use
+    if (options.directSave) {
+      doc.save(filename);
+      return { filename, serialNumber, doc };
+    }
+
     // Save PDF directly (for direct download)
     doc.save(filename);
     
-    return { filename, serialNumber };
+    return { filename, serialNumber, doc };
   } catch (error) {
     console.error('PDF generation error:', error);
     throw new Error(`Error generating PDF: ${error.message}`);
