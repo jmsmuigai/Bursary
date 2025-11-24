@@ -204,7 +204,30 @@ function initializeDummyData() {
       console.log(`   - Pending: ${pendingCount}`);
       console.log(`   - Rejected: ${rejectedCount}`);
       console.log(`   - Budget: KSH 50,000,000 (Allocated: KSH ${totalAwarded.toLocaleString()})`);
-      console.log('Sample applications:', verify.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
+      console.log('Sample applications:', verify.slice(0, 3).map(a => ({ 
+        id: a.appID, 
+        name: a.applicantName, 
+        status: a.status,
+        subCounty: a.subCounty,
+        ward: a.ward
+      })));
+      
+      // Force a storage event to trigger updates
+      try {
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'mbms_applications',
+          newValue: localStorage.getItem('mbms_applications'),
+          oldValue: null,
+          storageArea: localStorage
+        }));
+      } catch (e) {
+        console.log('Storage event dispatch:', e);
+      }
+      
+      // Also dispatch custom event
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { key: 'mbms_applications', action: 'loaded', count: verify.length }
+      }));
       
       return true;
     } else {
@@ -232,6 +255,34 @@ function clearDummyData() {
   }
   return false;
 }
+
+// Force load dummy data function (for testing)
+window.forceLoadDummyData = function() {
+  console.log('🔄 Force loading dummy data...');
+  
+  // Clear existing data
+  localStorage.removeItem('mbms_applications');
+  localStorage.removeItem('mbms_application_counter');
+  localStorage.removeItem('mbms_last_serial');
+  
+  // Generate and save
+  if (initializeDummyData()) {
+    // Force refresh
+    if (typeof refreshApplications === 'function') {
+      refreshApplications();
+    }
+    
+    // Show success message
+    alert('✅ Dummy data loaded successfully!\n\n10 records created:\n- 3 Awarded\n- 3 Pending Review\n- 2 Rejected\n- 2 Pending Submission\n\nData is now visible on the dashboard.');
+    
+    // Reload page to ensure display
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  } else {
+    alert('❌ Error loading dummy data. Please check console for details.');
+  }
+};
 
 // Export functions
 window.generateDummyApplications = generateDummyApplications;
