@@ -1133,9 +1133,9 @@
   let allApps = loadApplications();
   console.log('Initial applications loaded:', allApps.length);
   
-  // AUTO-LOAD DUMMY DATA if no applications exist (like it was before)
+  // AUTO-LOAD DUMMY DATA if no applications exist (10 records: 5 Rejected, 5 Pending Review)
   if (allApps.length === 0 && typeof initializeDummyData === 'function') {
-    console.log('🔄 No applications found. Auto-loading dummy data (10 records)...');
+    console.log('🔄 No applications found. Auto-loading dummy data (10 records: 5 Rejected, 5 Pending Review)...');
     setTimeout(() => {
       try {
         if (initializeDummyData()) {
@@ -1156,10 +1156,16 @@
           const notification = document.createElement('div');
           notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
           notification.style.zIndex = '9999';
-          notification.style.minWidth = '450px';
+          notification.style.minWidth = '500px';
           notification.innerHTML = `
             <strong>✅ Demo Data Auto-Loaded!</strong><br>
-            10 sample applications created (5 Awarded, 3 Pending, 1 Rejected, 1 Pending Submission)
+            <div class="mt-2">
+              📊 10 sample applications created:<br>
+              &nbsp;&nbsp;• 5 Rejected applications<br>
+              &nbsp;&nbsp;• 5 Pending Review applications<br>
+              <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (unchanged - no awards yet)</small>
+              <small class="text-info d-block mt-1">✅ System ready for testing and production use</small>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           `;
           document.body.appendChild(notification);
@@ -1167,7 +1173,7 @@
             if (notification.parentNode) {
               notification.remove();
             }
-          }, 5000);
+          }, 8000);
           
           // Generate summary report
           if (typeof generateSummaryReport === 'function') {

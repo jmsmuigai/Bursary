@@ -37,7 +37,8 @@ function generateDummyApplications() {
   
   // Award amounts that will total to a reasonable portion of 50M budget
   const awardAmounts = [150000, 200000, 180000, 120000, 250000, 175000, 220000, 190000, 160000, 210000];
-  const statuses = ['Awarded', 'Awarded', 'Awarded', 'Awarded', 'Awarded', 'Pending Submission', 'Pending Ward Review', 'Pending Committee Review', 'Rejected', 'Pending Submission'];
+  // Updated: 5 Rejected, 5 Pending Review (no awards for testing)
+  const statuses = ['Rejected', 'Rejected', 'Rejected', 'Rejected', 'Rejected', 'Pending Ward Review', 'Pending Ward Review', 'Pending Committee Review', 'Pending Committee Review', 'Pending Ward Review'];
   
   // Ensure we have exactly 10 records
   for (let i = 0; i < 10; i++) {
@@ -113,27 +114,20 @@ function generateDummyApplications() {
       }
     };
     
-    // Add award details for awarded applications
-    if (status === 'Awarded') {
-      const awardedAmount = awardAmounts[i];
-      // Use sequential serial numbers starting from 001
-      const serialNumber = `GRS/Bursary/${String(i + 1).padStart(3, '0')}`;
-      
-      app.awardDetails = {
-        committee_amount_kes: awardedAmount,
-        date_awarded: new Date(now.getTime() - ((i + 1) * 12 * 60 * 60 * 1000)).toISOString(),
-        justification: `Application approved based on financial need assessment and academic performance. The committee has allocated Ksh ${awardedAmount.toLocaleString()} to support the student's education.`,
-        admin_assigned_uid: 'fundadmin@garissa.go.ke',
-        serialNumber: serialNumber,
-        amount: awardedAmount
-      };
+    // Add rejection details for rejected applications (5 rejected)
+    if (status === 'Rejected') {
+      const rejectionReasons = [
+        'Application did not meet the minimum academic requirements for bursary allocation.',
+        'Incomplete documentation provided. Missing required supporting documents.',
+        'Family income exceeds the eligibility threshold for bursary support.',
+        'Application submitted after the deadline. Late submissions are not considered.',
+        'Previous bursary recipient. Priority given to first-time applicants.'
+      ];
+      app.rejectionDate = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)).toISOString();
+      app.rejectionReason = rejectionReasons[i] || 'Application did not meet the minimum requirements for bursary allocation.';
     }
     
-    // Add rejection details for rejected applications
-    if (status === 'Rejected') {
-      app.rejectionDate = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)).toISOString();
-      app.rejectionReason = 'Application did not meet the minimum requirements for bursary allocation.';
-    }
+    // No award details - all are either rejected or pending (for testing)
     
     applications.push(app);
   }
