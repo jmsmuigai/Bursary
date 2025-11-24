@@ -139,31 +139,47 @@ function generateDummyApplications() {
  * Initialize dummy data (only if no applications exist)
  */
 function initializeDummyData() {
-  const existingApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-  
-  if (existingApps.length === 0) {
-    console.log('🔄 Initializing dummy data (10 records)...');
-    const dummyApps = generateDummyApplications();
-    localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
+  try {
+    const existingApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     
-    // Update application counter
-    localStorage.setItem('mbms_application_counter', '10');
-    localStorage.setItem('mbms_last_serial', '10');
-    
-    // Initialize budget
-    if (typeof initializeBudget !== 'undefined') {
-      initializeBudget();
+    if (existingApps.length === 0) {
+      console.log('🔄 Initializing dummy data (10 records: 5 Rejected, 5 Pending Review)...');
+      const dummyApps = generateDummyApplications();
+      
+      // Save to localStorage
+      localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
+      
+      // Update application counter
+      localStorage.setItem('mbms_application_counter', '10');
+      localStorage.setItem('mbms_last_serial', '10');
+      
+      // Initialize budget
+      if (typeof initializeBudget !== 'undefined') {
+        initializeBudget();
+      }
+      if (typeof syncBudgetWithAwards !== 'undefined') {
+        syncBudgetWithAwards();
+      }
+      
+      // Verify save
+      const verify = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      const rejectedCount = verify.filter(a => a.status === 'Rejected').length;
+      const pendingCount = verify.filter(a => a.status?.includes('Pending')).length;
+      
+      console.log('✅ Dummy data initialized:', verify.length, 'applications');
+      console.log(`   - Rejected: ${rejectedCount}`);
+      console.log(`   - Pending Review: ${pendingCount}`);
+      console.log(`   - Budget: KSH 50,000,000 (unchanged - no awards)`);
+      console.log('Sample applications:', verify.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
+      
+      return true;
+    } else {
+      console.log('✅ Applications already exist:', existingApps.length);
+      // Still return true to allow refresh
+      return true;
     }
-    if (typeof syncBudgetWithAwards !== 'undefined') {
-      syncBudgetWithAwards();
-    }
-    
-    console.log('✅ Dummy data initialized:', dummyApps.length, 'applications');
-    console.log('Sample applications:', dummyApps.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
-    
-    return true;
-  } else {
-    console.log('✅ Applications already exist:', existingApps.length);
+  } catch (error) {
+    console.error('Error initializing dummy data:', error);
     return false;
   }
 }

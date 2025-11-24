@@ -1131,7 +1131,15 @@
   
   // Load and display all applications on page load
   let allApps = loadApplications();
-  console.log('Initial applications loaded:', allApps.length);
+  console.log('📊 Initial applications loaded:', allApps.length);
+  
+  // If no apps, ensure dummy data loads and displays
+  if (allApps.length === 0) {
+    console.log('⚠️ No applications found - will auto-load dummy data');
+  } else {
+    console.log('✅ Applications found:', allApps.length);
+    console.log('Sample:', allApps.slice(0, 2).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
+  }
   
   // AUTO-LOAD DUMMY DATA if no applications exist (10 records: 5 Rejected, 5 Pending Review)
   if (allApps.length === 0 && typeof initializeDummyData === 'function') {
