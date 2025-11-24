@@ -35,21 +35,35 @@ function generateDummyApplications() {
   const applications = [];
   const now = new Date();
   
-  // Award amounts that will total to a reasonable portion of 50M budget
-  const awardAmounts = [150000, 200000, 180000, 120000, 250000, 175000, 220000, 190000, 160000, 210000];
+  // Award amounts for awarded applications
+  const awardAmounts = [150000, 200000, 180000];
+  
   // Create 10 records with various statuses to demonstrate system functionality
   // 3 Awarded, 3 Pending Review, 2 Rejected, 2 Pending Submission
   const statuses = ['Awarded', 'Awarded', 'Awarded', 'Pending Ward Review', 'Pending Ward Review', 'Pending Committee Review', 'Rejected', 'Rejected', 'Pending Submission', 'Pending Submission'];
   
-  // Ensure we have exactly 10 records
+  // Distribute across all sub-counties and their wards
+  const allSubCounties = Object.keys(GARISSA_WARDS);
+  const subCountyWardPairs = [];
+  
+  // Create pairs of (subCounty, ward) for distribution
+  allSubCounties.forEach(subCounty => {
+    const wards = GARISSA_WARDS[subCounty];
+    wards.forEach(ward => {
+      subCountyWardPairs.push({ subCounty, ward });
+    });
+  });
+  
+  // Ensure we have exactly 10 records, distributed across sub-counties and wards
   for (let i = 0; i < 10; i++) {
     const name = DUMMY_NAMES[i];
-    const subCounty = SUB_COUNTIES[i % SUB_COUNTIES.length];
-    const wards = GARISSA_WARDS[subCounty];
-    const ward = wards[i % wards.length];
+    // Distribute evenly across sub-counties and wards
+    const locationPair = subCountyWardPairs[i % subCountyWardPairs.length];
+    const subCounty = locationPair.subCounty;
+    const ward = locationPair.ward;
     const institution = INSTITUTIONS[i % INSTITUTIONS.length];
     const status = statuses[i];
-    const amountRequested = awardAmounts[i] + Math.floor(Math.random() * 50000);
+    const amountRequested = 150000 + Math.floor(Math.random() * 100000);
     const feeBalance = amountRequested + Math.floor(Math.random() * 20000);
     const monthlyIncome = Math.floor(Math.random() * 15000) + 5000;
     

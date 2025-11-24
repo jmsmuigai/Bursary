@@ -1148,88 +1148,63 @@
     
     // AUTO-LOAD DUMMY DATA if no applications exist (10 records with various statuses)
     if (allApps.length === 0) {
-      console.log('🔄 No applications found. Auto-loading dummy data (10 records with various statuses)...');
+      console.log('🔄 No applications found. Auto-loading dummy data...');
       
       // Load immediately (no delay)
       try {
         if (typeof initializeDummyData === 'function') {
-          if (initializeDummyData()) {
+          const loaded = initializeDummyData();
+          console.log('Dummy data initialization result:', loaded);
+          
+          if (loaded) {
             // Force reload applications immediately
             allApps = loadApplications();
             console.log('✅ Dummy data loaded:', allApps.length, 'applications');
-            console.log('Sample apps:', allApps.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
             
-            // IMMEDIATELY refresh all displays
-            updateMetrics();
-            updateBudgetDisplay();
-            renderTable(allApps);
-            applyFilters();
-            
-            // Update session storage
-            sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
-            
-            // Show notification
-            const notification = document.createElement('div');
-            notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
-            notification.style.zIndex = '9999';
-            notification.style.minWidth = '500px';
-            notification.innerHTML = `
-              <strong>✅ Demo Data Auto-Loaded!</strong><br>
-              <div class="mt-2">
-                📊 10 sample applications created:<br>
-                &nbsp;&nbsp;• 3 Awarded applications<br>
-                &nbsp;&nbsp;• 3 Pending Review applications<br>
-                &nbsp;&nbsp;• 2 Rejected applications<br>
-                &nbsp;&nbsp;• 2 Pending Submission applications<br>
-                <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (with 3 awards totaling KSH 530,000)</small>
-                <small class="text-info d-block mt-1">✅ All records visible in dashboard and table</small>
-              </div>
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(notification);
-            setTimeout(() => {
-              if (notification.parentNode) {
-                notification.remove();
-              }
-            }, 10000);
-            
-            // Force multiple refreshes to ensure display
-            setTimeout(() => {
-              const verifyApps = loadApplications();
-              if (verifyApps.length > 0) {
-                updateMetrics();
-                updateBudgetDisplay();
-                renderTable(verifyApps);
-                applyFilters();
-                console.log('✅ Display refreshed with', verifyApps.length, 'applications');
-              }
-            }, 300);
-            
-            setTimeout(() => {
-              const verifyApps = loadApplications();
-              updateMetrics();
-              updateBudgetDisplay();
-              renderTable(verifyApps);
-              applyFilters();
-              console.log('✅ Final refresh completed');
-            }, 1000);
-            
-            setTimeout(() => {
-              const verifyApps = loadApplications();
-              updateMetrics();
-              updateBudgetDisplay();
-              renderTable(verifyApps);
-              console.log('✅ Third refresh completed');
-            }, 2000);
-          } else {
-            // Even if it says it exists, refresh display
-            allApps = loadApplications();
             if (allApps.length > 0) {
+              console.log('Sample apps:', allApps.slice(0, 3).map(a => ({ 
+                id: a.appID, 
+                name: a.applicantName, 
+                status: a.status,
+                subCounty: a.subCounty,
+                ward: a.ward
+              })));
+              
+              // IMMEDIATELY refresh all displays
               updateMetrics();
               updateBudgetDisplay();
               renderTable(allApps);
               applyFilters();
-              console.log('✅ Refreshed existing data:', allApps.length, 'applications');
+              
+              // Update session storage
+              sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
+              
+              // Show notification
+              const notification = document.createElement('div');
+              notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+              notification.style.zIndex = '9999';
+              notification.style.minWidth = '500px';
+              notification.innerHTML = `
+                <strong>✅ Demo Data Auto-Loaded!</strong><br>
+                <div class="mt-2">
+                  📊 10 sample applications created:<br>
+                  &nbsp;&nbsp;• 3 Awarded applications<br>
+                  &nbsp;&nbsp;• 3 Pending Review applications<br>
+                  &nbsp;&nbsp;• 2 Rejected applications<br>
+                  &nbsp;&nbsp;• 2 Pending Submission applications<br>
+                  <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (with 3 awards totaling KSH 530,000)</small>
+                  <small class="text-info d-block mt-1">✅ All records visible in dashboard and table</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              `;
+              document.body.appendChild(notification);
+              setTimeout(() => {
+                if (notification.parentNode) {
+                  notification.remove();
+                }
+              }, 10000);
+            } else {
+              console.error('❌ Dummy data initialized but no applications loaded!');
             }
           }
         } else {
@@ -1241,10 +1216,12 @@
             localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
             localStorage.setItem('mbms_application_counter', '10');
             allApps = loadApplications();
-            updateMetrics();
-            updateBudgetDisplay();
-            renderTable(allApps);
-            applyFilters();
+            if (allApps.length > 0) {
+              updateMetrics();
+              updateBudgetDisplay();
+              renderTable(allApps);
+              applyFilters();
+            }
           }
         }
       } catch (error) {
@@ -1255,6 +1232,29 @@
       console.log('✅ Applications found:', allApps.length);
       console.log('Sample:', allApps.slice(0, 2).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
     }
+    
+    // Force multiple refreshes to ensure display (even if data exists)
+    setTimeout(() => {
+      const verifyApps = loadApplications();
+      if (verifyApps.length > 0) {
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(verifyApps);
+        applyFilters();
+        console.log('✅ Display refreshed with', verifyApps.length, 'applications');
+      }
+    }, 500);
+    
+    setTimeout(() => {
+      const verifyApps = loadApplications();
+      if (verifyApps.length > 0) {
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(verifyApps);
+        applyFilters();
+        console.log('✅ Second refresh completed');
+      }
+    }, 1500);
     
     // ALWAYS update and render
     updateMetrics();
