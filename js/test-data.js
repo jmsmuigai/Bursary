@@ -38,7 +38,11 @@ const TEST_INSTITUTIONS = [
  */
 function generateTestApplications() {
   const year = new Date().getFullYear();
-  const baseCounter = parseInt(localStorage.getItem('mbms_application_counter') || '0');
+  // Use a fixed starting point for test data to avoid conflicts
+  const baseCounter = Math.max(
+    parseInt(localStorage.getItem('mbms_application_counter') || '0'),
+    5 // Start from 5 to avoid conflicts
+  );
   
   const testApps = [];
   
@@ -147,21 +151,43 @@ function initializeTestData() {
     const existingApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     const existingCount = existingApps.length;
     
-    // Generate test applications
-    const testApps = generateTestApplications();
+    // Check if test data already exists (by checking for @test.com emails)
+    const hasTestData = existingApps.some(app => app.applicantEmail?.includes('@test.com'));
     
-    // Merge with existing applications (avoid duplicates)
-    const existingAppIDs = new Set(existingApps.map(app => app.appID));
-    const newTestApps = testApps.filter(app => !existingAppIDs.has(app.appID));
-    
-    if (newTestApps.length === 0) {
-      console.log('Test data already exists');
-      return false;
+    if (hasTestData && existingCount >= 5) {
+      console.log('✅ Test data already exists:', existingCount, 'applications');
+      // Still return true to allow refresh
+      return true;
     }
     
-    // Add new test apps
-    const allApps = [...existingApps, ...newTestApps];
+    // Generate test applications
+    const testApps = generateTestApplications();
+    console.log('Generated', testApps.length, 'test applications');
+    
+    // If test data exists, replace it; otherwise merge
+    let allApps;
+    if (hasTestData) {
+      // Remove old test data and add new
+      const nonTestApps = existingApps.filter(app => !app.applicantEmail?.includes('@test.com'));
+      allApps = [...nonTestApps, ...testApps];
+      console.log('Replaced test data:', nonTestApps.length, 'existing +', testApps.length, 'new test apps');
+    } else {
+      // Merge with existing applications (avoid duplicates)
+      const existingAppIDs = new Set(existingApps.map(app => app.appID));
+      const newTestApps = testApps.filter(app => !existingAppIDs.has(app.appID));
+      
+      if (newTestApps.length === 0) {
+        console.log('Test data already exists (no new apps to add)');
+        return true; // Return true to allow refresh
+      }
+      
+      allApps = [...existingApps, ...newTestApps];
+      console.log('Added', newTestApps.length, 'new test applications');
+    }
+    
+    // Save all applications
     localStorage.setItem('mbms_applications', JSON.stringify(allApps));
+    console.log('✅ Saved', allApps.length, 'applications to localStorage');
     
     // Update counter
     const newCount = allApps.length;
