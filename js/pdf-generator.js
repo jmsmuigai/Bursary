@@ -383,8 +383,12 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
     doc.setTextColor(150, 150, 150);
     doc.text('This is a computer-generated document. No signature required.', pageWidth / 2, footerY, { align: 'center' });
 
-    // Generate filename
-    const filename = `Garissa_Bursary_Award_${serialNumber}_${application.appID}.pdf`;
+    // Generate filename with applicant name for uniqueness
+    const applicantName = application.applicantName || 
+      `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+    // Sanitize name for filename (remove special characters)
+    const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+    const filename = `Garissa_Bursary_Award_${sanitizedName}_${serialNumber}_${application.appID}.pdf`;
 
     // If preview mode, return blob URL
     if (options.preview) {
@@ -1085,8 +1089,11 @@ async function generateRejectionLetterPDF(application) {
     yPos += 5;
     addText('Garissa County Scholarship Fund', margin, yPos, { fontSize: 10 });
 
-    // Generate filename and save
-    const filename = `Garissa_Bursary_Rejection_${application.appID}.pdf`;
+    // Generate filename with applicant name for uniqueness
+    const applicantName = application.applicantName || 
+      `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+    const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+    const filename = `Garissa_Bursary_Rejection_${sanitizedName}_${application.appID}.pdf`;
     doc.save(filename);
     
     return { filename };
@@ -1246,7 +1253,9 @@ async function generateStatusLetterPDF(application) {
     yPos += 5;
     addText('fundadmin@garissa.go.ke', margin, yPos, { fontSize: 10 });
 
-    const filename = `Garissa_Bursary_Status_${application.appID}.pdf`;
+    // Generate filename with applicant name for uniqueness
+    const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+    const filename = `Garissa_Bursary_Status_${sanitizedName}_${application.appID}.pdf`;
     doc.save(filename);
     
     return { filename };

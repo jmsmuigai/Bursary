@@ -134,19 +134,49 @@
     if (budgetBalanceEl) budgetBalanceEl.textContent = `Ksh ${calculatedBalance.toLocaleString()}`;
     if (budgetPercentageEl) budgetPercentageEl.textContent = status.percentage.toFixed(1) + '%';
     
-    // Update progress bar
+    // Update progress bar with dynamic colors
     const progressBar = document.getElementById('budgetProgressBar');
     if (progressBar) {
-      progressBar.style.width = Math.min(status.percentage, 100) + '%';
-      progressBar.setAttribute('aria-valuenow', status.percentage);
+      const percentage = Math.min(status.percentage, 100);
+      progressBar.style.width = percentage + '%';
+      progressBar.setAttribute('aria-valuenow', percentage);
       progressBar.setAttribute('aria-valuemin', 0);
       progressBar.setAttribute('aria-valuemax', 100);
       
-      // Change color based on utilization
-      if (status.isExhausted || calculatedBalance <= 0) {
-        progressBar.className = 'progress-bar bg-danger';
+      // Dynamic color based on utilization (real-time updates)
         const budgetCard = document.getElementById('budgetCard');
-        if (budgetCard) budgetCard.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+      if (status.isExhausted || calculatedBalance <= 0) {
+        // Dark red when exhausted
+        progressBar.className = 'progress-bar';
+        progressBar.style.backgroundColor = '#8b0000'; // Dark red
+        progressBar.style.transition = 'background-color 0.3s ease, width 0.5s ease';
+        if (budgetCard) {
+          budgetCard.style.background = 'linear-gradient(135deg, #8b0000 0%, #6b0000 100%)';
+          budgetCard.style.transition = 'background 0.3s ease';
+        }
+      } else if (percentage >= 90) {
+        // Red when 90%+ used
+        progressBar.className = 'progress-bar';
+        progressBar.style.backgroundColor = '#dc3545';
+        progressBar.style.transition = 'background-color 0.3s ease, width 0.5s ease';
+        if (budgetCard) {
+          budgetCard.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+          budgetCard.style.transition = 'background 0.3s ease';
+        }
+      } else if (percentage >= 75) {
+        // Orange when 75-90% used
+        progressBar.className = 'progress-bar';
+        progressBar.style.backgroundColor = '#fd7e14';
+        progressBar.style.transition = 'background-color 0.3s ease, width 0.5s ease';
+      } else if (percentage >= 50) {
+        // Yellow when 50-75% used
+        progressBar.className = 'progress-bar';
+        progressBar.style.backgroundColor = '#ffc107';
+        progressBar.style.transition = 'background-color 0.3s ease, width 0.5s ease';
+      } else {
+        // Green when <50% used
+        progressBar.className = 'progress-bar bg-success';
+        progressBar.style.transition = 'background-color 0.3s ease, width 0.5s ease';
       } else if (status.isLow) {
         progressBar.className = 'progress-bar bg-warning';
         const budgetCard = document.getElementById('budgetCard');
@@ -353,37 +383,76 @@
     modal.addEventListener('hidden.bs.modal', () => modal.remove());
   };
 
-  // Approve application
+  // Approve application - works for all statuses
   window.approveApplication = async function(appID) {
-    const amount = document.getElementById('awardAmount').value;
-    const justification = document.getElementById('awardJustification').value;
-
-    if (!amount || !justification) {
-      alert('Please enter award amount and justification');
+    // Handle if appID is an object (error case)
+    if (typeof appID === 'object') {
+      console.error('Invalid appID (object):', appID);
+      alert('⚠️ Invalid application ID. Please refresh the page and try again.');
+      return;
+    }
+    
+    // Get admin email from session
+    let adminEmail = 'fundadmin@garissa.go.ke';
+    try {
+      const adminStr = sessionStorage.getItem('mbms_admin');
+      if (adminStr) {
+        const admin = JSON.parse(adminStr);
+        adminEmail = admin.email || adminEmail;
+      }
+    } catch (e) {
+      console.warn('Could not get admin email:', e);
+    }
+    
+    const awardAmountInput = document.getElementById('awardAmount');
+    const justificationInput = document.getElementById('awardJustification');
+    
+    if (!awardAmountInput || !justificationInput) {
+      alert('⚠️ Award form not found. Please refresh the page.');
       return;
     }
 
-    const awardAmount = parseInt(amount);
+    const awardAmount = parseFloat(awardAmountInput.value);
+    const justification = justificationInput.value.trim();
     
     if (isNaN(awardAmount) || awardAmount <= 0) {
-      alert('Please enter a valid award amount greater than 0');
+      alert('⚠️ Please enter a valid award amount (greater than 0).');
+      awardAmountInput.focus();
+      return;
+    }
+    
+    if (!justification) {
+      alert('⚠️ Justification is required. Please provide a reason for this award.');
+      justificationInput.focus();
       return;
     }
     
     // Check budget availability (recalculate first)
     if (typeof checkBudgetAvailable !== 'undefined') {
+      if (typeof syncBudgetWithAwards !== 'undefined') {
       syncBudgetWithAwards(); // Sync before checking
-      if (!checkBudgetAvailable(awardAmount)) {
+      }
+      const budgetCheck = checkBudgetAvailable(awardAmount);
+      if (!budgetCheck.available) {
         const budget = getBudgetBalance();
         const available = budget.total - budget.allocated;
-        alert(`❌ Insufficient Budget!\n\nTotal Budget: Ksh ${budget.total.toLocaleString()}\nAlready Allocated: Ksh ${budget.allocated.toLocaleString()}\nAvailable: Ksh ${available.toLocaleString()}\nRequested: Ksh ${awardAmount.toLocaleString()}\n\nPlease reduce the award amount or contact finance department.`);
+        alert(`❌ INSUFFICIENT BUDGET!\n\n${budgetCheck.message}\n\nTotal Budget: Ksh ${budget.total.toLocaleString()}\nAlready Allocated: Ksh ${budget.allocated.toLocaleString()}\nAvailable: Ksh ${available.toLocaleString()}\nRequested: Ksh ${awardAmount.toLocaleString()}\n\nPlease reduce the award amount or contact finance department.`);
         return;
       }
+    }
+    
+    if (!confirm(`Are you sure you want to award Ksh ${awardAmount.toLocaleString()} to this applicant?`)) {
+      return;
     }
 
     const apps = loadApplications();
     const app = apps.find(a => a.appID === appID);
-    if (app) {
+    
+    if (!app) {
+      alert('⚠️ Application not found.');
+      return;
+    }
+    
       // Get serial number before awarding
       const serialNumber = getNextSerialNumber();
       
@@ -399,13 +468,13 @@
         }
       }
       
-      // Update application status
+    // Update application status (works for all statuses)
       app.status = 'Awarded';
       app.awardDetails = {
         committee_amount_kes: awardAmount,
         date_awarded: new Date().toISOString(),
         justification: justification,
-        admin_assigned_uid: admin.email,
+      admin_assigned_uid: adminEmail,
         serialNumber: serialNumber,
         amount: awardAmount // For compatibility
       };
@@ -418,10 +487,16 @@
         syncBudgetWithAwards();
       }
       
-      // Update metrics and budget display IMMEDIATELY
+      // Update metrics and budget display IMMEDIATELY (real-time)
       updateMetrics();
       updateBudgetDisplay();
       applyFilters();
+      
+      // Force immediate UI refresh
+      setTimeout(() => {
+        updateMetrics();
+        updateBudgetDisplay();
+      }, 100);
       
       // Trigger storage event for multi-device sync
       window.dispatchEvent(new CustomEvent('mbms-data-updated', {
@@ -451,14 +526,22 @@
         notifyAdminAwarded(app, app.awardDetails);
       }
       
-      // Generate and preview PDF offer letter
-      try {
-        await previewPDF(app, app.awardDetails);
-        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Email notification sent to fundadmin@garissa.go.ke\n\nPDF preview is now open. You can print or download it.');
-      } catch (error) {
-        console.error('PDF generation error:', error);
-        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Email notification sent to fundadmin@garissa.go.ke\n\n⚠️ PDF preview failed. You can generate it later from the applications list.');
-      }
+      // Send email draft with award letter
+      setTimeout(() => {
+        if (typeof sendEmailDraft !== 'undefined') {
+          const applicantName = app.applicantName || 
+            `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+          const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+          const filename = `Garissa_Bursary_Award_${sanitizedName}_${serialNumber}_${app.appID}.pdf`;
+          sendEmailDraft(app, 'award', filename, app.awardDetails);
+        }
+      }, 1000);
+      
+      // Show success message
+      alert('✅ Successfully awarded!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Copy sent to fundadmin@garissa.go.ke\n\nYou can download the award letter from the applications list.');
+      
+      // Refresh display
+      refreshApplications();
     }
   };
 
@@ -519,6 +602,13 @@
         return;
       }
       
+      // Handle if appID is an object (error case)
+      if (typeof appID === 'object') {
+        console.error('Invalid appID (object):', appID);
+        alert('⚠️ Invalid application ID. Please refresh the page and try again.');
+        return;
+      }
+      
     const app = apps.find(a => a.appID === appID);
       
       if (!app) {
@@ -528,9 +618,17 @@
       return;
     }
 
+      // Show loading indicator
+      const loadingAlert = document.createElement('div');
+      loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+      loadingAlert.style.zIndex = '9999';
+      loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating and downloading PDF...';
+      document.body.appendChild(loadingAlert);
+
       if (app.status === 'Awarded') {
         // Download award letter
     if (!app.awardDetails) {
+          loadingAlert.remove();
       alert('⚠️ Award details not found. Please award this application first.');
       return;
     }
@@ -541,15 +639,20 @@
       };
       
       await downloadPDFDirect(app, awardDetails);
+        loadingAlert.remove();
       } else if (app.status === 'Rejected') {
         // Download rejection letter
         await downloadRejectionLetter(app);
+        loadingAlert.remove();
       } else {
         // Download status letter for pending applications
         await downloadStatusLetter(app);
+        loadingAlert.remove();
       }
     } catch (error) {
       console.error('PDF download error:', error);
+      const loadingAlert = document.querySelector('.alert-info');
+      if (loadingAlert) loadingAlert.remove();
       alert('❌ Error downloading PDF. Please try again or contact support.\n\nError: ' + error.message);
     }
   };
@@ -1126,6 +1229,32 @@
     }
     alert(`✅ Display refreshed!\n\nFound ${apps.length} applications in the system.`);
   };
+  
+  // Real-time budget updates - listen for storage changes
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'mbms_applications' || e.key === 'mbms_budget') {
+      console.log('Storage changed, updating budget...');
+      updateMetrics();
+      updateBudgetDisplay();
+      refreshApplications();
+    }
+  });
+  
+  // Listen for custom data update events
+  window.addEventListener('mbms-data-updated', function(e) {
+    console.log('Data updated event:', e.detail);
+    updateMetrics();
+    updateBudgetDisplay();
+    if (e.detail && (e.detail.action === 'awarded' || e.detail.action === 'rejected')) {
+      refreshApplications();
+    }
+  });
+  
+  // Real-time update interval (every 2 seconds) for multi-tab sync
+  setInterval(function() {
+    updateMetrics();
+    updateBudgetDisplay();
+  }, 2000);
   
   // Check budget status on load
   if (typeof getBudgetStatus !== 'undefined') {
