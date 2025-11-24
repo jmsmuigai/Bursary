@@ -1128,30 +1128,59 @@
   // Load test data and refresh (5 records: 3 Rejected, 2 Pending)
   window.loadTestDataAndRefresh = function() {
     try {
+      console.log('🔄 Loading test data...');
+      
+      // Clear the flag to allow reloading
+      localStorage.removeItem('mbms_test_data_loaded');
+      
       if (typeof initializeTestData === 'function') {
-        if (initializeTestData()) {
-          // Refresh display
+        const loaded = initializeTestData();
+        if (loaded) {
+          localStorage.setItem('mbms_test_data_loaded', 'loaded');
+          
+          // Force refresh display immediately
+          const allApps = loadApplications();
+          console.log('✅ Test data loaded:', allApps.length, 'applications');
+          console.log('Applications:', allApps.map(a => ({ id: a.appID, status: a.status, name: a.applicantName })));
+          
+          // Update everything
+          updateMetrics();
+          updateBudgetDisplay();
+          renderTable(allApps);
+          applyFilters();
+          
+          // Update session storage
+          sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
+          
+          // Generate summary report
           setTimeout(() => {
-            const allApps = loadApplications();
-            console.log('Test data loaded:', allApps.length, 'applications');
-            
-            // Update everything
+            if (typeof generateSummaryReport === 'function') {
+              generateSummaryReport();
+            }
+          }, 500);
+          
+          // Force another refresh to ensure display
+          setTimeout(() => {
+            const verifyApps = loadApplications();
             updateMetrics();
             updateBudgetDisplay();
-            renderTable(allApps);
-            applyFilters();
-            
-            // Generate summary report
-            setTimeout(() => {
-              if (typeof generateSummaryReport === 'function') {
-                generateSummaryReport();
-              }
-            }, 500);
-            
-            alert('✅ Test Data Loaded Successfully!\n\n📊 5 applications created:\n   - 3 Rejected\n   - 2 Pending\n\n💰 Budget: KSH 50,000,000 (unchanged - no awards)\n\n✅ All records visible in dashboard and Excel export');
-          }, 100);
+            renderTable(verifyApps);
+            console.log('✅ Forced refresh completed with', verifyApps.length, 'applications');
+          }, 500);
+          
+          alert('✅ Test Data Loaded Successfully!\n\n📊 5 applications created:\n   • 3 Rejected\n   • 2 Pending\n\n💰 Budget: KSH 50,000,000 (unchanged - no awards)\n\n✅ All records visible in dashboard and Excel export');
         } else {
-          alert('⚠️ Test data already exists or could not be loaded.');
+          // Try to reload existing test data
+          const existingApps = loadApplications();
+          if (existingApps.length > 0) {
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(existingApps);
+            applyFilters();
+            alert('✅ Test data already exists. Display refreshed!\n\n📊 ' + existingApps.length + ' applications found');
+          } else {
+            alert('⚠️ Test data could not be loaded. Please check console for errors.');
+          }
         }
       } else {
         console.error('initializeTestData function not found');
@@ -1235,28 +1264,39 @@
   // Auto-load test data (5 records: 3 Rejected, 2 Pending) if no applications exist
   const testDataFlag = localStorage.getItem('mbms_test_data_loaded');
   if (allApps.length === 0 && typeof initializeTestData === 'function' && testDataFlag !== 'loaded') {
-    console.log('No applications found. Loading test data (5 records: 3 Rejected, 2 Pending)...');
+    console.log('🔄 No applications found. Auto-loading test data (5 records: 3 Rejected, 2 Pending)...');
     setTimeout(() => {
       try {
         if (initializeTestData()) {
           localStorage.setItem('mbms_test_data_loaded', 'loaded');
-          const newApps = loadApplications();
-          console.log('Test data loaded:', newApps.length, 'applications');
           
+          // Force reload applications
+          const newApps = loadApplications();
+          console.log('✅ Test data loaded:', newApps.length, 'applications');
+          console.log('Sample apps:', newApps.slice(0, 2));
+          
+          // Force refresh all displays
           updateMetrics();
           updateBudgetDisplay();
           renderTable(newApps);
           applyFilters();
           
+          // Update session storage count
+          sessionStorage.setItem('mbms_last_app_count', newApps.length.toString());
+          
           // Show notification
           const notification = document.createElement('div');
-          notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+          notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
           notification.style.zIndex = '9999';
-          notification.style.minWidth = '400px';
+          notification.style.minWidth = '450px';
           notification.innerHTML = `
-            <strong>✅ Test Data Loaded!</strong><br>
-            5 test applications created (3 Rejected, 2 Pending)<br>
-            <small>Budget: KSH 50,000,000 (unchanged - no awards yet)</small>
+            <strong>✅ Test Data Auto-Loaded!</strong><br>
+            <div class="mt-2">
+              📊 5 test applications created:<br>
+              &nbsp;&nbsp;• 3 Rejected applications<br>
+              &nbsp;&nbsp;• 2 Pending applications<br>
+              <small class="text-muted">💰 Budget: KSH 50,000,000 (unchanged - no awards)</small>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           `;
           document.body.appendChild(notification);
@@ -1264,12 +1304,28 @@
             if (notification.parentNode) {
               notification.remove();
             }
-          }, 5000);
+          }, 8000);
+          
+          // Force another refresh after a short delay to ensure display
+          setTimeout(() => {
+            const verifyApps = loadApplications();
+            if (verifyApps.length > 0) {
+              updateMetrics();
+              updateBudgetDisplay();
+              renderTable(verifyApps);
+              console.log('✅ Display refreshed with', verifyApps.length, 'applications');
+            }
+          }, 1000);
+        } else {
+          console.log('⚠️ Test data already exists or could not be loaded');
         }
       } catch (error) {
-        console.error('Error loading test data:', error);
+        console.error('❌ Error loading test data:', error);
+        alert('Error loading test data: ' + error.message);
       }
-    }, 500);
+    }, 300);
+  } else if (allApps.length === 0) {
+    console.log('⚠️ No applications found. Test data flag:', testDataFlag);
   }
   
   // Auto-load demo data on first visit if no applications exist (legacy)
@@ -1344,6 +1400,16 @@
   }
   
   // Initial display - ensure applications are shown
+  console.log('📊 Initializing dashboard with', allApps.length, 'applications');
+  
+  if (allApps.length > 0) {
+    console.log('Sample applications:', allApps.slice(0, 3).map(a => ({
+      id: a.appID,
+      name: a.applicantName,
+      status: a.status
+    })));
+  }
+  
   updateMetrics();
   updateBudgetDisplay();
   renderTable(allApps);
@@ -1351,21 +1417,60 @@
   // Store initial count for comparison
   sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
   
-  console.log('Admin dashboard initialized with', allApps.length, 'applications');
+  console.log('✅ Admin dashboard initialized with', allApps.length, 'applications');
+  
+  // Force a refresh after a short delay to ensure everything is displayed
+  setTimeout(() => {
+    const verifyApps = loadApplications();
+    if (verifyApps.length !== allApps.length) {
+      console.log('🔄 Application count changed, refreshing display...');
+      updateMetrics();
+      updateBudgetDisplay();
+      renderTable(verifyApps);
+      sessionStorage.setItem('mbms_last_app_count', verifyApps.length.toString());
+    }
+  }, 1000);
   
   // Expose a global function to manually refresh everything
   window.forceRefreshAll = function() {
-    console.log('Force refreshing all displays...');
+    console.log('🔄 Force refreshing all displays...');
+    
+    // Clear any cached data
     const apps = loadApplications();
-    console.log('Loaded', apps.length, 'applications');
+    console.log('📊 Loaded', apps.length, 'applications from localStorage');
+    
+    if (apps.length > 0) {
+      console.log('Sample applications:', apps.slice(0, 3).map(a => ({
+        id: a.appID,
+        name: a.applicantName,
+        status: a.status
+      })));
+    }
+    
+    // Force update everything
     updateMetrics();
     updateBudgetDisplay();
     renderTable(apps);
     applyFilters();
+    
+    // Update session storage
+    sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
+    
+    // Generate summary report
     if (typeof generateSummaryReport === 'function') {
       setTimeout(() => generateSummaryReport(), 500);
     }
-    alert(`✅ Display refreshed!\n\nFound ${apps.length} applications in the system.`);
+    
+    // Force another refresh after short delay
+    setTimeout(() => {
+      const verifyApps = loadApplications();
+      updateMetrics();
+      updateBudgetDisplay();
+      renderTable(verifyApps);
+      console.log('✅ Force refresh completed with', verifyApps.length, 'applications');
+    }, 500);
+    
+    alert(`✅ Display Force Refreshed!\n\n📊 Found ${apps.length} applications in the system.\n\nAll data updated and displayed.`);
   };
   
   // Real-time budget updates - listen for storage changes
