@@ -291,9 +291,17 @@
           }
           await downloadPDFDirect(app, app.awardDetails);
         } else if (app.status === 'Rejected') {
-          await downloadRejectionLetter(app);
+          if (typeof downloadRejectionLetter !== 'undefined') {
+            await downloadRejectionLetter(app);
+          } else {
+            alert('Rejection letter function not available. Please refresh the page.');
+          }
         } else {
-          await downloadStatusLetter(app);
+          if (typeof downloadStatusLetter !== 'undefined') {
+            await downloadStatusLetter(app);
+          } else {
+            alert('Status letter function not available. Please refresh the page.');
+          }
         }
       } catch (error) {
         console.error('Error downloading PDF:', error);

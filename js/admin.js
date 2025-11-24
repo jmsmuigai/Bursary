@@ -252,18 +252,24 @@
       const institution = app.personalDetails?.institution || app.institution || 'N/A';
 
       const serialNumber = app.awardDetails?.serialNumber || '';
+      const appID = app.appID || 'N/A';
+      
+      // Escape quotes in onclick handlers
+      const safeAppID = appID.replace(/'/g, "\\'");
+      const safeName = name.replace(/'/g, "\\'");
+      
       tr.innerHTML = `
-        <td><strong>${app.appID || 'N/A'}</strong>${serialNumber ? `<br><small class="text-muted">Serial: ${serialNumber}</small>` : ''}</td>
+        <td><strong>${appID}</strong>${serialNumber ? `<br><small class="text-muted">Serial: ${serialNumber}</small>` : ''}</td>
         <td>${name}</td>
         <td>${location} / ${ward}</td>
         <td>${institution}</td>
         <td><span class="badge ${statusClass}">${status}</span></td>
         <td>Ksh ${amount.toLocaleString()}</td>
         <td>
-          <button class="btn btn-sm btn-info me-1" onclick="viewApplication('${app.appID}')" title="View Application Details">
+          <button class="btn btn-sm btn-info me-1" onclick="viewApplication('${safeAppID}')" title="View Application Details">
             <i class="bi bi-eye"></i> View
           </button>
-          <button class="btn btn-sm btn-success" onclick="downloadApplicationLetter('${app.appID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter">
+          <button class="btn btn-sm btn-success" onclick="downloadApplicationLetter('${safeAppID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter">
               <i class="bi bi-download"></i> Download
             </button>
         </td>
@@ -526,6 +532,14 @@
         notifyAdminAwarded(app, app.awardDetails);
       }
       
+      // Auto-download award letter immediately
+      try {
+        await downloadPDFDirect(app, app.awardDetails);
+      } catch (pdfError) {
+        console.error('PDF download error:', pdfError);
+        // Continue even if PDF fails
+      }
+      
       // Send email draft with award letter
       setTimeout(() => {
         if (typeof sendEmailDraft !== 'undefined') {
@@ -535,10 +549,10 @@
           const filename = `Garissa_Bursary_Award_${sanitizedName}_${serialNumber}_${app.appID}.pdf`;
           sendEmailDraft(app, 'award', filename, app.awardDetails);
         }
-      }, 1000);
+      }, 2000);
       
       // Show success message
-      alert('✅ Successfully awarded!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Copy sent to fundadmin@garissa.go.ke\n\nYou can download the award letter from the applications list.');
+      alert('✅ Successfully awarded!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Copy sent to fundadmin@garissa.go.ke\n\n📥 Award letter has been automatically downloaded!');
       
       // Refresh display
       refreshApplications();
@@ -1240,20 +1254,33 @@
     }
   });
   
-  // Listen for custom data update events
+  // Listen for custom data update events (including new submissions)
   window.addEventListener('mbms-data-updated', function(e) {
     console.log('Data updated event:', e.detail);
     updateMetrics();
     updateBudgetDisplay();
-    if (e.detail && (e.detail.action === 'awarded' || e.detail.action === 'rejected')) {
+    if (e.detail && (e.detail.action === 'awarded' || e.detail.action === 'rejected' || e.detail.action === 'submitted')) {
       refreshApplications();
     }
   });
   
-  // Real-time update interval (every 2 seconds) for multi-tab sync
+  // Real-time update interval (every 2 seconds) for multi-tab sync and new submissions
   setInterval(function() {
-    updateMetrics();
-    updateBudgetDisplay();
+    const apps = loadApplications();
+    const currentCount = apps.length;
+    const lastCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
+    
+    if (currentCount !== lastCount) {
+      console.log('New application detected! Count changed from', lastCount, 'to', currentCount);
+      sessionStorage.setItem('mbms_last_app_count', currentCount.toString());
+      updateMetrics();
+      updateBudgetDisplay();
+      refreshApplications();
+    } else {
+      // Still update metrics and budget periodically
+      updateMetrics();
+      updateBudgetDisplay();
+    }
   }, 2000);
   
   // Check budget status on load

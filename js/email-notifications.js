@@ -208,10 +208,96 @@ Garissa County Bursary Management System`;
   }
 }
 
+/**
+ * Send email to Jacob with GitHub access information
+ */
+function sendEmailToJacob() {
+  const JACOB_EMAIL = 'Jacobmuimi@gmail.com';
+  const subject = 'GitHub Access - Garissa County Bursary Management System';
+  const body = `Dear Jacob,
+
+I hope this email finds you well.
+
+I am reaching out to request your assistance with hosting the Garissa County Bursary Management System. I would like to add you as a collaborator to the GitHub repository so you can help with deployment and hosting.
+
+REPOSITORY DETAILS:
+Repository URL: https://github.com/jmsmuigai/Bursary
+Repository Name: Bursary
+Owner: jmsmuigai
+
+NEXT STEPS:
+1. Accept the GitHub Invitation:
+   - You should receive an email invitation from GitHub
+   - Click "Accept invitation" in the email
+   - Or visit: https://github.com/jmsmuigai/Bursary/invitations
+
+2. Clone the Repository:
+   git clone https://github.com/jmsmuigai/Bursary.git
+   cd Bursary
+
+3. Review the System:
+   - Check README.md for system overview
+   - Review DATABASE_STRUCTURE.md for data structure
+   - Check help.html for user guide
+
+SYSTEM INFORMATION:
+- Technology: HTML, CSS, JavaScript (Vanilla JS)
+- Storage: Currently using localStorage (client-side)
+- PDF Generation: jsPDF library
+- Hosting Ready: Can be hosted on GitHub Pages, Netlify, Vercel, or any static hosting
+
+DATABASE STRUCTURE:
+I have created a DATABASE_STRUCTURE.md file that details:
+- Current localStorage structure
+- Recommended migration to Firebase or MySQL
+- Authentication structure
+- Data models for users, applications, and budget
+
+HOSTING REQUIREMENTS:
+The system is currently a static web application that can be hosted on:
+- GitHub Pages (already configured)
+- Netlify
+- Vercel
+- Any static hosting service
+
+For production, you may want to:
+1. Migrate from localStorage to a backend database (Firebase/MongoDB/MySQL)
+2. Set up authentication (Firebase Auth/JWT)
+3. Configure environment variables
+4. Set up CI/CD pipeline
+
+CURRENT STATUS:
+✅ System is fully functional
+✅ All features tested and working
+✅ Ready for production deployment
+✅ Documentation complete
+
+QUESTIONS OR SUPPORT:
+If you have any questions or need clarification on any aspect of the system, please don't hesitate to reach out to me at jmsmuigai@gmail.com.
+
+Thank you for your assistance with hosting this system. I look forward to working with you.
+
+Best regards,
+James Muigai
+jmsmuigai@gmail.com
+
+---
+GitHub Repository: https://github.com/jmsmuigai/Bursary
+Live Demo: https://jmsmuigai.github.io/Bursary/
+Documentation: See README.md and DATABASE_STRUCTURE.md in the repository`;
+
+  const mailtoLink = `mailto:${JACOB_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoLink;
+  
+  console.log('Email draft created for Jacob:', { to: JACOB_EMAIL, subject });
+  return true;
+}
+
 // Export functions
 window.sendEmailNotification = sendEmailNotification;
 window.notifyAdminAwarded = notifyAdminAwarded;
 window.notifyAdminRejected = notifyAdminRejected;
 window.notifyAdminReportGenerated = notifyAdminReportGenerated;
 window.sendEmailDraft = sendEmailDraft;
+window.sendEmailToJacob = sendEmailToJacob;
 

@@ -252,10 +252,17 @@
 
     // Collect all form data
     const formData = new FormData(form);
+    
+    // Generate unique application ID
+    const year = new Date().getFullYear();
+    const counter = parseInt(localStorage.getItem('mbms_application_counter') || '0') + 1;
+    const appID = `GSA/${year}/${counter.toString().padStart(4, '0')}`;
+    
     const applicationData = {
-      appID: `GSA/${new Date().getFullYear()}/${Date.now().toString().slice(-4)}`,
+      appID: appID,
       applicantEmail: user.email,
       applicantName: `${user.firstName} ${user.lastName}`,
+      dateSubmitted: new Date().toISOString(),
       status: 'Pending Submission',
       dateSubmitted: new Date().toISOString(),
       // Include location from user registration
@@ -325,8 +332,25 @@
     localStorage.removeItem(applicationKey);
 
     // Update application counter
-    const counter = parseInt(localStorage.getItem('mbms_application_counter') || '0') + 1;
     localStorage.setItem('mbms_application_counter', counter.toString());
+    
+    // Trigger storage event to notify admin dashboard (for real-time updates)
+    window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+      detail: { key: 'mbms_applications', action: 'submitted', appID: appID }
+    }));
+    
+    // Also trigger storage event for cross-tab sync
+    try {
+      const storageEvent = new StorageEvent('storage', {
+        key: 'mbms_applications',
+        newValue: localStorage.getItem('mbms_applications'),
+        oldValue: null,
+        storageArea: localStorage
+      });
+      window.dispatchEvent(storageEvent);
+    } catch (e) {
+      console.log('Storage event dispatch:', e);
+    }
 
     alert('✅ Application submitted successfully! Redirecting to dashboard...');
     window.location.href = 'applicant_dashboard.html';

@@ -370,11 +370,47 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
       fontSize: 10
     });
 
-    // Stamp on the right side
+    // Smart colorful stamp on the right side (auto-generated)
+    const stampX = pageWidth - margin - 50;
+    const stampY = pageHeight - 65;
+    const stampWidth = 45;
+    const stampHeight = 45;
+    
+    // Draw colorful stamp background (blue gradient circle)
+    doc.setFillColor(30, 144, 255); // Dodger blue
+    doc.setDrawColor(0, 100, 200); // Darker blue border
+    doc.setLineWidth(0.5);
+    doc.circle(stampX + stampWidth/2, stampY + stampHeight/2, stampWidth/2, 'FD');
+    
+    // Add white text inside stamp
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('OFFICIAL', stampX + stampWidth/2, stampY + 12, { align: 'center' });
+    doc.text('STAMP', stampX + stampWidth/2, stampY + 18, { align: 'center' });
+    doc.setFontSize(6);
+    doc.text('GARISSA', stampX + stampWidth/2, stampY + 24, { align: 'center' });
+    doc.text('COUNTY', stampX + stampWidth/2, stampY + 28, { align: 'center' });
+    
+    // Add contact info below stamp
+    doc.setTextColor(0, 100, 200);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('fundadmin@garissa.go.ke', stampX + stampWidth/2, stampY + 35, { align: 'center' });
+    doc.setFontSize(6);
+    doc.text('P.O. Box 1377-70100', stampX + stampWidth/2, stampY + 40, { align: 'center' });
+    doc.text('Garissa, Kenya', stampX + stampWidth/2, stampY + 44, { align: 'center' });
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    
+    // Also try to add image stamp if available
     if (stampImg) {
-      const stampX = pageWidth - margin - 40;
-      const stampY = pageHeight - 50;
-      addImage(stampImg, stampX, stampY, 40, 40);
+      try {
+        addImage(stampImg, stampX - 5, stampY - 5, stampWidth + 10, stampHeight + 10);
+      } catch (e) {
+        console.warn('Could not add image stamp:', e);
+      }
     }
 
     // Footer
