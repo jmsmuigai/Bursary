@@ -334,6 +334,9 @@
     // Update application counter
     localStorage.setItem('mbms_application_counter', counter.toString());
     
+    console.log('✅ Application submitted:', appID);
+    console.log('📊 Total applications now:', applications.length);
+    
     // Trigger storage event to notify admin dashboard (for real-time updates)
     window.dispatchEvent(new CustomEvent('mbms-data-updated', {
       detail: { key: 'mbms_applications', action: 'submitted', appID: appID }
@@ -351,6 +354,10 @@
     } catch (e) {
       console.log('Storage event dispatch:', e);
     }
+    
+    // Force localStorage update to trigger cross-tab events
+    const currentApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    localStorage.setItem('mbms_applications', JSON.stringify(currentApps));
 
     alert('✅ Application submitted successfully! Redirecting to dashboard...');
     window.location.href = 'applicant_dashboard.html';
