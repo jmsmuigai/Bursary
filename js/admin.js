@@ -234,8 +234,8 @@
             <i class="bi bi-eye"></i> View
           </button>
           <button class="btn btn-sm btn-success" onclick="downloadApplicationLetter('${app.appID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter">
-            <i class="bi bi-download"></i> Download
-          </button>
+              <i class="bi bi-download"></i> Download
+            </button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -500,7 +500,7 @@
       alert('Application not found');
       return;
     }
-    
+
     // Download application summary PDF
     if (typeof downloadApplicationSummaryPDF !== 'undefined') {
       await downloadApplicationSummaryPDF(app);
@@ -512,28 +512,35 @@
 
   // Download application letter (works for all statuses: Awarded, Rejected, Pending)
   window.downloadApplicationLetter = async function(appID) {
-    const apps = loadApplications();
+    try {
+      const apps = loadApplications();
+      if (!apps || apps.length === 0) {
+        alert('⚠️ No applications found. Please load demo data or wait for applications to be submitted.');
+        return;
+      }
+      
     const app = apps.find(a => a.appID === appID);
-    
-    if (!app) {
-      alert('⚠️ Application not found.');
+      
+      if (!app) {
+        console.error('Application not found. AppID:', appID);
+        console.log('Available applications:', apps.map(a => a.appID));
+        alert('⚠️ Application not found.\n\nApplication ID: ' + appID + '\n\nPlease refresh the page and try again.');
       return;
     }
 
-    try {
       if (app.status === 'Awarded') {
         // Download award letter
-        if (!app.awardDetails) {
-          alert('⚠️ Award details not found. Please award this application first.');
-          return;
-        }
-        
-        const awardDetails = {
-          ...app.awardDetails,
-          serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
-        };
-        
-        await downloadPDFDirect(app, awardDetails);
+    if (!app.awardDetails) {
+      alert('⚠️ Award details not found. Please award this application first.');
+      return;
+    }
+
+      const awardDetails = {
+        ...app.awardDetails,
+        serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
+      };
+      
+      await downloadPDFDirect(app, awardDetails);
       } else if (app.status === 'Rejected') {
         // Download rejection letter
         await downloadRejectionLetter(app);
@@ -713,21 +720,21 @@
           
           if (reportType === 'beneficiaries') {
             rows = [['Serial No', 'App ID', 'Applicant Name', 'Sub-County', 'Ward', 'Institution', 'Status', 'Amount Requested', 'Awarded Amount', 'Date Submitted', 'Date Awarded']];
-            filtered.forEach(app => {
-              rows.push([
+          filtered.forEach(app => {
+            rows.push([
                 app.awardDetails?.serialNumber || 'N/A',
-                app.appID || 'N/A',
-                app.applicantName || 'N/A',
-                app.personalDetails?.subCounty || app.subCounty || 'N/A',
-                app.personalDetails?.ward || app.ward || 'N/A',
-                app.personalDetails?.institution || app.institution || 'N/A',
-                app.status || 'N/A',
-                (app.financialDetails?.amountRequested || 0).toString(),
-                (app.awardDetails?.committee_amount_kes || 0).toString(),
+              app.appID || 'N/A',
+              app.applicantName || 'N/A',
+              app.personalDetails?.subCounty || app.subCounty || 'N/A',
+              app.personalDetails?.ward || app.ward || 'N/A',
+              app.personalDetails?.institution || app.institution || 'N/A',
+              app.status || 'N/A',
+              (app.financialDetails?.amountRequested || 0).toString(),
+              (app.awardDetails?.committee_amount_kes || 0).toString(),
                 new Date(app.dateSubmitted).toLocaleDateString(),
                 app.awardDetails?.date_awarded ? new Date(app.awardDetails.date_awarded).toLocaleDateString() : 'N/A'
-              ]);
-            });
+            ]);
+          });
             filename = `garissa_bursary_beneficiaries_${new Date().toISOString().split('T')[0]}.csv`;
           } else if (reportType === 'allocation') {
             rows = [['Sub-County', 'Ward', 'Applicant Name', 'Institution', 'Amount Requested', 'Amount Awarded', 'Serial Number', 'Date Awarded']];
@@ -1023,7 +1030,7 @@
       alert('❌ Error loading demo data: ' + error.message);
     }
   };
-
+  
   // Initialize
   populateFilters();
   

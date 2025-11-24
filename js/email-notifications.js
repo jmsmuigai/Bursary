@@ -104,9 +104,114 @@ Garissa County Bursary Management System`;
   sendEmailNotification(ADMIN_EMAIL, subject, body);
 }
 
+/**
+ * Send email draft to fundadmin@garissa.go.ke
+ * Creates a draft email that appears in the user's email client
+ */
+function sendEmailDraft(application, documentType, filename, awardDetails = null) {
+  try {
+    const ADMIN_EMAIL = 'fundadmin@garissa.go.ke';
+    let subject = '';
+    let body = '';
+    
+    const applicantName = application.applicantName || 
+      `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim();
+    const institution = application.personalDetails?.institution || 'N/A';
+    
+    if (documentType === 'award') {
+      const amount = awardDetails?.committee_amount_kes || awardDetails?.amount || 0;
+      const serialNumber = awardDetails?.serialNumber || 'N/A';
+      subject = `Bursary Award - ${application.appID} - ${applicantName}`;
+      body = `Dear Fund Administrator,
+
+Please find attached the award letter for the following bursary application:
+
+Application ID: ${application.appID}
+Applicant: ${applicantName}
+Institution: ${institution}
+Amount Awarded: Ksh ${amount.toLocaleString()}
+Serial Number: ${serialNumber}
+Date Awarded: ${new Date(awardDetails?.date_awarded || new Date()).toLocaleDateString()}
+
+Document: ${filename}
+
+This document has been generated and saved to your downloads folder.
+
+Best regards,
+Garissa County Bursary Management System`;
+    } else if (documentType === 'rejection') {
+      subject = `Bursary Rejection - ${application.appID} - ${applicantName}`;
+      body = `Dear Fund Administrator,
+
+Please find attached the rejection letter for the following bursary application:
+
+Application ID: ${application.appID}
+Applicant: ${applicantName}
+Institution: ${institution}
+Date Rejected: ${new Date(application.rejectionDate || new Date()).toLocaleDateString()}
+Reason: ${application.rejectionReason || 'Application did not meet requirements'}
+
+Document: ${filename}
+
+This document has been generated and saved to your downloads folder.
+
+Best regards,
+Garissa County Bursary Management System`;
+    } else if (documentType === 'status') {
+      subject = `Bursary Status Update - ${application.appID} - ${applicantName}`;
+      body = `Dear Fund Administrator,
+
+Please find attached the status letter for the following bursary application:
+
+Application ID: ${application.appID}
+Applicant: ${applicantName}
+Institution: ${institution}
+Current Status: ${application.status || 'Pending'}
+
+Document: ${filename}
+
+This document has been generated and saved to your downloads folder.
+
+Best regards,
+Garissa County Bursary Management System`;
+    } else {
+      subject = `Bursary Application Summary - ${application.appID} - ${applicantName}`;
+      body = `Dear Fund Administrator,
+
+Please find attached the application summary for:
+
+Application ID: ${application.appID}
+Applicant: ${applicantName}
+Institution: ${institution}
+Status: ${application.status || 'N/A'}
+
+Document: ${filename}
+
+This document has been generated and saved to your downloads folder.
+
+Best regards,
+Garissa County Bursary Management System`;
+    }
+    
+    // Create mailto link with body (creates draft in email client)
+    const mailtoLink = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Open email client with draft
+    window.location.href = mailtoLink;
+    
+    console.log('Email draft created:', { to: ADMIN_EMAIL, subject, filename });
+    
+    return true;
+  } catch (error) {
+    console.error('Email draft error:', error);
+    return false;
+  }
+}
+
 // Export functions
 window.sendEmailNotification = sendEmailNotification;
 window.notifyAdminAwarded = notifyAdminAwarded;
 window.notifyAdminRejected = notifyAdminRejected;
 window.notifyAdminReportGenerated = notifyAdminReportGenerated;
+window.sendEmailDraft = sendEmailDraft;
 

@@ -56,11 +56,20 @@ function getNextSerialNumber() {
 async function generateOfferLetterPDF(application, awardDetails, options = {}) {
   try {
     // Load jsPDF dynamically
-    if (typeof window.jsPDF === 'undefined') {
-      await loadJSPDF();
+    await loadJSPDF();
+    
+    // Get jsPDF constructor - handle different loading scenarios
+    let jsPDF;
+    if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
+      jsPDF = window.jspdf.jsPDF;
+    } else if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF !== 'undefined') {
+      jsPDF = window.jsPDF.jsPDF;
+    } else if (typeof window.jsPDF === 'function') {
+      jsPDF = window.jsPDF;
+    } else {
+      throw new Error('jsPDF library not available. Please refresh the page.');
     }
 
-    const { jsPDF } = window.jsPDF;
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -639,7 +648,85 @@ function downloadPDFFromModal(blobUrl, filename) {
 }
 
 /**
- * Direct download PDF (without preview) - Cross-platform compatible
+ * Get jsPDF constructor - handles all loading scenarios
+ */
+function getJSPDFConstructor() {
+  // Try multiple ways jsPDF might be loaded
+  if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF === 'function') {
+    return window.jspdf.jsPDF;
+  }
+  if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF === 'function') {
+    return window.jsPDF.jsPDF;
+  }
+  if (typeof window.jsPDF === 'function') {
+    return window.jsPDF;
+  }
+  if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
+    return window.jspdf.jsPDF;
+  }
+  throw new Error('jsPDF library not loaded. Please refresh the page.');
+}
+
+/**
+ * Smart auto-download function - generates and saves PDF automatically
+ * Uses doc.save() which is the most reliable method
+ */
+async function autoDownloadPDF(application, awardDetails, documentType = 'award') {
+  try {
+    await loadJSPDF();
+    const jsPDF = getJSPDFConstructor();
+    
+    let doc;
+    let filename;
+    
+    // Generate the appropriate PDF
+    if (documentType === 'award') {
+      // Use existing generator but modify to use direct save
+      const result = await generateOfferLetterPDF(application, awardDetails, { preview: false, directSave: true });
+      filename = result.filename;
+      doc = result.doc;
+    } else if (documentType === 'rejection') {
+      const result = await generateRejectionLetterPDF(application);
+      filename = result.filename;
+      // Regenerate with direct save
+      doc = await createRejectionPDFDoc(application, jsPDF);
+    } else if (documentType === 'status') {
+      const result = await generateStatusLetterPDF(application);
+      filename = result.filename;
+      doc = await createStatusPDFDoc(application, jsPDF);
+    } else {
+      const result = await generateApplicationSummaryPDF(application);
+      filename = result.filename;
+      doc = await createSummaryPDFDoc(application, jsPDF);
+    }
+    
+    // Auto-save to downloads folder using doc.save() - most reliable
+    if (doc && typeof doc.save === 'function') {
+      doc.save(filename);
+    } else {
+      // Fallback: regenerate and save
+      const jsPDF2 = getJSPDFConstructor();
+      const newDoc = new jsPDF2({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      if (documentType === 'award') {
+        await populateAwardPDF(newDoc, application, awardDetails);
+      }
+      newDoc.save(filename);
+    }
+    
+    // Send email draft after download
+    setTimeout(() => {
+      sendEmailDraft(application, documentType, filename, awardDetails);
+    }, 1000);
+    
+    return { filename, success: true };
+  } catch (error) {
+    console.error('Auto-download error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Direct download PDF (without preview) - Smart auto-download
  */
 async function downloadPDFDirect(application, awardDetails) {
   try {
@@ -649,65 +736,54 @@ async function downloadPDFDirect(application, awardDetails) {
     loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating PDF...';
     document.body.appendChild(loadingAlert);
 
-    // Generate PDF as blob
-    const result = await generateOfferLetterPDF(application, awardDetails, { preview: true });
+    // Use smart auto-download
+    await loadJSPDF();
+    const jsPDF = getJSPDFConstructor();
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    
+    // Generate award letter content
+    await populateAwardPDF(doc, application, awardDetails);
+    
+    const serialNumber = awardDetails?.serialNumber || getNextSerialNumber();
+    const filename = `Garissa_Bursary_Award_${serialNumber}_${application.appID}.pdf`;
+    
+    // Auto-save (most reliable method)
+    doc.save(filename);
     
     loadingAlert.remove();
+    showDownloadSuccess(filename);
     
-    // Download the blob
-    try {
-      const link = document.createElement('a');
-      link.href = result.blobUrl;
-      link.download = result.filename;
-      link.style.display = 'none';
-      link.setAttribute('download', result.filename);
-      
-      document.body.appendChild(link);
-      
-      // Trigger download
-      if (link.click) {
-        link.click();
-      } else {
-        const event = new MouseEvent('click', {
-          view: window,
-          bubbles: true,
-          cancelable: true
-        });
-        link.dispatchEvent(event);
-      }
-      
-      // Clean up
-      setTimeout(() => {
-        if (link.parentNode) {
-          document.body.removeChild(link);
-        }
-        URL.revokeObjectURL(result.blobUrl);
-      }, 100);
-      
-      // Show success message
-      showDownloadSuccess(result.filename);
-      
-    } catch (downloadError) {
-      console.error('Download trigger error:', downloadError);
-      // Fallback: regenerate without preview and use doc.save
-      try {
-        const directResult = await generateOfferLetterPDF(application, awardDetails);
-        showDownloadSuccess(directResult.filename);
-      } catch (fallbackError) {
-        console.error('Fallback download error:', fallbackError);
-        // Last resort: open in new tab
-        window.open(result.blobUrl, '_blank');
-        alert('✅ PDF opened in new tab. Please use your browser\'s download option (right-click → Save As).');
-      }
-    }
+    // Send email draft
+    setTimeout(() => {
+      sendEmailDraft(application, 'award', filename, awardDetails);
+    }, 1000);
     
-    return result;
+    return { filename, success: true };
   } catch (error) {
     console.error('Download error:', error);
     const loadingAlert = document.querySelector('.alert-info');
     if (loadingAlert) loadingAlert.remove();
-    alert('❌ Error generating PDF: ' + error.message);
-    throw error;
+    
+    // Fallback: try blob download
+    try {
+      const result = await generateOfferLetterPDF(application, awardDetails, { preview: true });
+      const link = document.createElement('a');
+      link.href = result.blobUrl;
+      link.download = result.filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        if (link.parentNode) document.body.removeChild(link);
+        URL.revokeObjectURL(result.blobUrl);
+      }, 100);
+      showDownloadSuccess(result.filename);
+      sendEmailDraft(application, 'award', result.filename, awardDetails);
+      return result;
+    } catch (fallbackError) {
+      alert('❌ Error generating PDF: ' + error.message + '\n\nPlease refresh the page and try again.');
+      throw error;
+    }
   }
 }
 
@@ -745,17 +821,55 @@ function showDownloadSuccess(filename) {
  */
 function loadJSPDF() {
   return new Promise((resolve, reject) => {
-    if (typeof window.jsPDF !== 'undefined') {
+    // Check if already loaded (multiple ways it might be available)
+    if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF !== 'undefined') {
       resolve();
+      return;
+    }
+    if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
+      window.jsPDF = window.jspdf;
+      resolve();
+      return;
+    }
+    if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF === 'undefined') {
+      // Try to use directly
+      if (typeof window.jsPDF === 'function') {
+        resolve();
+        return;
+      }
+    }
+
+    // Check if script already exists
+    const existingScript = document.querySelector('script[src*="jspdf"]');
+    if (existingScript) {
+      // Wait a bit for it to load
+      setTimeout(() => {
+        if (typeof window.jspdf !== 'undefined') {
+          window.jsPDF = window.jspdf;
+          resolve();
+        } else if (typeof window.jsPDF !== 'undefined') {
+          resolve();
+        } else {
+          reject(new Error('jsPDF library failed to load'));
+        }
+      }, 500);
       return;
     }
 
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
     script.onload = () => {
-      // jsPDF is loaded in window.jspdf
-      window.jsPDF = window.jspdf.jsPDF;
-      resolve();
+      // Wait a moment for library to initialize
+      setTimeout(() => {
+        if (typeof window.jspdf !== 'undefined') {
+          window.jsPDF = window.jspdf;
+          resolve();
+        } else if (typeof window.jsPDF !== 'undefined') {
+          resolve();
+        } else {
+          reject(new Error('jsPDF library loaded but not accessible'));
+        }
+      }, 100);
     };
     script.onerror = () => reject(new Error('Failed to load jsPDF library'));
     document.head.appendChild(script);
@@ -806,11 +920,20 @@ function loadImage(src) {
  */
 async function generateRejectionLetterPDF(application) {
   try {
-    if (typeof window.jsPDF === 'undefined') {
-      await loadJSPDF();
+    await loadJSPDF();
+    
+    // Get jsPDF constructor
+    let jsPDF;
+    if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
+      jsPDF = window.jspdf.jsPDF;
+    } else if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF !== 'undefined') {
+      jsPDF = window.jsPDF.jsPDF;
+    } else if (typeof window.jsPDF === 'function') {
+      jsPDF = window.jsPDF;
+    } else {
+      throw new Error('jsPDF library not available. Please refresh the page.');
     }
 
-    const { jsPDF } = window.jsPDF;
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -972,11 +1095,20 @@ async function generateRejectionLetterPDF(application) {
  */
 async function generateStatusLetterPDF(application) {
   try {
-    if (typeof window.jsPDF === 'undefined') {
-      await loadJSPDF();
+    await loadJSPDF();
+    
+    // Get jsPDF constructor
+    let jsPDF;
+    if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
+      jsPDF = window.jspdf.jsPDF;
+    } else if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF !== 'undefined') {
+      jsPDF = window.jsPDF.jsPDF;
+    } else if (typeof window.jsPDF === 'function') {
+      jsPDF = window.jsPDF;
+    } else {
+      throw new Error('jsPDF library not available. Please refresh the page.');
     }
 
-    const { jsPDF } = window.jsPDF;
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -1132,6 +1264,14 @@ async function downloadRejectionLetter(application) {
     const result = await generateRejectionLetterPDF(application);
     loadingAlert.remove();
     showDownloadSuccess(result.filename);
+    
+    // Send email draft
+    setTimeout(() => {
+      if (typeof sendEmailDraft !== 'undefined') {
+        sendEmailDraft(application, 'rejection', result.filename);
+      }
+    }, 1500);
+    
     return result;
   } catch (error) {
     console.error('Download rejection letter error:', error);
@@ -1156,6 +1296,14 @@ async function downloadStatusLetter(application) {
     const result = await generateStatusLetterPDF(application);
     loadingAlert.remove();
     showDownloadSuccess(result.filename);
+    
+    // Send email draft
+    setTimeout(() => {
+      if (typeof sendEmailDraft !== 'undefined') {
+        sendEmailDraft(application, 'status', result.filename);
+      }
+    }, 1500);
+    
     return result;
   } catch (error) {
     console.error('Download status letter error:', error);
@@ -1171,11 +1319,20 @@ async function downloadStatusLetter(application) {
  */
 async function generateApplicationSummaryPDF(application) {
   try {
-    if (typeof window.jsPDF === 'undefined') {
-      await loadJSPDF();
+    await loadJSPDF();
+    
+    // Get jsPDF constructor
+    let jsPDF;
+    if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
+      jsPDF = window.jspdf.jsPDF;
+    } else if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF !== 'undefined') {
+      jsPDF = window.jsPDF.jsPDF;
+    } else if (typeof window.jsPDF === 'function') {
+      jsPDF = window.jsPDF;
+    } else {
+      throw new Error('jsPDF library not available. Please refresh the page.');
     }
 
-    const { jsPDF } = window.jsPDF;
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -1330,6 +1487,14 @@ async function downloadApplicationSummaryPDF(application) {
     const result = await generateApplicationSummaryPDF(application);
     loadingAlert.remove();
     showDownloadSuccess(result.filename);
+    
+    // Send email draft
+    setTimeout(() => {
+      if (typeof sendEmailDraft !== 'undefined') {
+        sendEmailDraft(application, 'summary', result.filename);
+      }
+    }, 1500);
+    
     return result;
   } catch (error) {
     console.error('Download application summary error:', error);
