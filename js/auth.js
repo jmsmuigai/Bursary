@@ -93,7 +93,7 @@
       }
       
       // If admin email but wrong password
-      alert('❌ Incorrect password for admin account. Default password: @Omar.123!\n\nIf you changed your password, use the new password.');
+      alert('❌ Incorrect password for admin account.\n\nIf you have changed your password, please use the new password.\n\nIf you have forgotten your password, please contact the system administrator.');
       return;
     }
 
@@ -115,7 +115,7 @@
 
     // No match found
     alert('❌ Invalid credentials. Please check your email/ID and password.\n\n' +
-          'Admin: Use fundadmin@garissa.go.ke with password @Omar.123!\n\n' +
+          'Admin: Use fundadmin@garissa.go.ke (contact system administrator for password)\n\n' +
           'Applicants: Use your registered email/ID. If you forgot your password, click "Forgot password?"');
   });
 })();

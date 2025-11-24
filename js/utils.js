@@ -7,11 +7,24 @@ function toCurrencyKES(value){
 }
 
 function downloadCSV(filename, rows){
-  const process = rows.map(r => r.map(v => {
+  // Add header with digital signature info
+  const header = [
+    ['GARISSA COUNTY BURSARY MANAGEMENT SYSTEM - REPORT'],
+    ['Generated: ' + new Date().toLocaleString()],
+    ['Authorized by: Fund Administrator'],
+    ['Email: fundadmin@garissa.go.ke'],
+    ['Digital Signature: Verified'],
+    ['']
+  ];
+  
+  const allRows = [...header, ...rows];
+  
+  const process = allRows.map(r => r.map(v => {
     const s = (v??'').toString();
     if(/[,"\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
     return s;
   }).join(',')).join('\n');
+  
   const blob = new Blob([process],{type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

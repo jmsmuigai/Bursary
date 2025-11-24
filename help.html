@@ -186,7 +186,7 @@
                 <strong>Admin Account:</strong>
                 <ul class="mb-0">
                   <li>Email: fundadmin@garissa.go.ke</li>
-                  <li>Default Password: @Omar.123! (can be changed)</li>
+                  <li>Password: Contact system administrator for access credentials</li>
                 </ul>
               </div>
 
@@ -195,7 +195,29 @@
                   <span class="step-number">1</span>
                   <div>
                     <h5>Login to Admin Dashboard</h5>
-                    <p class="mb-0">Use your admin email and password to access the administration portal.</p>
+                    <p class="mb-0">Use your admin email and password to access the administration portal. If you need to reset your password, contact the system administrator.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-card">
+                <div class="d-flex align-items-start">
+                  <span class="step-number">1a</span>
+                  <div>
+                    <h5>Change Your Password</h5>
+                    <p class="mb-0">To change your admin password:
+                      <ol>
+                        <li>Login to the admin dashboard</li>
+                        <li>Click on "Change Password" in the sidebar menu</li>
+                        <li>Enter your current password</li>
+                        <li>Enter your new password (minimum 8 characters)</li>
+                        <li>Confirm your new password</li>
+                        <li>Click "Change Password" to save</li>
+                      </ol>
+                      <div class="alert alert-warning mt-2 mb-0">
+                        <strong>Security Note:</strong> Choose a strong password with a mix of letters, numbers, and special characters. Do not share your password with anyone.
+                      </div>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -259,6 +281,7 @@
                     <h5>Award an Application</h5>
                     <p class="mb-0">To approve and award:
                       <ol>
+                        <li>Click "View" on the application</li>
                         <li>Enter the <strong>Award Amount (KES)</strong> in the input field</li>
                         <li>Enter a <strong>Recommendation/Justification</strong> (mandatory)</li>
                         <li>Click <strong>"Approve/Award"</strong></li>
@@ -267,6 +290,7 @@
                             <li>Check budget availability (Total Budget: KSH 50,000,000)</li>
                             <li>Generate a unique serial number (GRS/Bursary/001, 002, etc.)</li>
                             <li>Deduct the amount from available budget</li>
+                            <li>Send email notification to fundadmin@garissa.go.ke</li>
                             <li>Open PDF preview modal for review</li>
                             <li>Allow you to print or download the award letter</li>
                           </ul>
@@ -275,7 +299,10 @@
                       <div class="alert alert-info mt-2 mb-0">
                         <strong>Budget Management:</strong> The system tracks a total budget of KSH 50,000,000. When you award an application, the amount is automatically deducted from the budget. You'll receive alerts when budget is low (80% used) or exhausted.
                       </div>
-                      <strong>Note:</strong> The PDF includes serial number, signature, and stamp from the Fund Administrator.
+                      <div class="alert alert-success mt-2 mb-0">
+                        <strong>Email Notifications:</strong> When you award or reject an application, an email notification is automatically sent to fundadmin@garissa.go.ke with all relevant details.
+                      </div>
+                      <strong>Note:</strong> The PDF includes serial number, digital signature, and stamp from the Fund Administrator.
                     </p>
                   </div>
                 </div>
@@ -286,7 +313,23 @@
                   <span class="step-number">6</span>
                   <div>
                     <h5>Reject an Application</h5>
-                    <p class="mb-0">If an application doesn't meet criteria, click "Reject" and confirm. The status will be updated to "Rejected".</p>
+                    <p class="mb-0">If an application doesn't meet criteria:
+                      <ol>
+                        <li>Click "View" on the application</li>
+                        <li>Click "Reject" button</li>
+                        <li>Enter a <strong>rejection reason</strong> (mandatory - this will be included in the rejection letter)</li>
+                        <li>Confirm the rejection</li>
+                      </ol>
+                      The system will:
+                      <ul>
+                        <li>Update status to "Rejected"</li>
+                        <li>Send email notification to fundadmin@garissa.go.ke</li>
+                        <li>Generate rejection letter with the reason (can be downloaded)</li>
+                      </ul>
+                      <div class="alert alert-info mt-2 mb-0">
+                        <strong>Note:</strong> The rejection reason is included in the official rejection letter that applicants can download.
+                      </div>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -333,9 +376,14 @@
                             <li>Select report type (Beneficiary List, Financial Summary, Demographics, Budget Utilization)</li>
                             <li>Choose status filter (Awarded Only, All Applications, Pending, Rejected)</li>
                             <li>Click "Download Excel/CSV" to export data</li>
+                            <li>All reports include digital signature of Fund Administrator</li>
+                            <li>Email notification automatically sent to fundadmin@garissa.go.ke</li>
                           </ul>
                         </li>
                       </ul>
+                      <div class="alert alert-success mt-2 mb-0">
+                        <strong>Digital Signatures:</strong> All downloaded reports include the Fund Administrator's digital signature and authorization information for official use.
+                      </div>
                     </p>
                   </div>
                 </div>
@@ -345,23 +393,30 @@
                 <div class="d-flex align-items-start">
                   <span class="step-number">9</span>
                   <div>
-                    <h5>Preview and Download Award Letters</h5>
-                    <p class="mb-0">For already-awarded applications:
+                    <h5>Download Application Documents</h5>
+                    <p class="mb-0">For all applications (Awarded, Rejected, Pending):
                       <ul>
-                        <li>Click the <strong>"Preview"</strong> or <strong>"Download"</strong> button in the applications table</li>
-                        <li>A preview modal will open showing the complete award letter in receipt-style format</li>
-                        <li>You can <strong>Print to PDF</strong> (opens system print dialog)</li>
-                        <li>Or <strong>Download</strong> the PDF directly</li>
-                        <li>The award letter includes:
+                        <li>Click the <strong>"Download"</strong> button in the applications table</li>
+                        <li>The system generates the appropriate document:
                           <ul>
-                            <li>Professional receipt-style format</li>
-                            <li>Amount in words (e.g., "TWO HUNDRED THOUSAND")</li>
-                            <li>Detailed award information table</li>
-                            <li>Unique serial number (GRS/Bursary/001, 002, etc.)</li>
-                            <li>Official signature and stamp placeholders</li>
+                            <li><strong>Awarded:</strong> Award letter with receipt-style format, amount in words, serial number</li>
+                            <li><strong>Rejected:</strong> Rejection letter with reason for rejection</li>
+                            <li><strong>Pending:</strong> Status letter showing current review status</li>
                           </ul>
                         </li>
+                        <li>All documents include:
+                          <ul>
+                            <li>Professional formatting</li>
+                            <li>Digital signature of Fund Administrator</li>
+                            <li>Official county branding</li>
+                            <li>Complete application details</li>
+                          </ul>
+                        </li>
+                        <li>You can also download application summary PDF from the "View" modal</li>
                       </ul>
+                      <div class="alert alert-info mt-2 mb-0">
+                        <strong>Email Notifications:</strong> When documents are generated for awarded or rejected applications, email notifications are automatically sent to fundadmin@garissa.go.ke.
+                      </div>
                     </p>
                   </div>
                 </div>
@@ -489,7 +544,7 @@
     <div class="container">
       <div class="text-center">
         <p class="mb-2" style="font-size: 0.9rem;">
-          <span style="color: #FFD700; font-weight: bold;">Garissa County Bursary Management System v2.0</span>
+          <span style="color: #FFD700; font-weight: bold;">Garissa County Bursary Management System v2.2</span>
         </p>
         <p class="mb-0" style="font-size: 0.85rem; opacity: 0.9;">
           System developed by <a href="mailto:jmsmuigai@gmail.com" style="color: #FFD700; text-decoration: none; font-weight: bold;">jmsmuigai@gmail.com</a>

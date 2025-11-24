@@ -1,8 +1,8 @@
-# 🌟 Garissa County Modern Bursary Management System (MBMS) v2.1
+# 🌟 Garissa County Modern Bursary Management System (MBMS) v2.2
 
 A comprehensive, modern, and secure bursary management system for Garissa County, Kenya. This system streamlines the entire bursary lifecycle from online application to fund allocation and reporting.
 
-**Version:** 2.1  
+**Version:** 2.2  
 **Release Date:** January 2025  
 **Status:** ✅ **PRODUCTION READY**  
 **Developed by:** jmsmuigai@gmail.com  
@@ -38,8 +38,9 @@ Anyone with this link can:
 
 ### Administration Dashboard
 - ✅ **Single Admin Account**:
-  - `fundadmin@garissa.go.ke` (Default Password: `@Omar.123!`)
-  - Password can be changed by administrator
+  - `fundadmin@garissa.go.ke`
+  - Password can be changed by administrator (see Help Guide for instructions)
+  - Contact system administrator for initial access credentials
 - ✅ **Budget Management System**:
   - Total Budget: KSH 50,000,000
   - Real-time budget tracking and deduction
@@ -55,16 +56,16 @@ Anyone with this link can:
   - Approve/Award applications with amount and justification
   - Automatic serial number generation (GRS/Bursary/001, 002, 003...)
   - Reject applications
-- ✅ **PDF Award Letter Generation** (Receipt-Style Format):
-  - Automatic PDF generation when awarding
-  - **Professional receipt-style format** matching official document standards
-  - **Amount in words** conversion
-  - **Detailed award table** with all information
-  - Preview before printing/downloading
+- ✅ **PDF Document Generation** (Receipt-Style Format):
+  - **Award Letters**: Professional receipt-style format with amount in words
+  - **Rejection Letters**: Official rejection notices with reasons
+  - **Status Letters**: Current status updates for pending applications
+  - **Application Summary**: Complete application details PDF
+  - **Digital Signatures**: All documents include Fund Administrator signature
+  - **Email Notifications**: Automatic email notifications to fundadmin@garissa.go.ke
   - Print to PDF functionality
-  - Download award letter with all details
+  - Download documents with all details
   - Professional design with Garissa County branding
-  - Includes serial number, signature, and stamp placeholders
 - ✅ **Smart Reports & Analytics Dashboard**:
   - **Summary Report** with comprehensive analytics
     - Total applications, awarded count, and budget utilization
@@ -72,10 +73,12 @@ Anyone with this link can:
     - Gender distribution statistics
     - Average award amounts and ranges
   - **Filterable Data Export**:
-    - Beneficiary List (CSV/Excel)
+    - Beneficiary List (CSV/Excel with digital signature)
     - Financial Allocation Summary
     - Demographics Report (Sub-County/Gender/Level)
     - Budget Utilization Report
+  - **Digital Signatures**: All reports include Fund Administrator digital signature
+  - **Email Notifications**: Reports automatically notify fundadmin@garissa.go.ke
   - One-click "Summary Report" button for instant insights
 - ✅ **Dashboard Metrics**:
   - Total Applications
@@ -116,8 +119,8 @@ Anyone with this link can:
    - Print/Download award letter when approved
 3. **For Admins**:
    - Email: `fundadmin@garissa.go.ke`
-   - Default Password: `@Omar.123!`
-   - Password can be changed after login
+   - Contact system administrator for access credentials
+   - Password can be changed after login (see Help Guide)
    - **Load Demo Data**: Click "Load Demo Data" button in Reports section to see 10 sample applications
 
 ### Local Testing (Optional)
@@ -232,7 +235,7 @@ Users can select "Other (Specify)" if their location is not listed.
 
 ### Fund Administrator
 - **Email**: `fundadmin@garissa.go.ke`
-- **Default Password**: `@Omar.123!` (can be changed)
+- **Password**: Contact system administrator for access credentials (can be changed after login)
 - **Role**: Fund Administrator
 
 The administrator has full access to:

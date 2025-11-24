@@ -1166,6 +1166,180 @@ async function downloadStatusLetter(application) {
   }
 }
 
+/**
+ * Generate application summary PDF (for viewing/downloading application details)
+ */
+async function generateApplicationSummaryPDF(application) {
+  try {
+    if (typeof window.jsPDF === 'undefined') {
+      await loadJSPDF();
+    }
+
+    const { jsPDF } = window.jsPDF;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    let yPos = margin;
+
+    function addText(text, x, y, options = {}) {
+      const { fontSize = 12, fontStyle = 'normal', align = 'left', color = [0, 0, 0] } = options;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', fontStyle);
+      doc.setTextColor(color[0], color[1], color[2]);
+      doc.text(text, x, y, { align });
+    }
+
+    // Header
+    try {
+      const logoImg = await loadImage('Garissa Logo.png');
+      if (logoImg) {
+        doc.addImage(logoImg, 'PNG', margin, yPos, 25, 25);
+      }
+    } catch (e) {
+      console.warn('Logo not loaded:', e);
+    }
+
+    yPos += 5;
+    addText('THE COUNTY GOVERNMENT OF GARISSA', pageWidth - margin, yPos, {
+      fontSize: 14,
+      fontStyle: 'bold',
+      align: 'right',
+      color: [139, 69, 19]
+    });
+
+    yPos += 6;
+    addText('SCHOLARSHIP FUND', pageWidth - margin, yPos, {
+      fontSize: 12,
+      fontStyle: 'bold',
+      align: 'right',
+      color: [139, 69, 19]
+    });
+
+    yPos += 15;
+
+    // Title
+    addText('BURSARY APPLICATION SUMMARY', margin, yPos, {
+      fontSize: 16,
+      fontStyle: 'bold',
+      align: 'center',
+      color: [139, 69, 19]
+    });
+
+    yPos += 10;
+
+    // Application Details
+    addText(`Application ID: ${application.appID}`, margin, yPos, { fontSize: 11, fontStyle: 'bold' });
+    yPos += 6;
+    addText(`Date Submitted: ${new Date(application.dateSubmitted || new Date()).toLocaleDateString()}`, margin, yPos, { fontSize: 10 });
+    yPos += 6;
+    addText(`Status: ${application.status || 'N/A'}`, margin, yPos, { fontSize: 10 });
+    yPos += 10;
+
+    // Applicant Information
+    doc.setDrawColor(139, 69, 19);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 5;
+
+    addText('APPLICANT INFORMATION', margin, yPos, { fontSize: 12, fontStyle: 'bold', color: [139, 69, 19] });
+    yPos += 8;
+
+    const applicantName = application.applicantName || 
+      `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim();
+    
+    addText(`Name: ${applicantName}`, margin, yPos, { fontSize: 10 });
+    yPos += 5;
+    addText(`Institution: ${application.personalDetails?.institution || 'N/A'}`, margin, yPos, { fontSize: 10 });
+    yPos += 5;
+    addText(`Registration No: ${application.personalDetails?.regNumber || 'N/A'}`, margin, yPos, { fontSize: 10 });
+    yPos += 5;
+    addText(`Location: ${application.personalDetails?.subCounty || 'N/A'}, ${application.personalDetails?.ward || 'N/A'}`, margin, yPos, { fontSize: 10 });
+    yPos += 10;
+
+    // Financial Information
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 5;
+    addText('FINANCIAL INFORMATION', margin, yPos, { fontSize: 12, fontStyle: 'bold', color: [139, 69, 19] });
+    yPos += 8;
+
+    addText(`Amount Requested: Ksh ${(application.financialDetails?.amountRequested || 0).toLocaleString()}`, margin, yPos, { fontSize: 10 });
+    yPos += 5;
+    addText(`Fee Balance: Ksh ${(application.financialDetails?.feeBalance || 0).toLocaleString()}`, margin, yPos, { fontSize: 10 });
+    yPos += 5;
+    addText(`Monthly Income: Ksh ${(application.financialDetails?.monthlyIncome || 0).toLocaleString()}`, margin, yPos, { fontSize: 10 });
+    yPos += 10;
+
+    // Award Details (if awarded)
+    if (application.status === 'Awarded' && application.awardDetails) {
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 5;
+      addText('AWARD DETAILS', margin, yPos, { fontSize: 12, fontStyle: 'bold', color: [139, 69, 19] });
+      yPos += 8;
+      addText(`Amount Awarded: Ksh ${(application.awardDetails.committee_amount_kes || application.awardDetails.amount || 0).toLocaleString()}`, margin, yPos, { fontSize: 10, fontStyle: 'bold' });
+      yPos += 5;
+      addText(`Serial Number: ${application.awardDetails.serialNumber || 'N/A'}`, margin, yPos, { fontSize: 10 });
+      yPos += 5;
+      addText(`Date Awarded: ${new Date(application.awardDetails.date_awarded || new Date()).toLocaleDateString()}`, margin, yPos, { fontSize: 10 });
+      yPos += 10;
+    }
+
+    // Signature
+    yPos += 10;
+    try {
+      const signatureImg = await loadImage('assets/signature.png');
+      if (signatureImg) {
+        doc.addImage(signatureImg, 'PNG', margin, yPos, 40, 15);
+        yPos += 18;
+      } else {
+        yPos += 10;
+      }
+    } catch (e) {
+      yPos += 10;
+    }
+
+    addText('Fund Administrator', margin, yPos, { fontSize: 11, fontStyle: 'bold' });
+    yPos += 5;
+    addText('fundadmin@garissa.go.ke', margin, yPos, { fontSize: 10 });
+
+    const filename = `Garissa_Bursary_Application_${application.appID}.pdf`;
+    doc.save(filename);
+    
+    return { filename };
+  } catch (error) {
+    console.error('Application summary PDF generation error:', error);
+    throw new Error(`Error generating application summary: ${error.message}`);
+  }
+}
+
+/**
+ * Download application summary PDF
+ */
+async function downloadApplicationSummaryPDF(application) {
+  try {
+    const loadingAlert = document.createElement('div');
+    loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+    loadingAlert.style.zIndex = '9999';
+    loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating application summary PDF...';
+    document.body.appendChild(loadingAlert);
+
+    const result = await generateApplicationSummaryPDF(application);
+    loadingAlert.remove();
+    showDownloadSuccess(result.filename);
+    return result;
+  } catch (error) {
+    console.error('Download application summary error:', error);
+    const loadingAlert = document.querySelector('.alert-info');
+    if (loadingAlert) loadingAlert.remove();
+    alert('❌ Error generating application summary: ' + error.message);
+    throw error;
+  }
+}
+
 // Export functions for use in admin.js and applicant_dashboard.html
 window.generateOfferLetterPDF = generateOfferLetterPDF;
 window.previewPDF = previewPDF;
@@ -1179,6 +1353,8 @@ window.generateRejectionLetterPDF = generateRejectionLetterPDF;
 window.generateStatusLetterPDF = generateStatusLetterPDF;
 window.downloadRejectionLetter = downloadRejectionLetter;
 window.downloadStatusLetter = downloadStatusLetter;
+window.generateApplicationSummaryPDF = generateApplicationSummaryPDF;
+window.downloadApplicationSummaryPDF = downloadApplicationSummaryPDF;
 
 // Legacy function names for backward compatibility
 window.printPDF = printPDFFromModal;

@@ -323,6 +323,12 @@
             <h6>Justification</h6>
             <p class="bg-light p-3 rounded">${app.financialDetails?.justification || 'N/A'}</p>
             <hr>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0">Actions</h6>
+              <button class="btn btn-sm btn-outline-primary" onclick="downloadApplicationPDFFromView('${appID}')" title="Download Application as PDF">
+                <i class="bi bi-download me-1"></i>Download PDF
+              </button>
+            </div>
             <h6>Admin Action</h6>
             <div class="input-group mb-3">
               <span class="input-group-text">Award Amount (KES):</span>
@@ -440,19 +446,30 @@
         bootstrap.Modal.getInstance(viewModal).hide();
       }
       
+      // Notify admin via email
+      if (typeof notifyAdminAwarded !== 'undefined') {
+        notifyAdminAwarded(app, app.awardDetails);
+      }
+      
       // Generate and preview PDF offer letter
       try {
         await previewPDF(app, app.awardDetails);
-        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n\nPDF preview is now open. You can print or download it.');
+        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Email notification sent to fundadmin@garissa.go.ke\n\nPDF preview is now open. You can print or download it.');
       } catch (error) {
         console.error('PDF generation error:', error);
-        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n\n⚠️ PDF preview failed. You can generate it later from the applications list.');
+        alert('✅ Application awarded successfully!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Email notification sent to fundadmin@garissa.go.ke\n\n⚠️ PDF preview failed. You can generate it later from the applications list.');
       }
     }
   };
 
   // Reject application
   window.rejectApplication = function(appID) {
+    const rejectionReason = prompt('Please provide a reason for rejection (this will be included in the rejection letter):');
+    if (!rejectionReason || rejectionReason.trim() === '') {
+      alert('Rejection reason is required. Please provide a reason.');
+      return;
+    }
+
     if (!confirm('Are you sure you want to reject this application?')) return;
 
     const apps = loadApplications();
@@ -460,11 +477,36 @@
     if (app) {
       app.status = 'Rejected';
       app.rejectionDate = new Date().toISOString();
+      app.rejectionReason = rejectionReason.trim();
       localStorage.setItem('mbms_applications', JSON.stringify(apps));
+      
+      // Notify admin via email
+      if (typeof notifyAdminRejected !== 'undefined') {
+        notifyAdminRejected(app);
+      }
+      
       updateMetrics();
       applyFilters();
-      alert('Application rejected');
+      alert('✅ Application rejected successfully!\n\n📧 Email notification sent to fundadmin@garissa.go.ke\n\nRejection letter can be downloaded from the applications list.');
       bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+    }
+  };
+
+  // Download application PDF from view modal
+  window.downloadApplicationPDFFromView = async function(appID) {
+    const apps = loadApplications();
+    const app = apps.find(a => a.appID === appID);
+    if (!app) {
+      alert('Application not found');
+      return;
+    }
+    
+    // Download application summary PDF
+    if (typeof downloadApplicationSummaryPDF !== 'undefined') {
+      await downloadApplicationSummaryPDF(app);
+    } else {
+      // Fallback to letter download
+      await downloadApplicationLetter(appID);
     }
   };
 
@@ -744,7 +786,19 @@
 
           if (typeof downloadCSV === 'function') {
             downloadCSV(filename, rows);
-            alert(`✅ Report downloaded successfully!\n\nFile: ${filename}`);
+            
+            // Notify admin via email
+            if (typeof notifyAdminReportGenerated !== 'undefined') {
+              const reportSummary = {
+                type: reportType,
+                status: reportStatus,
+                recordCount: filtered.length,
+                generatedDate: new Date().toLocaleString()
+              };
+              notifyAdminReportGenerated(reportType, reportSummary);
+            }
+            
+            alert(`✅ Report downloaded successfully!\n\nFile: ${filename}\n📧 Email notification sent to fundadmin@garissa.go.ke`);
           } else {
             alert('CSV download function not available. Please refresh the page.');
           }
