@@ -37,8 +37,9 @@ function generateDummyApplications() {
   
   // Award amounts that will total to a reasonable portion of 50M budget
   const awardAmounts = [150000, 200000, 180000, 120000, 250000, 175000, 220000, 190000, 160000, 210000];
-  // Updated: 5 Rejected, 5 Pending Review (no awards for testing)
-  const statuses = ['Rejected', 'Rejected', 'Rejected', 'Rejected', 'Rejected', 'Pending Ward Review', 'Pending Ward Review', 'Pending Committee Review', 'Pending Committee Review', 'Pending Ward Review'];
+  // Create 10 records with various statuses to demonstrate system functionality
+  // 3 Awarded, 3 Pending Review, 2 Rejected, 2 Pending Submission
+  const statuses = ['Awarded', 'Awarded', 'Awarded', 'Pending Ward Review', 'Pending Ward Review', 'Pending Committee Review', 'Rejected', 'Rejected', 'Pending Submission', 'Pending Submission'];
   
   // Ensure we have exactly 10 records
   for (let i = 0; i < 10; i++) {
@@ -114,20 +115,33 @@ function generateDummyApplications() {
       }
     };
     
-    // Add rejection details for rejected applications (5 rejected)
+    // Add award details for awarded applications (3 awarded)
+    if (status === 'Awarded') {
+      const awardAmounts = [150000, 200000, 180000];
+      const awardIndex = ['Awarded', 'Awarded', 'Awarded'].indexOf(status, i - statuses.slice(0, i).filter(s => s === 'Awarded').length);
+      const awardAmount = awardAmounts[awardIndex] || 150000;
+      const serialNumber = `GRS/Bursary/${String(1000 + i).padStart(3, '0')}`;
+      
+      app.awardDetails = {
+        committee_amount_kes: awardAmount,
+        date_awarded: new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)).toISOString(),
+        justification: `Student demonstrates financial need and meets all eligibility criteria. Family income is below threshold and academic performance is satisfactory.`,
+        admin_assigned_uid: 'fundadmin@garissa.go.ke',
+        serialNumber: serialNumber,
+        amount: awardAmount
+      };
+    }
+    
+    // Add rejection details for rejected applications (2 rejected)
     if (status === 'Rejected') {
       const rejectionReasons = [
         'Application did not meet the minimum academic requirements for bursary allocation.',
-        'Incomplete documentation provided. Missing required supporting documents.',
-        'Family income exceeds the eligibility threshold for bursary support.',
-        'Application submitted after the deadline. Late submissions are not considered.',
-        'Previous bursary recipient. Priority given to first-time applicants.'
+        'Incomplete documentation provided. Missing required supporting documents.'
       ];
+      const rejectionIndex = ['Rejected', 'Rejected'].indexOf(status, i - statuses.slice(0, i).filter(s => s === 'Rejected').length);
       app.rejectionDate = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)).toISOString();
-      app.rejectionReason = rejectionReasons[i] || 'Application did not meet the minimum requirements for bursary allocation.';
+      app.rejectionReason = rejectionReasons[rejectionIndex] || 'Application did not meet the minimum requirements for bursary allocation.';
     }
-    
-    // No award details - all are either rejected or pending (for testing)
     
     applications.push(app);
   }

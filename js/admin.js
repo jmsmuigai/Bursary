@@ -1146,9 +1146,9 @@
     let allApps = loadApplications();
     console.log('📊 Initial applications loaded:', allApps.length);
     
-    // AUTO-LOAD DUMMY DATA if no applications exist (10 records: 5 Rejected, 5 Pending Review)
+    // AUTO-LOAD DUMMY DATA if no applications exist (10 records with various statuses)
     if (allApps.length === 0) {
-      console.log('🔄 No applications found. Auto-loading dummy data (10 records: 5 Rejected, 5 Pending Review)...');
+      console.log('🔄 No applications found. Auto-loading dummy data (10 records with various statuses)...');
       
       // Load immediately (no delay)
       try {
@@ -1177,9 +1177,11 @@
               <strong>✅ Demo Data Auto-Loaded!</strong><br>
               <div class="mt-2">
                 📊 10 sample applications created:<br>
-                &nbsp;&nbsp;• 5 Rejected applications<br>
-                &nbsp;&nbsp;• 5 Pending Review applications<br>
-                <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (unchanged - no awards yet)</small>
+                &nbsp;&nbsp;• 3 Awarded applications<br>
+                &nbsp;&nbsp;• 3 Pending Review applications<br>
+                &nbsp;&nbsp;• 2 Rejected applications<br>
+                &nbsp;&nbsp;• 2 Pending Submission applications<br>
+                <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (with 3 awards totaling KSH 530,000)</small>
                 <small class="text-info d-block mt-1">✅ All records visible in dashboard and table</small>
               </div>
               <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -1189,7 +1191,7 @@
               if (notification.parentNode) {
                 notification.remove();
               }
-            }, 8000);
+            }, 10000);
             
             // Force multiple refreshes to ensure display
             setTimeout(() => {
@@ -1201,15 +1203,24 @@
                 applyFilters();
                 console.log('✅ Display refreshed with', verifyApps.length, 'applications');
               }
-            }, 200);
+            }, 300);
             
             setTimeout(() => {
               const verifyApps = loadApplications();
               updateMetrics();
               updateBudgetDisplay();
               renderTable(verifyApps);
+              applyFilters();
               console.log('✅ Final refresh completed');
             }, 1000);
+            
+            setTimeout(() => {
+              const verifyApps = loadApplications();
+              updateMetrics();
+              updateBudgetDisplay();
+              renderTable(verifyApps);
+              console.log('✅ Third refresh completed');
+            }, 2000);
           } else {
             // Even if it says it exists, refresh display
             allApps = loadApplications();
@@ -1223,6 +1234,18 @@
           }
         } else {
           console.error('❌ initializeDummyData function not found!');
+          // Try to generate directly
+          if (typeof generateDummyApplications === 'function') {
+            console.log('🔄 Trying direct generation...');
+            const dummyApps = generateDummyApplications();
+            localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
+            localStorage.setItem('mbms_application_counter', '10');
+            allApps = loadApplications();
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(allApps);
+            applyFilters();
+          }
         }
       } catch (error) {
         console.error('Error auto-loading dummy data:', error);
