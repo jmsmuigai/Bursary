@@ -1194,10 +1194,50 @@
   let allApps = loadApplications();
   console.log('Initial applications loaded:', allApps.length);
   
-  // Auto-load demo data on first visit if no applications exist
+  // Auto-load test data (5 records: 3 Rejected, 2 Pending) if no applications exist
+  const testDataFlag = localStorage.getItem('mbms_test_data_loaded');
+  if (allApps.length === 0 && typeof initializeTestData === 'function' && testDataFlag !== 'loaded') {
+    console.log('No applications found. Loading test data (5 records: 3 Rejected, 2 Pending)...');
+    setTimeout(() => {
+      try {
+        if (initializeTestData()) {
+          localStorage.setItem('mbms_test_data_loaded', 'loaded');
+          const newApps = loadApplications();
+          console.log('Test data loaded:', newApps.length, 'applications');
+          
+          updateMetrics();
+          updateBudgetDisplay();
+          renderTable(newApps);
+          applyFilters();
+          
+          // Show notification
+          const notification = document.createElement('div');
+          notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+          notification.style.zIndex = '9999';
+          notification.style.minWidth = '400px';
+          notification.innerHTML = `
+            <strong>✅ Test Data Loaded!</strong><br>
+            5 test applications created (3 Rejected, 2 Pending)<br>
+            <small>Budget: KSH 50,000,000 (unchanged - no awards yet)</small>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.remove();
+            }
+          }, 5000);
+        }
+      } catch (error) {
+        console.error('Error loading test data:', error);
+      }
+    }, 500);
+  }
+  
+  // Auto-load demo data on first visit if no applications exist (legacy)
   // Check localStorage flag to see if we should auto-load
   const autoLoadFlag = localStorage.getItem('mbms_auto_load_demo');
-  if (allApps.length === 0 && typeof initializeDummyData === 'function' && autoLoadFlag !== 'disabled') {
+  if (allApps.length === 0 && typeof initializeDummyData === 'function' && autoLoadFlag !== 'disabled' && testDataFlag === 'loaded') {
     // Auto-load demo data immediately (for testing/demo purposes)
     console.log('No applications found. Auto-loading demo data...');
     setTimeout(() => {
