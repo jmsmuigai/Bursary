@@ -1412,16 +1412,7 @@
     }
   }, 500);
   
-  setTimeout(() => {
-    const verifyApps = loadApplications();
-    console.log('🔄 Refresh check 2:', verifyApps.length, 'applications');
-    if (verifyApps.length > 0) {
-      updateMetrics();
-      updateBudgetDisplay();
-      renderTable(verifyApps);
-      sessionStorage.setItem('mbms_last_app_count', verifyApps.length.toString());
-    }
-  }, 2000);
+  // Removed duplicate refresh - single refresh is enough
   
   // Expose a global function to manually refresh everything
   window.forceRefreshAll = function() {

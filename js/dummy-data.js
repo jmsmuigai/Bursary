@@ -148,53 +148,28 @@ function initializeDummyData() {
   const existingApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
   
   if (existingApps.length === 0) {
-    console.log('Initializing dummy data...');
+    console.log('🔄 Initializing dummy data (10 records)...');
     const dummyApps = generateDummyApplications();
     localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
     
     // Update application counter
     localStorage.setItem('mbms_application_counter', '10');
-    
-    // Set serial number counter to 10 (since we created 10 records with serials 001-010)
     localStorage.setItem('mbms_last_serial', '10');
     
-    // Initialize budget if not already done
+    // Initialize budget
     if (typeof initializeBudget !== 'undefined') {
       initializeBudget();
     }
-    
-    // Sync budget with awarded applications
     if (typeof syncBudgetWithAwards !== 'undefined') {
       syncBudgetWithAwards();
     }
     
     console.log('✅ Dummy data initialized:', dummyApps.length, 'applications');
-    console.log('Sample application:', dummyApps[0]);
+    console.log('Sample applications:', dummyApps.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
     
-    // Verify data was saved
-    const verifyData = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-    console.log('Verified saved data:', verifyData.length, 'applications');
-    
-    // Return true - the calling function will handle display refresh
     return true;
   } else {
-    const confirmLoad = confirm('Applications already exist. Do you want to replace them with demo data?\n\n⚠️ This will delete all existing applications!');
-    if (confirmLoad) {
-      const dummyApps = generateDummyApplications();
-      localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
-      localStorage.setItem('mbms_application_counter', '10');
-      localStorage.setItem('mbms_last_serial', '10');
-      
-      if (typeof initializeBudget !== 'undefined') {
-        initializeBudget();
-      }
-      if (typeof syncBudgetWithAwards !== 'undefined') {
-        syncBudgetWithAwards();
-      }
-      
-      // Return true - the calling function will handle display refresh
-      return true;
-    }
+    console.log('✅ Applications already exist:', existingApps.length);
     return false;
   }
 }
