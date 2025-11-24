@@ -5,28 +5,35 @@
     console.warn('Admin dashboard already initialized');
     return;
   }
-  window.adminDashboardInitialized = true;
+  
+  // Wait for DOM to be ready before initializing
+  function initAdminDashboard() {
+    if (window.adminDashboardInitialized) {
+      console.warn('Admin dashboard already initialized');
+      return;
+    }
+    window.adminDashboardInitialized = true;
 
-  // Check admin access
-  try {
-    const adminStr = sessionStorage.getItem('mbms_admin');
-    if (!adminStr) {
-      alert('Access denied. Admin login required.');
+    // Check admin access
+    try {
+      const adminStr = sessionStorage.getItem('mbms_admin');
+      if (!adminStr) {
+        alert('Access denied. Admin login required.');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      const admin = JSON.parse(adminStr);
+      const adminEmailEl = document.getElementById('adminEmail');
+      if (adminEmailEl) {
+        adminEmailEl.textContent = admin.email;
+      }
+    } catch (error) {
+      console.error('Admin access check error:', error);
+      alert('Error loading admin session. Please login again.');
       window.location.href = 'index.html';
       return;
     }
-
-    const admin = JSON.parse(adminStr);
-    const adminEmailEl = document.getElementById('adminEmail');
-    if (adminEmailEl) {
-      adminEmailEl.textContent = admin.email;
-    }
-  } catch (error) {
-    console.error('Admin access check error:', error);
-    alert('Error loading admin session. Please login again.');
-    window.location.href = 'index.html';
-    return;
-  }
 
   // Load applications from localStorage (all applications, no filtering)
   function loadApplications() {
@@ -1123,224 +1130,162 @@
     }
   };
 
-  // DISABLED: Auto-refresh to prevent page freezing
-  // Manual refresh available via Refresh button
-  // Auto-refresh can be re-enabled if needed, but currently disabled for stability
+    // DISABLED: Auto-refresh to prevent page freezing
+    // Manual refresh available via Refresh button
+    // Auto-refresh can be re-enabled if needed, but currently disabled for stability
 
-  // Initialize budget
-  if (typeof initializeBudget !== 'undefined') {
-    initializeBudget();
-  }
-  
-  // REMOVED: Manual load functions - data loads automatically on page load
-  
-  // Initialize
-  populateFilters();
-  
-  // Load and display all applications on page load
-  let allApps = loadApplications();
-  console.log('📊 Initial applications loaded:', allApps.length);
-  
-  // If no apps, ensure dummy data loads and displays
-  if (allApps.length === 0) {
-    console.log('⚠️ No applications found - will auto-load dummy data');
-  } else {
-    console.log('✅ Applications found:', allApps.length);
-    console.log('Sample:', allApps.slice(0, 2).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
-  }
-  
-  // AUTO-LOAD DUMMY DATA if no applications exist (10 records: 5 Rejected, 5 Pending Review)
-  if (allApps.length === 0 && typeof initializeDummyData === 'function') {
-    console.log('🔄 No applications found. Auto-loading dummy data (10 records: 5 Rejected, 5 Pending Review)...');
+    // Initialize budget
+    if (typeof initializeBudget !== 'undefined') {
+      initializeBudget();
+    }
     
-    // Load immediately (no delay)
-    try {
-      if (initializeDummyData()) {
-        // Force reload applications immediately
-        allApps = loadApplications();
-        console.log('✅ Dummy data loaded:', allApps.length, 'applications');
-        console.log('Sample apps:', allApps.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
-        
-        // IMMEDIATELY refresh all displays
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(allApps);
-        applyFilters();
-        
-        // Update session storage
-        sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
-        
-        // Show notification
-        const notification = document.createElement('div');
-        notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
-        notification.style.zIndex = '9999';
-        notification.style.minWidth = '500px';
-        notification.innerHTML = `
-          <strong>✅ Demo Data Auto-Loaded!</strong><br>
-          <div class="mt-2">
-            📊 10 sample applications created:<br>
-            &nbsp;&nbsp;• 5 Rejected applications<br>
-            &nbsp;&nbsp;• 5 Pending Review applications<br>
-            <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (unchanged - no awards yet)</small>
-            <small class="text-info d-block mt-1">✅ All records visible in dashboard and table</small>
-          </div>
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.body.appendChild(notification);
-        setTimeout(() => {
-          if (notification.parentNode) {
-            notification.remove();
-          }
-        }, 8000);
-        
-        // Force multiple refreshes to ensure display
-        setTimeout(() => {
-          const verifyApps = loadApplications();
-          if (verifyApps.length > 0) {
+    // Initialize filters
+    populateFilters();
+    
+    // Load and display all applications on page load
+    let allApps = loadApplications();
+    console.log('📊 Initial applications loaded:', allApps.length);
+    
+    // AUTO-LOAD DUMMY DATA if no applications exist (10 records: 5 Rejected, 5 Pending Review)
+    if (allApps.length === 0) {
+      console.log('🔄 No applications found. Auto-loading dummy data (10 records: 5 Rejected, 5 Pending Review)...');
+      
+      // Load immediately (no delay)
+      try {
+        if (typeof initializeDummyData === 'function') {
+          if (initializeDummyData()) {
+            // Force reload applications immediately
+            allApps = loadApplications();
+            console.log('✅ Dummy data loaded:', allApps.length, 'applications');
+            console.log('Sample apps:', allApps.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
+            
+            // IMMEDIATELY refresh all displays
             updateMetrics();
             updateBudgetDisplay();
-            renderTable(verifyApps);
+            renderTable(allApps);
             applyFilters();
-            console.log('✅ Display refreshed with', verifyApps.length, 'applications');
+            
+            // Update session storage
+            sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
+            
+            // Show notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            notification.style.zIndex = '9999';
+            notification.style.minWidth = '500px';
+            notification.innerHTML = `
+              <strong>✅ Demo Data Auto-Loaded!</strong><br>
+              <div class="mt-2">
+                📊 10 sample applications created:<br>
+                &nbsp;&nbsp;• 5 Rejected applications<br>
+                &nbsp;&nbsp;• 5 Pending Review applications<br>
+                <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (unchanged - no awards yet)</small>
+                <small class="text-info d-block mt-1">✅ All records visible in dashboard and table</small>
+              </div>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+              if (notification.parentNode) {
+                notification.remove();
+              }
+            }, 8000);
+            
+            // Force multiple refreshes to ensure display
+            setTimeout(() => {
+              const verifyApps = loadApplications();
+              if (verifyApps.length > 0) {
+                updateMetrics();
+                updateBudgetDisplay();
+                renderTable(verifyApps);
+                applyFilters();
+                console.log('✅ Display refreshed with', verifyApps.length, 'applications');
+              }
+            }, 200);
+            
+            setTimeout(() => {
+              const verifyApps = loadApplications();
+              updateMetrics();
+              updateBudgetDisplay();
+              renderTable(verifyApps);
+              console.log('✅ Final refresh completed');
+            }, 1000);
+          } else {
+            // Even if it says it exists, refresh display
+            allApps = loadApplications();
+            if (allApps.length > 0) {
+              updateMetrics();
+              updateBudgetDisplay();
+              renderTable(allApps);
+              applyFilters();
+              console.log('✅ Refreshed existing data:', allApps.length, 'applications');
+            }
           }
-        }, 200);
-        
-        setTimeout(() => {
-          const verifyApps = loadApplications();
-          updateMetrics();
-          updateBudgetDisplay();
-          renderTable(verifyApps);
-          console.log('✅ Final refresh completed');
-        }, 1000);
-        
-        // Generate summary report
-        if (typeof generateSummaryReport === 'function') {
-          setTimeout(() => generateSummaryReport(), 500);
+        } else {
+          console.error('❌ initializeDummyData function not found!');
         }
-      } else {
-        // Even if it says it exists, refresh display
-        allApps = loadApplications();
-        if (allApps.length > 0) {
-          updateMetrics();
-          updateBudgetDisplay();
-          renderTable(allApps);
-          applyFilters();
-          console.log('✅ Refreshed existing data:', allApps.length, 'applications');
-        }
+      } catch (error) {
+        console.error('Error auto-loading dummy data:', error);
+        alert('Error loading dummy data: ' + error.message);
       }
-    } catch (error) {
-      console.error('Error auto-loading dummy data:', error);
-      alert('Error loading dummy data: ' + error.message);
+    } else {
+      console.log('✅ Applications found:', allApps.length);
+      console.log('Sample:', allApps.slice(0, 2).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
     }
-  }
-  
-  // Legacy check (removed - using simple auto-load above)
-  if (false && allApps.length === 0 && typeof initializeDummyData === 'function') {
-    // Auto-load demo data immediately (for testing/demo purposes)
-    console.log('No applications found. Auto-loading demo data...');
-    setTimeout(() => {
-      try {
-        // Generate and save dummy data
-        if (typeof generateDummyApplications === 'function') {
-          const dummyApps = generateDummyApplications();
-          localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
-          localStorage.setItem('mbms_application_counter', '10');
-          localStorage.setItem('mbms_last_serial', '10');
-          
-          // Initialize budget
-          if (typeof initializeBudget !== 'undefined') {
-            initializeBudget();
-          }
-          if (typeof syncBudgetWithAwards !== 'undefined') {
-            syncBudgetWithAwards();
-          }
-          
-          // Reload and refresh display
+    
+    // ALWAYS update and render
+    updateMetrics();
+    updateBudgetDisplay();
+    renderTable(allApps);
+    
+    // Store initial count for comparison
+    sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
+    
+    console.log('✅ Admin dashboard initialized with', allApps.length, 'applications');
+    
+    // Listen for new application submissions
+    window.addEventListener('mbms-data-updated', function(e) {
+      console.log('📬 New application submitted! Refreshing dashboard...', e.detail);
+      setTimeout(() => {
+        const newApps = loadApplications();
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(newApps);
+        applyFilters();
+        console.log('✅ Dashboard refreshed with', newApps.length, 'applications');
+      }, 500);
+    });
+    
+    // Listen for storage changes (cross-tab sync)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'mbms_applications') {
+        console.log('📬 Storage change detected! Refreshing dashboard...');
+        setTimeout(() => {
           const newApps = loadApplications();
-          console.log('Demo data auto-loaded:', newApps.length, 'applications');
-          
           updateMetrics();
           updateBudgetDisplay();
           renderTable(newApps);
           applyFilters();
-          
-          // Generate summary report
-          if (typeof generateSummaryReport === 'function') {
-            setTimeout(() => generateSummaryReport(), 500);
-          }
-          
-          // Show notification
-          const notification = document.createElement('div');
-          notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
-          notification.style.zIndex = '9999';
-          notification.style.minWidth = '400px';
-          notification.innerHTML = `
-            <strong>✅ Demo Data Auto-Loaded!</strong><br>
-            10 sample applications created (5 Awarded, 3 Pending, 1 Rejected, 1 Pending Submission)
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          `;
-          document.body.appendChild(notification);
-          setTimeout(() => {
-            if (notification.parentNode) {
-              notification.remove();
-            }
-          }, 5000);
-        }
-      } catch (error) {
-        console.error('Error auto-loading demo data:', error);
+        }, 500);
       }
-    }, 500);
-  }
-  
-  // Auto-generate summary report on load if there are applications
-  if (allApps.length > 0) {
-    console.log('Applications found:', allApps.map(a => ({ id: a.appID, status: a.status, name: a.applicantName })));
-    // Generate summary report after a short delay to ensure DOM is ready
-    setTimeout(() => {
-      if (typeof generateSummaryReport === 'function') {
-        generateSummaryReport();
+    });
+    
+    // Periodic check for new applications (every 5 seconds)
+    setInterval(() => {
+      const currentCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
+      const apps = loadApplications();
+      if (apps.length !== currentCount) {
+        console.log('📊 Application count changed:', currentCount, '->', apps.length);
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(apps);
+        applyFilters();
+        sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
       }
-    }, 500);
+    }, 5000);
   }
   
-  // Initial display - ensure applications are shown
-  console.log('📊 Initializing dashboard with', allApps.length, 'applications');
-  
-  if (allApps.length > 0) {
-    console.log('✅ Sample applications:', allApps.slice(0, 3).map(a => ({
-      id: a.appID,
-      name: a.applicantName,
-      status: a.status
-    })));
-  } else {
-    console.log('⚠️ No applications found - test data should load automatically');
-  }
-  
-  // ALWAYS update and render
-  updateMetrics();
-  updateBudgetDisplay();
-  renderTable(allApps);
-  
-  // Store initial count for comparison
-  sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
-  
-  console.log('✅ Admin dashboard initialized with', allApps.length, 'applications');
-  
-  // Force refresh after dummy data loads (if it loads)
-  setTimeout(() => {
-    const verifyApps = loadApplications();
-    console.log('🔄 Post-load refresh check:', verifyApps.length, 'applications');
-    if (verifyApps.length !== allApps.length || verifyApps.length > 0) {
-      updateMetrics();
-      updateBudgetDisplay();
-      renderTable(verifyApps);
-      applyFilters();
-      sessionStorage.setItem('mbms_last_app_count', verifyApps.length.toString());
-      console.log('✅ Display updated with', verifyApps.length, 'applications');
-    }
-  }, 1500);
-  
-  // Removed duplicate refresh - single refresh is enough
+  } // End of initAdminDashboard function
   
   // Force reload dummy data (for testing)
   window.forceReloadDummyData = function() {
@@ -1577,9 +1522,19 @@
   
   // Setup immediately if DOM is ready, otherwise wait
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupSidebarNavigation);
+    document.addEventListener('DOMContentLoaded', function() {
+      setupSidebarNavigation();
+      // Delay initAdminDashboard slightly to ensure all scripts are loaded
+      setTimeout(() => {
+        initAdminDashboard();
+      }, 100);
+    });
   } else {
     setupSidebarNavigation();
+    // Delay initAdminDashboard slightly to ensure all scripts are loaded
+    setTimeout(() => {
+      initAdminDashboard();
+    }, 100);
   }
 
   // Filter event listeners with error handling
