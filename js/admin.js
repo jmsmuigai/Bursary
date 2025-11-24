@@ -1136,54 +1136,86 @@
   // AUTO-LOAD DUMMY DATA if no applications exist (10 records: 5 Rejected, 5 Pending Review)
   if (allApps.length === 0 && typeof initializeDummyData === 'function') {
     console.log('🔄 No applications found. Auto-loading dummy data (10 records: 5 Rejected, 5 Pending Review)...');
-    setTimeout(() => {
-      try {
-        if (initializeDummyData()) {
-          // Reload applications
-          allApps = loadApplications();
-          console.log('✅ Dummy data loaded:', allApps.length, 'applications');
-          
-          // Refresh all displays
+    
+    // Load immediately (no delay)
+    try {
+      if (initializeDummyData()) {
+        // Force reload applications immediately
+        allApps = loadApplications();
+        console.log('✅ Dummy data loaded:', allApps.length, 'applications');
+        console.log('Sample apps:', allApps.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
+        
+        // IMMEDIATELY refresh all displays
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(allApps);
+        applyFilters();
+        
+        // Update session storage
+        sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
+        
+        // Show notification
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '500px';
+        notification.innerHTML = `
+          <strong>✅ Demo Data Auto-Loaded!</strong><br>
+          <div class="mt-2">
+            📊 10 sample applications created:<br>
+            &nbsp;&nbsp;• 5 Rejected applications<br>
+            &nbsp;&nbsp;• 5 Pending Review applications<br>
+            <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (unchanged - no awards yet)</small>
+            <small class="text-info d-block mt-1">✅ All records visible in dashboard and table</small>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.remove();
+          }
+        }, 8000);
+        
+        // Force multiple refreshes to ensure display
+        setTimeout(() => {
+          const verifyApps = loadApplications();
+          if (verifyApps.length > 0) {
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(verifyApps);
+            applyFilters();
+            console.log('✅ Display refreshed with', verifyApps.length, 'applications');
+          }
+        }, 200);
+        
+        setTimeout(() => {
+          const verifyApps = loadApplications();
+          updateMetrics();
+          updateBudgetDisplay();
+          renderTable(verifyApps);
+          console.log('✅ Final refresh completed');
+        }, 1000);
+        
+        // Generate summary report
+        if (typeof generateSummaryReport === 'function') {
+          setTimeout(() => generateSummaryReport(), 500);
+        }
+      } else {
+        // Even if it says it exists, refresh display
+        allApps = loadApplications();
+        if (allApps.length > 0) {
           updateMetrics();
           updateBudgetDisplay();
           renderTable(allApps);
           applyFilters();
-          
-          // Update session storage
-          sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
-          
-          // Show notification
-          const notification = document.createElement('div');
-          notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
-          notification.style.zIndex = '9999';
-          notification.style.minWidth = '500px';
-          notification.innerHTML = `
-            <strong>✅ Demo Data Auto-Loaded!</strong><br>
-            <div class="mt-2">
-              📊 10 sample applications created:<br>
-              &nbsp;&nbsp;• 5 Rejected applications<br>
-              &nbsp;&nbsp;• 5 Pending Review applications<br>
-              <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (unchanged - no awards yet)</small>
-              <small class="text-info d-block mt-1">✅ System ready for testing and production use</small>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          `;
-          document.body.appendChild(notification);
-          setTimeout(() => {
-            if (notification.parentNode) {
-              notification.remove();
-            }
-          }, 8000);
-          
-          // Generate summary report
-          if (typeof generateSummaryReport === 'function') {
-            setTimeout(() => generateSummaryReport(), 500);
-          }
+          console.log('✅ Refreshed existing data:', allApps.length, 'applications');
         }
-      } catch (error) {
-        console.error('Error auto-loading dummy data:', error);
       }
-    }, 300);
+    } catch (error) {
+      console.error('Error auto-loading dummy data:', error);
+      alert('Error loading dummy data: ' + error.message);
+    }
   }
   
   // Legacy check (removed - using simple auto-load above)
@@ -1268,7 +1300,7 @@
     console.log('⚠️ No applications found - test data should load automatically');
   }
   
-  // ALWAYS update and render, even if empty (test data will load)
+  // ALWAYS update and render
   updateMetrics();
   updateBudgetDisplay();
   renderTable(allApps);
@@ -1278,17 +1310,19 @@
   
   console.log('✅ Admin dashboard initialized with', allApps.length, 'applications');
   
-  // Force multiple refreshes to ensure test data appears
+  // Force refresh after dummy data loads (if it loads)
   setTimeout(() => {
     const verifyApps = loadApplications();
-    console.log('🔄 Refresh check 1:', verifyApps.length, 'applications');
-    if (verifyApps.length > 0) {
+    console.log('🔄 Post-load refresh check:', verifyApps.length, 'applications');
+    if (verifyApps.length !== allApps.length || verifyApps.length > 0) {
       updateMetrics();
       updateBudgetDisplay();
       renderTable(verifyApps);
+      applyFilters();
       sessionStorage.setItem('mbms_last_app_count', verifyApps.length.toString());
+      console.log('✅ Display updated with', verifyApps.length, 'applications');
     }
-  }, 500);
+  }, 1500);
   
   // Removed duplicate refresh - single refresh is enough
   
