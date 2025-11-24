@@ -1125,6 +1125,44 @@
   }
   
   // Function to load demo data and refresh display
+  // Load test data and refresh (5 records: 3 Rejected, 2 Pending)
+  window.loadTestDataAndRefresh = function() {
+    try {
+      if (typeof initializeTestData === 'function') {
+        if (initializeTestData()) {
+          // Refresh display
+          setTimeout(() => {
+            const allApps = loadApplications();
+            console.log('Test data loaded:', allApps.length, 'applications');
+            
+            // Update everything
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(allApps);
+            applyFilters();
+            
+            // Generate summary report
+            setTimeout(() => {
+              if (typeof generateSummaryReport === 'function') {
+                generateSummaryReport();
+              }
+            }, 500);
+            
+            alert('✅ Test Data Loaded Successfully!\n\n📊 5 applications created:\n   - 3 Rejected\n   - 2 Pending\n\n💰 Budget: KSH 50,000,000 (unchanged - no awards)\n\n✅ All records visible in dashboard and Excel export');
+          }, 100);
+        } else {
+          alert('⚠️ Test data already exists or could not be loaded.');
+        }
+      } else {
+        console.error('initializeTestData function not found');
+        alert('❌ Test data function not available. Please refresh the page and try again.');
+      }
+    } catch (error) {
+      console.error('Error loading test data:', error);
+      alert('❌ Error loading test data: ' + error.message);
+    }
+  };
+  
   window.loadDemoDataAndRefresh = function() {
     try {
       console.log('Loading demo data...');
