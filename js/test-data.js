@@ -204,11 +204,15 @@ function initializeTestData() {
       syncBudgetWithAwards(); // This will keep budget at 0 allocated since no awards
     }
     
-    console.log(`✅ Test data initialized: ${newTestApps.length} new applications added`);
-    console.log(`   - 3 Rejected applications`);
-    console.log(`   - 2 Pending applications`);
+    const rejectedCount = allApps.filter(a => a.status === 'Rejected').length;
+    const pendingCount = allApps.filter(a => a.status === 'Pending Submission' || a.status?.includes('Pending')).length;
+    
+    console.log(`✅ Test data initialized successfully!`);
     console.log(`   - Total applications: ${newCount}`);
+    console.log(`   - Rejected: ${rejectedCount}`);
+    console.log(`   - Pending: ${pendingCount}`);
     console.log(`   - Budget: KSH 50,000,000 (unchanged - no awards)`);
+    console.log(`   - Sample apps:`, allApps.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
     
     return true;
   } catch (error) {

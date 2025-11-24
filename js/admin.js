@@ -1261,71 +1261,88 @@
   let allApps = loadApplications();
   console.log('Initial applications loaded:', allApps.length);
   
-  // Auto-load test data (5 records: 3 Rejected, 2 Pending) if no applications exist
-  const testDataFlag = localStorage.getItem('mbms_test_data_loaded');
-  if (allApps.length === 0 && typeof initializeTestData === 'function' && testDataFlag !== 'loaded') {
-    console.log('🔄 No applications found. Auto-loading test data (5 records: 3 Rejected, 2 Pending)...');
-    setTimeout(() => {
-      try {
-        if (initializeTestData()) {
-          localStorage.setItem('mbms_test_data_loaded', 'loaded');
-          
-          // Force reload applications
-          const newApps = loadApplications();
-          console.log('✅ Test data loaded:', newApps.length, 'applications');
-          console.log('Sample apps:', newApps.slice(0, 2));
-          
-          // Force refresh all displays
+  // FORCE LOAD TEST DATA IMMEDIATELY if no applications exist
+  if (allApps.length === 0 && typeof initializeTestData === 'function') {
+    console.log('🔄 No applications found. FORCING test data load (5 records: 3 Rejected, 2 Pending)...');
+    
+    // Clear any flags that might prevent loading
+    localStorage.removeItem('mbms_test_data_loaded');
+    
+    // Load test data immediately (no delay)
+    try {
+      if (initializeTestData()) {
+        localStorage.setItem('mbms_test_data_loaded', 'loaded');
+        
+        // Force reload applications immediately
+        allApps = loadApplications();
+        console.log('✅ Test data loaded:', allApps.length, 'applications');
+        console.log('Sample apps:', allApps.slice(0, 3).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
+        
+        // Force refresh all displays IMMEDIATELY
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(allApps);
+        applyFilters();
+        
+        // Update session storage count
+        sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
+        
+        // Show notification
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '500px';
+        notification.innerHTML = `
+          <strong>✅ Test Data Loaded Successfully!</strong><br>
+          <div class="mt-2">
+            📊 <strong>5 test applications created:</strong><br>
+            &nbsp;&nbsp;• 3 Rejected applications<br>
+            &nbsp;&nbsp;• 2 Pending applications<br>
+            <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (unchanged - no awards)</small>
+            <small class="text-info d-block mt-1">✅ All records visible in dashboard and table</small>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.remove();
+          }
+        }, 10000);
+        
+        // Force multiple refreshes to ensure display
+        setTimeout(() => {
+          const verifyApps = loadApplications();
+          if (verifyApps.length > 0) {
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(verifyApps);
+            console.log('✅ Display refreshed with', verifyApps.length, 'applications');
+          }
+        }, 500);
+        
+        setTimeout(() => {
+          const verifyApps = loadApplications();
           updateMetrics();
           updateBudgetDisplay();
-          renderTable(newApps);
+          renderTable(verifyApps);
+          console.log('✅ Final refresh completed with', verifyApps.length, 'applications');
+        }, 1500);
+      } else {
+        // Even if it says it exists, try to refresh display
+        allApps = loadApplications();
+        if (allApps.length > 0) {
+          updateMetrics();
+          updateBudgetDisplay();
+          renderTable(allApps);
           applyFilters();
-          
-          // Update session storage count
-          sessionStorage.setItem('mbms_last_app_count', newApps.length.toString());
-          
-          // Show notification
-          const notification = document.createElement('div');
-          notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
-          notification.style.zIndex = '9999';
-          notification.style.minWidth = '450px';
-          notification.innerHTML = `
-            <strong>✅ Test Data Auto-Loaded!</strong><br>
-            <div class="mt-2">
-              📊 5 test applications created:<br>
-              &nbsp;&nbsp;• 3 Rejected applications<br>
-              &nbsp;&nbsp;• 2 Pending applications<br>
-              <small class="text-muted">💰 Budget: KSH 50,000,000 (unchanged - no awards)</small>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          `;
-          document.body.appendChild(notification);
-          setTimeout(() => {
-            if (notification.parentNode) {
-              notification.remove();
-            }
-          }, 8000);
-          
-          // Force another refresh after a short delay to ensure display
-          setTimeout(() => {
-            const verifyApps = loadApplications();
-            if (verifyApps.length > 0) {
-              updateMetrics();
-              updateBudgetDisplay();
-              renderTable(verifyApps);
-              console.log('✅ Display refreshed with', verifyApps.length, 'applications');
-            }
-          }, 1000);
-        } else {
-          console.log('⚠️ Test data already exists or could not be loaded');
+          console.log('✅ Refreshed existing test data:', allApps.length, 'applications');
         }
-      } catch (error) {
-        console.error('❌ Error loading test data:', error);
-        alert('Error loading test data: ' + error.message);
       }
-    }, 300);
-  } else if (allApps.length === 0) {
-    console.log('⚠️ No applications found. Test data flag:', testDataFlag);
+    } catch (error) {
+      console.error('❌ Error loading test data:', error);
+      alert('Error loading test data: ' + error.message);
+    }
   }
   
   // Auto-load demo data on first visit if no applications exist (legacy)
@@ -1403,13 +1420,16 @@
   console.log('📊 Initializing dashboard with', allApps.length, 'applications');
   
   if (allApps.length > 0) {
-    console.log('Sample applications:', allApps.slice(0, 3).map(a => ({
+    console.log('✅ Sample applications:', allApps.slice(0, 3).map(a => ({
       id: a.appID,
       name: a.applicantName,
       status: a.status
     })));
+  } else {
+    console.log('⚠️ No applications found - test data should load automatically');
   }
   
+  // ALWAYS update and render, even if empty (test data will load)
   updateMetrics();
   updateBudgetDisplay();
   renderTable(allApps);
@@ -1419,17 +1439,28 @@
   
   console.log('✅ Admin dashboard initialized with', allApps.length, 'applications');
   
-  // Force a refresh after a short delay to ensure everything is displayed
+  // Force multiple refreshes to ensure test data appears
   setTimeout(() => {
     const verifyApps = loadApplications();
-    if (verifyApps.length !== allApps.length) {
-      console.log('🔄 Application count changed, refreshing display...');
+    console.log('🔄 Refresh check 1:', verifyApps.length, 'applications');
+    if (verifyApps.length > 0) {
       updateMetrics();
       updateBudgetDisplay();
       renderTable(verifyApps);
       sessionStorage.setItem('mbms_last_app_count', verifyApps.length.toString());
     }
-  }, 1000);
+  }, 500);
+  
+  setTimeout(() => {
+    const verifyApps = loadApplications();
+    console.log('🔄 Refresh check 2:', verifyApps.length, 'applications');
+    if (verifyApps.length > 0) {
+      updateMetrics();
+      updateBudgetDisplay();
+      renderTable(verifyApps);
+      sessionStorage.setItem('mbms_last_app_count', verifyApps.length.toString());
+    }
+  }, 2000);
   
   // Expose a global function to manually refresh everything
   window.forceRefreshAll = function() {
