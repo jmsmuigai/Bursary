@@ -1,22 +1,15 @@
-// Firebase Configuration Template
-// Replace with your actual Firebase project credentials
-// Get these from: https://console.firebase.google.com/
+// Firebase Configuration for Garissa Bursary System
+// Project: garissa-bursary-system
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAdiH7a0SGTxqYOVMeWCVBWw_ycHMYUEWM",
+  authDomain: "garissa-bursary-system.firebaseapp.com",
+  projectId: "garissa-bursary-system",
+  storageBucket: "garissa-bursary-system.firebasestorage.app",
+  messagingSenderId: "844623676604",
+  appId: "1:844623676604:web:77be60a29b9cd48221fcb9"
 };
 
-// Initialize Firebase (uncomment when ready to use)
-// firebase.initializeApp(firebaseConfig);
-// const auth = firebase.auth();
-// const db = firebase.firestore();
-// const storage = firebase.storage();
-
-// Export for use in other files
-// export { auth, db, storage };
+// Firebase is initialized automatically by firebase-db.js
+// No need to manually initialize here
 
