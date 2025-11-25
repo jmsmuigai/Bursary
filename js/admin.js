@@ -464,13 +464,13 @@
         <td><span class="badge ${statusClass}">${status}</span></td>
         <td>Ksh ${amount.toLocaleString()}</td>
         <td>
-          <button class="btn btn-sm btn-info me-1" onclick="viewApplication('${safeAppID}')" title="View Application Details">
+          <button class="btn btn-sm btn-info me-1" onclick="safeViewApplication('${safeAppID}')" title="View Application Details" style="min-width: 70px; min-height: 38px;">
             <i class="bi bi-eye"></i> View
           </button>
-          ${!app.isFinalSubmission ? `<button class="btn btn-sm btn-warning me-1" onclick="editApplication('${safeAppID}')" title="Edit Application">
+          ${!app.isFinalSubmission ? `<button class="btn btn-sm btn-warning me-1" onclick="editApplication('${safeAppID}')" title="Edit Application" style="min-width: 70px; min-height: 38px;">
             <i class="bi bi-pencil"></i> Edit
           </button>` : ''}
-          <button class="btn btn-sm btn-success" onclick="downloadApplicationLetter('${safeAppID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter">
+          <button class="btn btn-sm btn-success" onclick="safeDownloadApplication('${safeAppID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter" style="min-width: 90px; min-height: 38px;">
             <i class="bi bi-download"></i> Download
           </button>
         </td>
