@@ -768,6 +768,27 @@
         notifyAdminRejected(app);
       }
       
+      // Auto-download rejection letter and send email
+      try {
+        if (typeof generateRejectionLetterPDF !== 'undefined') {
+          const result = await generateRejectionLetterPDF(app);
+          if (result && result.filename) {
+            console.log('✅ Rejection letter auto-downloaded:', result.filename);
+            
+            // Auto-send email to fundadmin@garissa.go.ke
+            setTimeout(() => {
+              if (typeof sendEmailDraft !== 'undefined') {
+                sendEmailDraft(app, 'rejection', result.filename, null);
+                console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
+              }
+            }, 1000);
+          }
+        }
+      } catch (pdfError) {
+        console.error('PDF download error:', pdfError);
+        // Continue even if PDF fails
+      }
+      
       // Update metrics and display (budget stays same)
       updateMetrics();
       updateBudgetDisplay(); // Refresh display but budget unchanged
