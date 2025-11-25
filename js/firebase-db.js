@@ -18,24 +18,38 @@
       }
       
       // Check if firebaseConfig exists and is configured
-      if (typeof firebaseConfig === 'undefined' || 
+      if (typeof firebaseConfig === 'undefined') {
+        console.log('📦 Firebase config not found - using localStorage fallback');
+        return false;
+      }
+      
+      // Validate config has real values (not template values)
+      if (!firebaseConfig.apiKey || 
           firebaseConfig.apiKey === 'YOUR_API_KEY' ||
-          !firebaseConfig.apiKey) {
-        console.log('📦 Firebase not configured - using localStorage fallback');
+          !firebaseConfig.projectId ||
+          firebaseConfig.projectId === 'YOUR_PROJECT_ID') {
+        console.log('📦 Firebase not properly configured - using localStorage fallback');
+        console.log('📦 Config:', firebaseConfig);
         return false;
       }
       
       // Initialize Firebase
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+      try {
+        if (!firebase.apps || firebase.apps.length === 0) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        
+        db = firebase.firestore();
+        firebaseInitialized = true;
+        useFirebase = true;
+        
+        console.log('✅ Firebase initialized successfully - using real-time database');
+        console.log('✅ Project:', firebaseConfig.projectId);
+        return true;
+      } catch (error) {
+        console.error('❌ Firebase initialization error:', error);
+        return false;
       }
-      
-      db = firebase.firestore();
-      firebaseInitialized = true;
-      useFirebase = true;
-      
-      console.log('✅ Firebase initialized successfully - using real-time database');
-      return true;
     } catch (error) {
       console.error('❌ Firebase initialization error:', error);
       console.log('📦 Falling back to localStorage');
@@ -59,23 +73,34 @@
   window.getApplications = async function() {
     if (useFirebase && db) {
       try {
+        console.log('📦 Loading applications from Firebase...');
         const snapshot = await db.collection('applications').get();
         const apps = [];
         snapshot.forEach(doc => {
-          apps.push({ id: doc.id, ...doc.data() });
+          const data = doc.data();
+          apps.push({ 
+            id: doc.id, 
+            ...data,
+            // Ensure appID exists
+            appID: data.appID || doc.id
+          });
         });
         console.log('✅ Loaded', apps.length, 'applications from Firebase');
         
         // Sync to localStorage as backup
-        localStorage.setItem('mbms_applications', JSON.stringify(apps));
+        if (apps.length > 0) {
+          localStorage.setItem('mbms_applications', JSON.stringify(apps));
+        }
         
         return apps;
       } catch (error) {
-        console.error('Firebase read error:', error);
+        console.error('❌ Firebase read error:', error);
+        console.log('📦 Falling back to localStorage...');
         // Fallback to localStorage
         return getApplicationsFromLocalStorage();
       }
     } else {
+      console.log('📦 Using localStorage (Firebase not enabled)');
       return getApplicationsFromLocalStorage();
     }
   };
@@ -101,23 +126,27 @@
   window.saveApplication = async function(application) {
     if (useFirebase && db) {
       try {
+        console.log('📦 Saving application to Firebase...', application.appID);
+        
         if (application.id) {
           // Update existing
           await db.collection('applications').doc(application.id).set(application, { merge: true });
+          console.log('✅ Application updated in Firebase:', application.id);
         } else {
-          // Create new
-          const docRef = await db.collection('applications').add(application);
-          application.id = docRef.id;
+          // Create new - use appID as document ID for easier lookup
+          const docId = application.appID || `app_${Date.now()}`;
+          await db.collection('applications').doc(docId).set(application);
+          application.id = docId;
+          console.log('✅ Application created in Firebase:', docId);
         }
         
-        console.log('✅ Application saved to Firebase');
-        
         // Sync to localStorage as backup
-        syncToLocalStorage();
+        await syncToLocalStorage();
         
         return application;
       } catch (error) {
-        console.error('Firebase save error:', error);
+        console.error('❌ Firebase save error:', error);
+        console.log('📦 Falling back to localStorage...');
         // Fallback to localStorage
         return saveApplicationToLocalStorage(application);
       }
@@ -155,29 +184,43 @@
   window.updateApplicationStatus = async function(appID, updates) {
     if (useFirebase && db) {
       try {
+        console.log('📦 Updating application in Firebase:', appID);
+        
+        // Try to find by appID first
         const apps = await getApplications();
         const app = apps.find(a => a.appID === appID);
         
         if (!app) {
-          throw new Error('Application not found');
+          console.warn('⚠️ Application not found by appID, trying direct update...');
+          // Try to update directly using appID as document ID
+          const docRef = db.collection('applications').doc(appID);
+          const doc = await docRef.get();
+          
+          if (doc.exists) {
+            await docRef.update(updates);
+            console.log('✅ Application updated in Firebase (direct)');
+            await syncToLocalStorage();
+            return { ...doc.data(), ...updates };
+          } else {
+            throw new Error('Application not found in Firebase');
+          }
         }
         
         const updatedApp = { ...app, ...updates };
         
-        if (app.id) {
-          await db.collection('applications').doc(app.id).update(updates);
-        } else {
-          await db.collection('applications').doc(app.id).set(updatedApp, { merge: true });
-        }
+        // Use app.id if available, otherwise use appID as document ID
+        const docId = app.id || appID;
+        await db.collection('applications').doc(docId).update(updates);
         
-        console.log('✅ Application status updated in Firebase');
+        console.log('✅ Application status updated in Firebase:', docId);
         
         // Sync to localStorage
-        syncToLocalStorage();
+        await syncToLocalStorage();
         
         return updatedApp;
       } catch (error) {
-        console.error('Firebase update error:', error);
+        console.error('❌ Firebase update error:', error);
+        console.log('📦 Falling back to localStorage...');
         // Fallback to localStorage
         return updateApplicationStatusInLocalStorage(appID, updates);
       }
@@ -230,10 +273,16 @@
   window.listenForUpdates = function(callback) {
     if (useFirebase && db) {
       try {
+        console.log('📡 Setting up Firebase real-time listener...');
         return db.collection('applications').onSnapshot((snapshot) => {
           const apps = [];
           snapshot.forEach(doc => {
-            apps.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            apps.push({ 
+              id: doc.id, 
+              ...data,
+              appID: data.appID || doc.id
+            });
           });
           
           // Sync to localStorage
@@ -246,12 +295,13 @@
           
           console.log('🔄 Real-time update received:', apps.length, 'applications');
         }, (error) => {
-          console.error('Firebase listener error:', error);
+          console.error('❌ Firebase listener error:', error);
         });
       } catch (error) {
-        console.error('Firebase listener setup error:', error);
+        console.error('❌ Firebase listener setup error:', error);
       }
     } else {
+      console.log('📦 Using localStorage storage events (Firebase not enabled)');
       // Fallback: Use storage event for localStorage
       window.addEventListener('storage', (e) => {
         if (e.key === 'mbms_applications') {
