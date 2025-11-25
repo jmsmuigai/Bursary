@@ -1463,8 +1463,14 @@
             notification.innerHTML = `
               <strong>✅ Demo Data Loaded!</strong><br>
               <div class="mt-2">
-                📊 ${newApps.length} sample applications created and visible in table<br>
-                <small class="text-info d-block mt-1">✅ All records visible in Application Management</small>
+                📊 <strong>${newApps.length} sample applications</strong> created and visible in table:<br>
+                &nbsp;&nbsp;• <strong>ALL PENDING REVIEW</strong> (ready for award)<br>
+                &nbsp;&nbsp;• Distributed across all Garissa sub-counties<br>
+                &nbsp;&nbsp;• From different schools and institutions<br>
+                &nbsp;&nbsp;• <strong>NONE AWARDED</strong> - ready for first review<br>
+                <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (Baseline - ready for first award)</small>
+                <small class="text-success d-block mt-1">✅ All records visible in scrollable Application Management table</small>
+                <small class="text-info d-block mt-1">📊 Check Visualizations section for colorful charts</small>
               </div>
               <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;

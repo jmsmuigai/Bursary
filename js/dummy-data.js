@@ -265,29 +265,63 @@ function clearDummyData() {
 
 // Force load dummy data function (for testing)
 window.forceLoadDummyData = function() {
-  console.log('🔄 Force loading dummy data...');
+  console.log('🔄 FORCE LOADING DUMMY DATA...');
   
-  // Clear existing data
+  // Clear ALL existing data
   localStorage.removeItem('mbms_applications');
   localStorage.removeItem('mbms_application_counter');
   localStorage.removeItem('mbms_last_serial');
+  localStorage.setItem('mbms_budget_allocated', '0'); // Reset budget
   
-  // Generate and save
-  if (initializeDummyData()) {
-    // Force refresh
-    if (typeof refreshApplications === 'function') {
-      refreshApplications();
+  // Generate fresh dummy data directly
+  const dummyApps = generateDummyApplications();
+  console.log('✅ Generated', dummyApps.length, 'dummy applications');
+  
+  if (dummyApps && dummyApps.length > 0) {
+    // Save to localStorage
+    localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
+    localStorage.setItem('mbms_application_counter', '10');
+    localStorage.setItem('mbms_last_serial', '10');
+    
+    // Initialize budget
+    if (typeof initializeBudget !== 'undefined') {
+      initializeBudget();
+    }
+    if (typeof syncBudgetWithAwards !== 'undefined') {
+      syncBudgetWithAwards();
     }
     
-    // Show success message
-    alert('✅ Dummy data loaded successfully!\n\n10 records created:\n- ALL PENDING REVIEW (ready for award)\n- Distributed across all Garissa sub-counties\n- From different schools and institutions\n- NONE AWARDED - ready for first review\n\nData is now visible in the scrollable table!\n\n📊 Visualizations will show data automatically.');
+    // Dispatch events
+    window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+      detail: { key: 'mbms_applications', action: 'force-loaded', count: dummyApps.length }
+    }));
     
-    // Reload page to ensure display
+    // Force refresh dashboard if functions available
+    if (typeof window.loadApplications === 'function' && typeof window.renderTable === 'function') {
+      const apps = window.loadApplications();
+      if (typeof window.updateMetrics === 'function') window.updateMetrics();
+      if (typeof window.updateBudgetDisplay === 'function') window.updateBudgetDisplay();
+      window.renderTable(apps);
+      if (typeof window.applyFilters === 'function') window.applyFilters();
+      console.log('✅ Dashboard refreshed with', apps.length, 'applications');
+    }
+    
+    // Refresh visualizations
+    setTimeout(() => {
+      if (typeof refreshVisualizations === 'function') {
+        refreshVisualizations();
+        console.log('✅ Visualizations refreshed');
+      }
+    }, 1000);
+    
+    alert('✅ Dummy data loaded successfully!\n\n📊 10 records created:\n- ALL PENDING REVIEW (ready for award)\n- Distributed across all Garissa sub-counties\n- From different schools and institutions\n- NONE AWARDED - ready for first review\n\n✅ Data is now visible in the scrollable table!\n\n📊 Visualizations will show data automatically.');
+    
+    // Reload page to ensure everything displays
     setTimeout(() => {
       window.location.reload();
     }, 500);
   } else {
-    alert('❌ Error loading dummy data. Please check console for details.');
+    alert('❌ Error generating dummy data. Please refresh the page and try again.');
   }
 };
 
