@@ -654,23 +654,44 @@
     loadSavedApplication();
     showStep(currentStep);
     
-    // Ensure all buttons are active and responsive
+    // Ensure all buttons are active and responsive - ENHANCED
     if (saveBtn) {
       saveBtn.disabled = false;
       saveBtn.style.cursor = 'pointer';
       saveBtn.style.opacity = '1';
+      saveBtn.style.pointerEvents = 'auto';
+      saveBtn.style.display = 'block';
+      saveBtn.classList.remove('disabled');
+    }
+    
+    if (nextBtn) {
+      nextBtn.disabled = false;
+      nextBtn.style.cursor = 'pointer';
+      nextBtn.style.opacity = '1';
+      nextBtn.style.pointerEvents = 'auto';
+      nextBtn.classList.remove('disabled');
+    }
+    
+    if (prevBtn) {
+      prevBtn.disabled = false;
+      prevBtn.style.cursor = 'pointer';
+      prevBtn.style.opacity = '1';
+      prevBtn.style.pointerEvents = 'auto';
+      prevBtn.classList.remove('disabled');
     }
     
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.style.cursor = 'pointer';
       submitBtn.style.opacity = '1';
+      submitBtn.style.pointerEvents = 'auto';
+      submitBtn.classList.remove('disabled');
     }
     
     // Ensure all form inputs are active
     const allInputs = form.querySelectorAll('input, select, textarea, button');
     allInputs.forEach(input => {
-      if (input.type !== 'hidden') {
+      if (input.type !== 'hidden' && input.id !== 'submitBtn') {
         input.disabled = false;
         input.style.pointerEvents = 'auto';
         input.style.opacity = '1';
@@ -678,6 +699,8 @@
     });
     
     console.log('✅ All buttons and inputs activated');
+    console.log('💾 Database: localStorage (same for all components)');
+    console.log('✅ System ready for use');
   }
 })();
 
