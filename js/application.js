@@ -88,10 +88,11 @@
           village: user.village || ''
         };
 
-        // Save to localStorage (same database used by admin portal)
+        // Save to localStorage (SAME DATABASE used by admin portal)
         localStorage.setItem(applicationKey, JSON.stringify(applicationData));
-        console.log('💾 Saved to database (localStorage):', applicationKey, '- Step', currentStep + 1);
-        console.log('✅ Auto-saved application progress - Step', currentStep + 1);
+        console.log('💾 Auto-saved to database (localStorage):', applicationKey, '- Step', currentStep + 1);
+        console.log('📊 Database: localStorage (mbms_application_' + user.email + ')');
+        console.log('✅ Same database as admin portal reads from');
         
         // Show subtle save indicator (only if not already showing)
         if (saveStatus && saveStatusText) {
