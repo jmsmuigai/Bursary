@@ -1231,6 +1231,52 @@ async function generateRejectionLetterPDF(application) {
     addText('fundadmin@garissa.go.ke', margin, yPos, { fontSize: 10 });
     yPos += 5;
     addText('Garissa County Scholarship Fund', margin, yPos, { fontSize: 10 });
+    yPos += 5;
+    addText('P.O. Box 1377-70100, Garissa', margin, yPos, { fontSize: 10 });
+
+    // Smart colorful stamp on the right side (auto-generated)
+    const stampX = pageWidth - margin - 50;
+    const stampY = pageHeight - 65;
+    const stampWidth = 45;
+    const stampHeight = 45;
+    
+    // Draw colorful stamp background (red gradient circle for rejection)
+    doc.setFillColor(220, 53, 69); // Red for rejection
+    doc.setDrawColor(180, 30, 50); // Darker red border
+    doc.setLineWidth(0.5);
+    doc.circle(stampX + stampWidth/2, stampY + stampHeight/2, stampWidth/2, 'FD');
+    
+    // Add white text inside stamp
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('REJECTED', stampX + stampWidth/2, stampY + 12, { align: 'center' });
+    doc.text('STAMP', stampX + stampWidth/2, stampY + 18, { align: 'center' });
+    doc.setFontSize(6);
+    doc.text('GARISSA', stampX + stampWidth/2, stampY + 24, { align: 'center' });
+    doc.text('COUNTY', stampX + stampWidth/2, stampY + 28, { align: 'center' });
+    
+    // Add contact info below stamp
+    doc.setTextColor(180, 30, 50);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('fundadmin@garissa.go.ke', stampX + stampWidth/2, stampY + 35, { align: 'center' });
+    doc.setFontSize(6);
+    doc.text('P.O. Box 1377-70100', stampX + stampWidth/2, stampY + 40, { align: 'center' });
+    doc.text('Garissa, Kenya', stampX + stampWidth/2, stampY + 44, { align: 'center' });
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    
+    // Also try to add image stamp if available
+    try {
+      const stampImg = await loadImage('assets/stamp.png');
+      if (stampImg) {
+        doc.addImage(stampImg, 'PNG', stampX - 5, stampY - 5, stampWidth + 10, stampHeight + 10);
+      }
+    } catch (e) {
+      console.warn('Could not add image stamp:', e);
+    }
 
     // Generate filename with applicant name for uniqueness
     const applicantName = application.applicantName || 
