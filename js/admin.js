@@ -741,8 +741,17 @@
         amount: awardAmount // For compatibility
       };
       
-      // Save applications
-      localStorage.setItem('mbms_applications', JSON.stringify(apps));
+      // Save applications to UNIFIED DATABASE
+      if (typeof updateApplication !== 'undefined') {
+        updateApplication(appID, {
+          status: 'Awarded',
+          awardDetails: app.awardDetails
+        });
+        console.log('✅ Application awarded and updated in UNIFIED DATABASE:', appID);
+      } else {
+        localStorage.setItem('mbms_applications', JSON.stringify(apps));
+        console.log('✅ Application awarded (fallback):', appID);
+      }
       
       // Force budget sync to ensure accuracy
       if (typeof syncBudgetWithAwards !== 'undefined') {
@@ -1397,7 +1406,9 @@
         try {
           const reportType = document.getElementById('reportType')?.value || 'beneficiary';
           const reportStatus = document.getElementById('reportStatus')?.value || 'all';
-          const apps = loadApplications();
+          // Get applications from UNIFIED DATABASE
+          const apps = typeof getApplications !== 'undefined' ? getApplications() : loadApplications();
+          console.log('📊 Report: Using', apps.length, 'applications from UNIFIED DATABASE');
           
           let filtered = apps;
           if (reportStatus === 'Awarded') {
