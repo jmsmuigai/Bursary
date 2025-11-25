@@ -833,21 +833,59 @@
     }
   };
 
-  // Download application PDF from view modal
+  // Download application PDF from view modal - AUTO-DOWNLOADS with success message
   window.downloadApplicationPDFFromView = async function(appID) {
-    const apps = loadApplications();
-    const app = apps.find(a => a.appID === appID);
-    if (!app) {
-      alert('Application not found');
-      return;
-    }
+    try {
+      const apps = loadApplications();
+      const app = apps.find(a => a.appID === appID);
+      if (!app) {
+        alert('Application not found');
+        return;
+      }
 
-    // Download application summary PDF
-    if (typeof downloadApplicationSummaryPDF !== 'undefined') {
-      await downloadApplicationSummaryPDF(app);
-    } else {
-      // Fallback to letter download
-      await downloadApplicationLetter(appID);
+      // Show loading indicator
+      const loadingAlert = document.createElement('div');
+      loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+      loadingAlert.style.zIndex = '9999';
+      loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating application summary PDF...';
+      document.body.appendChild(loadingAlert);
+
+      let filename = '';
+      
+      // Download application summary PDF
+      if (typeof generateApplicationSummaryPDF !== 'undefined') {
+        const result = await generateApplicationSummaryPDF(app);
+        if (result && result.filename) {
+          filename = result.filename;
+        } else {
+          const applicantName = app.applicantName || 
+            `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+          const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+          filename = `Garissa_Bursary_Summary_${sanitizedName}_${app.appID}.pdf`;
+        }
+      } else if (typeof downloadApplicationSummaryPDF !== 'undefined') {
+        await downloadApplicationSummaryPDF(app);
+        const applicantName = app.applicantName || 
+          `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+        const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+        filename = `Garissa_Bursary_Summary_${sanitizedName}_${app.appID}.pdf`;
+      } else {
+        // Fallback to letter download
+        await downloadApplicationLetter(appID);
+        return; // downloadApplicationLetter will show its own success message
+      }
+      
+      loadingAlert.remove();
+      
+      // Show success message
+      if (filename) {
+        showDownloadSuccess(filename, app);
+      }
+    } catch (error) {
+      console.error('Error downloading application summary:', error);
+      const loadingAlert = document.querySelector('.alert-info');
+      if (loadingAlert) loadingAlert.remove();
+      alert('❌ Error downloading PDF. Please try again.\n\nError: ' + error.message);
     }
   };
 
@@ -980,6 +1018,11 @@
           console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
         }, 1000);
       }
+      
+      // Show success message
+      if (filename) {
+        showDownloadSuccess(filename, app);
+      }
     } catch (error) {
       console.error('PDF download error:', error);
       const loadingAlert = document.querySelector('.alert-info');
@@ -987,6 +1030,41 @@
       alert('❌ Error downloading PDF. Please try again or contact support.\n\nError: ' + error.message);
     }
   };
+  
+  // Show download success notification
+  function showDownloadSuccess(filename, app) {
+    // Remove loading alert if exists
+    const loadingAlert = document.querySelector('.alert-info');
+    if (loadingAlert) loadingAlert.remove();
+    
+    // Create success notification
+    const successNotification = document.createElement('div');
+    successNotification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg';
+    successNotification.style.zIndex = '10000';
+    successNotification.style.minWidth = '400px';
+    successNotification.style.animation = 'slideDown 0.5s ease-out';
+    successNotification.innerHTML = `
+      <div class="d-flex align-items-center">
+        <i class="bi bi-check-circle-fill me-2" style="font-size: 1.5rem;"></i>
+        <div class="flex-grow-1">
+          <strong>✅ Downloaded Successfully!</strong><br>
+          <small class="text-muted">${filename}</small><br>
+          <small class="text-muted">Document saved to your downloads folder</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+    document.body.appendChild(successNotification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (successNotification.parentNode) {
+        successNotification.remove();
+      }
+    }, 5000);
+    
+    console.log('✅ Download success notification shown:', filename);
+  }
   
   // Legacy functions for backward compatibility
   window.previewPDFLetter = async function(appID) {
