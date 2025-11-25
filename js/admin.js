@@ -220,26 +220,44 @@
     });
   }
 
-  // Populate filters
+  // Populate filters with all sub-counties and wards
   function populateFilters() {
     const scSel = document.getElementById('filterSubCounty');
     const wardSel = document.getElementById('filterWard');
     
+    if (!scSel || !wardSel) {
+      console.error('Filter elements not found');
+      return;
+    }
+    
+    // Populate sub-counties
     scSel.innerHTML = '<option value="">All Sub-Counties</option>';
     Object.keys(GARISSA_WARDS).forEach(sc => {
       scSel.add(new Option(sc, sc));
     });
     scSel.add(new Option('Other', 'Other'));
 
+    // Function to populate wards based on selected sub-county
     function populateFilterWards() {
       wardSel.innerHTML = '<option value="">All Wards</option>';
-      const wards = GARISSA_WARDS[scSel.value] || [];
-      wards.forEach(w => wardSel.add(new Option(w, w)));
+      const selectedSubCounty = scSel.value;
+      
+      if (selectedSubCounty && selectedSubCounty !== 'Other' && GARISSA_WARDS[selectedSubCounty]) {
+        const wards = GARISSA_WARDS[selectedSubCounty];
+        wards.forEach(w => wardSel.add(new Option(w, w)));
+      } else if (selectedSubCounty === '') {
+        // If no sub-county selected, show all wards from all sub-counties
+        Object.values(GARISSA_WARDS).flat().forEach(w => {
+          if (!Array.from(wardSel.options).some(opt => opt.value === w)) {
+            wardSel.add(new Option(w, w));
+          }
+        });
+      }
       wardSel.add(new Option('Other', 'Other'));
     }
     
     scSel.addEventListener('change', populateFilterWards);
-    populateFilterWards();
+    populateFilterWards(); // Initial population
   }
 
   // Render applications table
@@ -1256,15 +1274,47 @@
       }
     }, 1500);
     
-    // ALWAYS update and render
+    // ALWAYS update and render - CRITICAL: This must happen
     updateMetrics();
     updateBudgetDisplay();
-    renderTable(allApps);
+    renderTable(allApps); // FORCE render table immediately
     
     // Store initial count for comparison
     sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
     
     console.log('✅ Admin dashboard initialized with', allApps.length, 'applications');
+    
+    // FINAL CHECK: If still no apps after 2 seconds, force load dummy data
+    setTimeout(() => {
+      const finalCheck = loadApplications();
+      console.log('🔍 Final check:', finalCheck.length, 'applications');
+      if (finalCheck.length === 0) {
+        console.log('⚠️ Still no applications after 2 seconds - forcing dummy data load...');
+        // Force clear and reload
+        if (typeof generateDummyApplications === 'function') {
+          console.log('🔄 Direct generation as last resort...');
+          const dummyApps = generateDummyApplications();
+          localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
+          localStorage.setItem('mbms_application_counter', '10');
+          const newApps = loadApplications();
+          if (newApps.length > 0) {
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(newApps);
+            applyFilters();
+            console.log('✅ Dummy data force-loaded:', newApps.length, 'applications');
+            alert('✅ Demo data loaded! ' + newApps.length + ' applications are now visible.');
+          }
+        }
+      } else {
+        // Data exists but might not be visible - force render
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(finalCheck);
+        applyFilters();
+        console.log('✅ Forced render with', finalCheck.length, 'applications');
+      }
+    }, 2000);
     
     // Listen for new application submissions
     window.addEventListener('mbms-data-updated', function(e) {

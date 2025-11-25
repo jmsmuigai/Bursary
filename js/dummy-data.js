@@ -61,6 +61,8 @@ function generateDummyApplications() {
     const locationPair = subCountyWardPairs[i % subCountyWardPairs.length];
     const subCounty = locationPair.subCounty;
     const ward = locationPair.ward;
+    
+    // Ensure subCounty and ward are set at root level for filtering
     const institution = INSTITUTIONS[i % INSTITUTIONS.length];
     const status = statuses[i];
     const amountRequested = 150000 + Math.floor(Math.random() * 100000);
@@ -74,8 +76,8 @@ function generateDummyApplications() {
       applicantName: `${name.first} ${name.middle} ${name.last}`,
       status: status,
       dateSubmitted: new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)).toISOString(),
-      subCounty: subCounty,
-      ward: ward,
+      subCounty: subCounty, // CRITICAL: Set at root level for filtering
+      ward: ward, // CRITICAL: Set at root level for filtering
       village: `${ward} Village`,
       personalDetails: {
         firstNames: `${name.first} ${name.middle}`,
