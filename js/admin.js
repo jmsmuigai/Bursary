@@ -822,28 +822,31 @@
         notifyAdminAwarded(app, app.awardDetails);
       }
       
-      // Auto-download award letter immediately
+      // Auto-download award letter immediately (to default downloads folder)
       try {
-        if (typeof generateOfferLetterPDF !== 'undefined') {
-          const result = await generateOfferLetterPDF(app, app.awardDetails, { preview: false });
+        console.log('📥 Auto-downloading award letter...');
+        if (typeof downloadPDFDirect !== 'undefined') {
+          // Use direct download for auto-save to downloads folder
+          await downloadPDFDirect(app, app.awardDetails);
+          console.log('✅ Award letter auto-downloaded to default downloads folder');
+        } else if (typeof generateOfferLetterPDF !== 'undefined') {
+          const result = await generateOfferLetterPDF(app, app.awardDetails, { preview: false, directSave: true });
           if (result && result.filename) {
             console.log('✅ Award letter auto-downloaded:', result.filename);
-            
-            // Auto-send email to fundadmin@garissa.go.ke
-            setTimeout(() => {
-              if (typeof sendEmailDraft !== 'undefined') {
-                sendEmailDraft(app, 'award', result.filename, app.awardDetails);
-                console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
-              }
-            }, 1000);
           }
-        } else {
-          // Fallback
-          await downloadPDFDirect(app, app.awardDetails);
         }
+        
+        // Auto-send email to fundadmin@garissa.go.ke
+        setTimeout(() => {
+          if (typeof sendEmailDraft !== 'undefined') {
+            sendEmailDraft(app, 'award', app.awardDetails?.serialNumber || 'Award', app.awardDetails);
+            console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
+          }
+        }, 1000);
       } catch (pdfError) {
         console.error('PDF download error:', pdfError);
-        // Continue even if PDF fails
+        // Continue even if PDF fails - show warning but don't block
+        alert('⚠️ Award successful but PDF download failed. You can download it later from the applications list.');
       }
       
       // Show success message
@@ -866,7 +869,7 @@
   };
 
   // Reject application
-  window.rejectApplication = function(appID) {
+  window.rejectApplication = async function(appID) {
     const rejectionReason = prompt('Please provide a reason for rejection (this will be included in the rejection letter):');
     if (!rejectionReason || rejectionReason.trim() === '') {
       alert('Rejection reason is required. Please provide a reason.');
@@ -881,10 +884,41 @@
       app.status = 'Rejected';
       app.rejectionDate = new Date().toISOString();
       app.rejectionReason = rejectionReason.trim();
-      localStorage.setItem('mbms_applications', JSON.stringify(apps));
+      
+      // Save to UNIFIED DATABASE (Firebase or localStorage)
+      try {
+        if (typeof updateApplicationStatus !== 'undefined') {
+          await updateApplicationStatus(appID, {
+            status: 'Rejected',
+            rejectionDate: app.rejectionDate,
+            rejectionReason: app.rejectionReason
+          });
+          console.log('✅ Application rejected and updated in UNIFIED DATABASE:', appID);
+        } else {
+          // Fallback: Update in apps array and save
+          const appIndex = apps.findIndex(a => a.appID === appID);
+          if (appIndex >= 0) {
+            apps[appIndex] = app;
+          }
+          localStorage.setItem('mbms_applications', JSON.stringify(apps));
+          console.log('✅ Application rejected (localStorage fallback):', appID);
+        }
+      } catch (error) {
+        console.error('Error saving rejection:', error);
+        // Still save to localStorage as backup
+        const appIndex = apps.findIndex(a => a.appID === appID);
+        if (appIndex >= 0) {
+          apps[appIndex] = app;
+        }
+        localStorage.setItem('mbms_applications', JSON.stringify(apps));
+      }
+      
+      // Update metrics and display
+      updateMetrics();
+      applyFilters();
+      refreshApplications();
       
       // Budget remains unchanged when rejecting (only changes when awarding)
-      // No need to update budget - it stays the same
       const budget = getBudgetBalance();
       const remainingBalance = budget.total - budget.allocated;
       
@@ -893,12 +927,14 @@
         notifyAdminRejected(app);
       }
       
-      // Auto-download rejection letter and send email
+      // Auto-download rejection letter to default downloads folder
       try {
+        console.log('📥 Auto-downloading rejection letter...');
         if (typeof generateRejectionLetterPDF !== 'undefined') {
           const result = await generateRejectionLetterPDF(app);
           if (result && result.filename) {
-            console.log('✅ Rejection letter auto-downloaded:', result.filename);
+            console.log('✅ Rejection letter auto-downloaded to default downloads folder:', result.filename);
+            showDownloadSuccess(result.filename);
             
             // Auto-send email to fundadmin@garissa.go.ke
             setTimeout(() => {
@@ -911,8 +947,22 @@
         }
       } catch (pdfError) {
         console.error('PDF download error:', pdfError);
-        // Continue even if PDF fails
+        // Continue even if PDF fails - show warning but don't block
+        alert('⚠️ Application rejected but PDF download failed. You can download it later from the applications list.');
       }
+      
+      // Close modal
+      const viewModal = document.querySelector('.modal');
+      if (viewModal) {
+        bootstrap.Modal.getInstance(viewModal).hide();
+      }
+      
+      alert('✅ Application rejected successfully!\n\n📄 Rejection letter has been automatically downloaded to your default downloads folder.\n📧 Copy sent to fundadmin@garissa.go.ke');
+      
+      // Refresh display
+      refreshApplications();
+      updateMetrics();
+      applyFilters();
       
       // Update metrics and display (budget stays same)
       updateMetrics();

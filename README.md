@@ -2,9 +2,10 @@
 
 A comprehensive, modern, and secure bursary management system for Garissa County, Kenya. This system streamlines the entire bursary lifecycle from online application to fund allocation and reporting.
 
-**Version:** 3.0  
+**Version:** 3.1  
 **Release Date:** January 2025  
 **Status:** ✅ **PRODUCTION READY - FULLY TESTED & MOBILE-OPTIMIZED**  
+**Latest Update:** Enhanced filters, auto-download, immediate budget updates, Firebase integration  
 **Developed by:** jmsmuigai@gmail.com  
 **Support Email:** fundadmin@garissa.go.ke
 
@@ -44,30 +45,49 @@ Anyone with this link can:
   - Contact system administrator for initial access credentials
 - ✅ **Budget Management System**:
   - Total Budget: KSH 50,000,000
-  - Real-time budget tracking and deduction
+  - **Immediate budget deduction** when awarding (no delays)
+  - Real-time budget tracking and updates
   - Colorful budget display card (Total, Allocated, Balance, Utilization %)
   - Budget alerts (Low budget warning at 80%, Exhausted alert at 0%)
   - Prevents awarding when budget is insufficient
   - Auto-syncs with existing awarded applications
+  - **Multi-device sync** via Firebase (if configured)
 - ✅ **Smart Application Counter** - Real-time updates when new applications are submitted
+- ✅ **Enhanced Filtering System**:
+  - Sub-County filter with all Garissa sub-counties + "Other" option
+  - Ward filter dynamically populated based on sub-county selection
+  - Shows all wards from all sub-counties when no sub-county selected
+  - "Other" option for custom entries
+  - Auto-applies filters when selections change
 - ✅ **Application Management**:
   - View all applications with smart scrolling
-  - Filter by Sub-County, Ward, and Status
+  - **Enhanced Filtering:**
+    - Filter by Sub-County (all sub-counties + "Other" option)
+    - Filter by Ward (all wards from selected sub-county, or all wards if no sub-county selected + "Other" option)
+    - Filter by Status (Pending, Awarded, Rejected)
+    - Filters apply automatically when selections change
   - Review individual applications
   - Approve/Award applications with amount and justification
+  - **Immediate budget deduction** when awarding
   - Automatic serial number generation (GRS/Bursary/001, 002, 003...)
-  - Reject applications
-- ✅ **PDF Document Generation** (Receipt-Style Format):
+  - Reject applications with reason
+  - **Auto-download** award/rejection letters to default downloads folder
+- ✅ **PDF Document Generation** (Professional Format):
   - **Award Letters**: Professional receipt-style format with amount in words
   - **Rejection Letters**: Official rejection notices with reasons
   - **Status Letters**: Current status updates for pending applications
   - **Application Summary**: Complete application details PDF
-  - **Digital Signatures**: All documents include Fund Administrator signature
+  - **Document Features:**
+    - **Garissa County Logo** - Official branding
+    - **Digital Signature** - Fund Administrator signature image
+    - **Smart Stamp** - Auto-generated colorful official stamp
+    - **Serial Numbers** - Unique tracking (GRS/Bursary/001, etc.)
+    - **Professional Formatting** - Receipt-style award details table
   - **Email Notifications**: Automatic email notifications to fundadmin@garissa.go.ke
-  - **Auto-Download**: Documents automatically download to default downloads folder
+  - **Auto-Download**: Documents automatically download to default downloads folder when awarding/rejecting
   - **Mobile & Desktop Compatible**: Works seamlessly on phones and laptops
+  - **View & Download**: Preview documents before downloading
   - Print to PDF functionality
-  - Download documents with all details
   - Professional design with Garissa County branding
 - ✅ **Smart Reports & Analytics Dashboard**:
   - **Summary Report** with comprehensive analytics

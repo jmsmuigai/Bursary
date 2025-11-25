@@ -11,7 +11,13 @@ const DUMMY_NAMES = [
   { first: 'Abdullahi', middle: 'Ali', last: 'Mohamed', gender: 'Male' },
   { first: 'Khadija', middle: 'Omar', last: 'Ahmed', gender: 'Female' },
   { first: 'Mohamed', middle: 'Hassan', last: 'Abdi', gender: 'Male' },
-  { first: 'Aisha', middle: 'Ibrahim', last: 'Ali', gender: 'Female' }
+  { first: 'Aisha', middle: 'Ibrahim', last: 'Ali', gender: 'Female' },
+  // 5 NEW NAMES
+  { first: 'Ibrahim', middle: 'Mohamed', last: 'Hassan', gender: 'Male' },
+  { first: 'Sahra', middle: 'Ahmed', last: 'Omar', gender: 'Female' },
+  { first: 'Yusuf', middle: 'Abdi', last: 'Ibrahim', gender: 'Male' },
+  { first: 'Maryam', middle: 'Hassan', last: 'Ali', gender: 'Female' },
+  { first: 'Abdirahman', middle: 'Omar', last: 'Mohamed', gender: 'Male' }
 ];
 
 const SUB_COUNTIES = Object.keys(GARISSA_WARDS);
@@ -35,7 +41,7 @@ function generateDummyApplications() {
   const applications = [];
   const now = new Date();
   
-  // Create 10 records - ALL PENDING (none awarded) - ready for review and award
+  // Create 15 records (10 original + 5 new) - ALL PENDING (none awarded) - ready for review and award
   // Statuses: Mix of Pending Ward Review, Pending Committee Review, and Pending Submission
   // This demonstrates the system is ready for the first applicant
   const statuses = [
@@ -48,6 +54,12 @@ function generateDummyApplications() {
     'Pending Submission', 
     'Pending Submission', 
     'Pending Ward Review', 
+    'Pending Committee Review',
+    // 5 NEW RECORDS
+    'Pending Ward Review',
+    'Pending Committee Review',
+    'Pending Submission',
+    'Pending Ward Review',
     'Pending Committee Review'
   ];
   
@@ -63,8 +75,8 @@ function generateDummyApplications() {
     });
   });
   
-  // Ensure we have exactly 10 records, distributed across sub-counties and wards
-  for (let i = 0; i < 10; i++) {
+  // Ensure we have exactly 15 records (10 original + 5 new), distributed across sub-counties and wards
+  for (let i = 0; i < 15; i++) {
     const name = DUMMY_NAMES[i];
     // Distribute evenly across sub-counties and wards
     const locationPair = subCountyWardPairs[i % subCountyWardPairs.length];
@@ -193,8 +205,8 @@ function initializeDummyData() {
       console.log('✅ Saved', dummyApps.length, 'applications to localStorage');
       
       // Update application counter
-      localStorage.setItem('mbms_application_counter', '10');
-      localStorage.setItem('mbms_last_serial', '10');
+      localStorage.setItem('mbms_application_counter', '15');
+      localStorage.setItem('mbms_last_serial', '15');
       
       // Initialize budget
       if (typeof initializeBudget !== 'undefined') {
@@ -332,7 +344,7 @@ window.forceLoadDummyData = function() {
       }
     }, 1000);
     
-    alert('✅ Dummy data loaded successfully!\n\n📊 10 records created:\n- ALL PENDING REVIEW (ready for award)\n- Distributed across all Garissa sub-counties\n- From different schools and institutions\n- NONE AWARDED - ready for first review\n\n✅ Data is now visible in the scrollable table!\n\n📊 Visualizations will show data automatically.');
+      alert('✅ Dummy data loaded successfully!\n\n📊 15 records created:\n- ALL PENDING REVIEW (ready for award)\n- Distributed across all Garissa sub-counties\n- From different schools and institutions\n- NONE AWARDED - ready for first review\n\n✅ Data is now visible in the scrollable table!\n\n📊 Visualizations will show data automatically.');
     
     // Reload page to ensure everything displays
     setTimeout(() => {
