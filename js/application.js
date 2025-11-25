@@ -20,8 +20,8 @@
     const saveStatus = document.getElementById('saveStatus');
     const saveStatusText = document.getElementById('saveStatusText');
     
-    // Ensure all elements exist before proceeding
-    if (!form || !saveBtn || !submitBtn) {
+    // Ensure all elements exist before proceeding - ENHANCED: Check all critical elements
+    if (!form || !saveBtn || !submitBtn || !nextBtn || !prevBtn) {
       console.error('⚠️ Critical form elements not found. Retrying...');
       setTimeout(initializeApplicationForm, 500);
       return;
@@ -168,10 +168,43 @@
     const progress = ((step + 1) / totalSteps) * 100;
     progressBar.style.width = `${progress}%`;
 
-    // Update buttons
-    prevBtn.style.display = step > 0 ? 'block' : 'none';
-    nextBtn.style.display = step < totalSteps - 1 ? 'block' : 'none';
-    submitBtn.style.display = step === totalSteps - 1 ? 'block' : 'none';
+    // Update buttons - ENHANCED: Separate Save and Next buttons
+    if (prevBtn) {
+      prevBtn.style.display = step > 0 ? 'block' : 'none';
+      prevBtn.disabled = false;
+      prevBtn.style.cursor = 'pointer';
+      prevBtn.style.opacity = '1';
+      prevBtn.style.pointerEvents = 'auto';
+      prevBtn.classList.remove('disabled');
+    }
+    
+    if (nextBtn) {
+      nextBtn.style.display = step < totalSteps - 1 ? 'block' : 'none';
+      nextBtn.disabled = false;
+      nextBtn.style.cursor = 'pointer';
+      nextBtn.style.opacity = '1';
+      nextBtn.style.pointerEvents = 'auto';
+      nextBtn.classList.remove('disabled');
+    }
+    
+    if (submitBtn) {
+      submitBtn.style.display = step === totalSteps - 1 ? 'block' : 'none';
+      submitBtn.disabled = false;
+      submitBtn.style.cursor = 'pointer';
+      submitBtn.style.opacity = '1';
+      submitBtn.style.pointerEvents = 'auto';
+      submitBtn.classList.remove('disabled');
+    }
+    
+    // Save button is always visible and active
+    if (saveBtn) {
+      saveBtn.style.display = 'block';
+      saveBtn.disabled = false;
+      saveBtn.style.cursor = 'pointer';
+      saveBtn.style.opacity = '1';
+      saveBtn.style.pointerEvents = 'auto';
+      saveBtn.classList.remove('disabled');
+    }
 
     // Update step indicators
     document.querySelectorAll('.step-indicator').forEach((ind, i) => {
@@ -234,16 +267,20 @@
     });
   }, 100);
 
-    // Navigation - ENHANCED: Friendly Next button with auto-save
+    // Navigation - ENHANCED: Separate Next button (Save is separate)
     if (nextBtn) {
-      nextBtn.addEventListener('click', function(e) {
+      // Remove any existing listeners to prevent duplicates
+      const newNextBtn = nextBtn.cloneNode(true);
+      nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+      
+      newNextBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         try {
           console.log('➡️ Next button clicked - Step', currentStep + 1);
           
-          // Auto-save current step data before proceeding
+          // Auto-save current step data before proceeding (automatic)
           autosave();
           
           // Show friendly message
@@ -263,7 +300,7 @@
           // Allow proceeding even if some fields are missing (user-friendly)
           if (missingFields.length > 0) {
             // Show friendly warning but allow proceeding
-            const proceed = confirm(`⚠️ Some required fields are not filled:\n\n${missingFields.slice(0, 3).join(', ')}${missingFields.length > 3 ? '...' : ''}\n\nYour progress has been saved. You can continue and fill them later.\n\nDo you want to proceed to the next step?`);
+            const proceed = confirm(`⚠️ Some required fields are not filled:\n\n${missingFields.slice(0, 3).join(', ')}${missingFields.length > 3 ? '...' : ''}\n\nYour progress has been saved automatically. You can continue and fill them later.\n\nDo you want to proceed to the next step?`);
             
             if (!proceed) {
               // Focus on first missing field
@@ -295,9 +332,40 @@
         }
       });
       
-      nextBtn.disabled = false;
-      nextBtn.style.cursor = 'pointer';
-      console.log('✅ Next button activated and friendly');
+      newNextBtn.disabled = false;
+      newNextBtn.style.cursor = 'pointer';
+      newNextBtn.style.pointerEvents = 'auto';
+      console.log('✅ Next button activated and working');
+    }
+    
+    // Previous button - ENHANCED
+    if (prevBtn) {
+      // Remove any existing listeners to prevent duplicates
+      const newPrevBtn = prevBtn.cloneNode(true);
+      prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+      
+      newPrevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          // Auto-save before going back
+          autosave();
+          
+          if (currentStep > 0) {
+            currentStep--;
+            showStep(currentStep);
+            console.log('✅ Moved to step', currentStep + 1);
+          }
+        } catch (error) {
+          console.error('Previous button error:', error);
+          alert('Error navigating. Please try again.');
+        }
+      });
+      
+      newPrevBtn.disabled = false;
+      newPrevBtn.style.cursor = 'pointer';
+      newPrevBtn.style.pointerEvents = 'auto';
+      console.log('✅ Previous button activated and working');
     }
 
   prevBtn.addEventListener('click', function() {
@@ -324,7 +392,7 @@
       ind.style.cursor = 'pointer';
     });
 
-    // Save button - ENHANCED with error handling and browser compatibility
+    // Save button - ENHANCED: Separate button, always active
     if (saveBtn) {
       // Remove any existing listeners to prevent duplicates
       const newSaveBtn = saveBtn.cloneNode(true);
@@ -334,18 +402,32 @@
         e.preventDefault();
         e.stopPropagation();
         try {
+          console.log('💾 Save button clicked - Manual save triggered');
           manualSave();
-          console.log('✅ Manual save triggered');
+          
+          // Visual feedback
+          newSaveBtn.classList.add('btn-success');
+          newSaveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Saved!';
+          setTimeout(() => {
+            newSaveBtn.classList.remove('btn-success');
+            newSaveBtn.classList.add('btn-warning');
+            newSaveBtn.innerHTML = '<i class="bi bi-save me-1"></i>Save Progress';
+          }, 2000);
+          
+          console.log('✅ Manual save completed');
         } catch (error) {
           console.error('Save error:', error);
           alert('Error saving progress. Please try again.');
         }
       });
       
-      // Ensure button is always active
+      // Ensure button is always active and visible
       newSaveBtn.disabled = false;
       newSaveBtn.style.cursor = 'pointer';
-      console.log('✅ Save button activated and working');
+      newSaveBtn.style.pointerEvents = 'auto';
+      newSaveBtn.style.display = 'block';
+      newSaveBtn.classList.remove('disabled');
+      console.log('✅ Save button activated and always available');
     }
 
   // Autosave on input change (debounced)

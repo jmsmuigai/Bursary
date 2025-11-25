@@ -11,8 +11,13 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- Mobile Menu Toggle Button -->
+  <button class="mobile-menu-toggle d-md-none" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+    <i class="bi bi-list" id="menuIcon"></i>
+  </button>
+  
   <div class="d-flex">
-    <aside class="p-3" style="width:260px;background:var(--primary-700);color:#fff;min-height:100vh">
+    <aside id="sidebar" class="p-3" style="width:260px;background:var(--primary-700);color:#fff;min-height:100vh">
       <div class="text-center mb-4">
         <img src="Garissa Logo.png" class="logo-circle mb-2" alt="" onerror="this.style.display='none'"/>
         <div class="fw-bold">Garissa MBMS</div>
@@ -29,6 +34,10 @@
       </nav>
       <div class="mt-auto pt-4 small">Logged in as: <b id="adminEmail">Admin</b></div>
     </aside>
+    
+    <!-- Mobile overlay to close sidebar -->
+    <div class="mobile-overlay d-md-none" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+    
     <main class="flex-grow-1 bg-app">
       <div class="container py-4">
         <section id="overview" class="mb-4">
@@ -309,6 +318,49 @@
   <script src="js/visualizations.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/admin-edit.js"></script>
+  
+  <!-- Mobile Menu Toggle Script -->
+  <script>
+    function toggleMobileMenu() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobileOverlay');
+      const menuIcon = document.getElementById('menuIcon');
+      
+      if (sidebar && overlay) {
+        sidebar.classList.toggle('mobile-open');
+        overlay.style.display = sidebar.classList.contains('mobile-open') ? 'block' : 'none';
+        
+        if (menuIcon) {
+          menuIcon.className = sidebar.classList.contains('mobile-open') ? 'bi bi-x' : 'bi bi-list';
+        }
+      }
+    }
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+      const sidebar = document.getElementById('sidebar');
+      const toggleBtn = document.querySelector('.mobile-menu-toggle');
+      const overlay = document.getElementById('mobileOverlay');
+      
+      if (window.innerWidth <= 768 && sidebar && overlay) {
+        if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target) && sidebar.classList.contains('mobile-open')) {
+          toggleMobileMenu();
+        }
+      }
+    });
+    
+    // Close sidebar on window resize to desktop
+    window.addEventListener('resize', function() {
+      if (window.innerWidth > 768) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        if (sidebar && overlay) {
+          sidebar.classList.remove('mobile-open');
+          overlay.style.display = 'none';
+        }
+      }
+    });
+  </script>
   
   <!-- Footer -->
   <footer class="mt-5 py-4" style="background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-600) 100%); color: white;">

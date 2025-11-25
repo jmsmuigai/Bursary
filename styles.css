@@ -193,3 +193,350 @@ body {
   overflow-x: hidden;
 }
 
+/* ============================================
+   MOBILE RESPONSIVE ENHANCEMENTS
+   ============================================ */
+
+/* Mobile-first: Touch-friendly buttons */
+@media (max-width: 768px) {
+  /* Larger tap targets for mobile */
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    touch-action: manipulation;
+  }
+  
+  .btn-sm {
+    min-height: 38px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Mobile-friendly forms */
+  .form-control, .form-select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+    min-height: 44px;
+  }
+  
+  /* Mobile-friendly cards */
+  .card {
+    margin-bottom: 1rem;
+    border-radius: 0.75rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  /* Mobile table - horizontal scroll */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+    display: block;
+    width: 100%;
+  }
+  
+  .table {
+    font-size: 0.875rem;
+    min-width: 800px; /* Force horizontal scroll on small screens */
+  }
+  
+  .table td, .table th {
+    padding: 0.5rem;
+    white-space: nowrap;
+  }
+  
+  /* Stack table actions vertically on mobile */
+  .table td:last-child {
+    white-space: normal;
+  }
+  
+  .table td:last-child .btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Mobile-friendly modals */
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+  
+  .modal-content {
+    border-radius: 0.75rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Mobile sidebar - hide by default, show on toggle */
+  aside {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    z-index: 1050;
+    transition: left 0.3s ease;
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  aside.mobile-open {
+    left: 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+  }
+  
+  /* Mobile menu toggle button */
+  .mobile-menu-toggle {
+    display: block !important;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1060;
+    background: var(--primary-700);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  
+  .mobile-menu-toggle:active {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+  
+  /* Mobile overlay */
+  .mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1040;
+  }
+  
+  /* Main content adjustment for mobile */
+  main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 1rem !important;
+  }
+  
+  /* Mobile-friendly dashboard cards */
+  .card-dash {
+    margin-bottom: 1rem;
+  }
+  
+  .card-dash .d-flex {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .card-dash .fs-3 {
+    font-size: 2rem !important;
+  }
+  
+  /* Mobile-friendly progress bar */
+  .progress {
+    height: 10px;
+  }
+  
+  /* Mobile-friendly step indicators */
+  .step-indicator {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+  
+  /* Mobile-friendly alerts */
+  .alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Mobile-friendly navigation */
+  .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+  
+  /* Mobile-friendly filters */
+  .row.g-3 > [class*="col-"] {
+    margin-bottom: 1rem;
+  }
+  
+  /* Mobile-friendly buttons group */
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-group .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem !important;
+  }
+  
+  /* Mobile-friendly input groups */
+  .input-group {
+    flex-direction: column;
+  }
+  
+  .input-group-text {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    width: 100%;
+  }
+  
+  .input-group .form-control {
+    border-radius: 0 0 0.5rem 0.5rem !important;
+  }
+  
+  /* Mobile-friendly footer */
+  footer {
+    padding: 1.5rem 1rem !important;
+    font-size: 0.85rem;
+  }
+  
+  /* Mobile-friendly logo */
+  .logo-circle {
+    width: 60px;
+    height: 60px;
+  }
+  
+  /* Mobile-friendly container */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Mobile-friendly spacing */
+  .py-4, .py-5 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+  
+  /* Mobile-friendly text */
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  h4 { font-size: 1.1rem; }
+  h5 { font-size: 1rem; }
+  
+  /* Mobile-friendly badges */
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+  }
+  
+  /* Mobile-friendly dropdowns */
+  .dropdown-menu {
+    max-width: calc(100vw - 2rem);
+    left: 1rem !important;
+    right: 1rem !important;
+    transform: none !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  aside {
+    width: 220px;
+  }
+  
+  main {
+    margin-left: 220px;
+  }
+  
+  .table {
+    font-size: 0.9rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.65rem 1rem;
+  }
+  
+  .card-body {
+    padding: 0.75rem;
+  }
+  
+  .modal-dialog {
+    margin: 0.25rem;
+    max-width: calc(100% - 0.5rem);
+  }
+  
+  .table {
+    font-size: 0.8rem;
+    min-width: 700px;
+  }
+  
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.15rem; }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .modal-body {
+    max-height: calc(100vh - 150px);
+  }
+  
+  aside {
+    width: 200px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets */
+  .btn, .nav-link, .step-indicator {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .btn:hover {
+    transform: none;
+  }
+  
+  .card-dash:hover {
+    transform: none;
+  }
+  
+  /* Better tap feedback */
+  .btn:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+/* Print styles */
+@media print {
+  aside, .mobile-menu-toggle, .btn, footer {
+    display: none !important;
+  }
+  
+  main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+

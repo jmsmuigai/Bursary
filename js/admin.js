@@ -35,12 +35,12 @@
     return;
   }
 
-  // Load applications from localStorage (all applications, no filtering)
+  // Load applications from localStorage (SAME DATABASE as registration and application form)
   function loadApplications() {
     try {
       const appsStr = localStorage.getItem('mbms_applications');
       if (!appsStr) {
-        console.log('No applications in localStorage');
+        console.log('📊 No applications in database (localStorage: mbms_applications)');
         return [];
       }
       
@@ -52,7 +52,8 @@
         return [];
       }
       
-      console.log('✅ Loaded', apps.length, 'applications from localStorage');
+      console.log('✅ Loaded', apps.length, 'applications from database (localStorage: mbms_applications)');
+      console.log('📊 Database: localStorage (same as registration and application form)');
       
       // Ensure all applications have required fields for backward compatibility
       return apps.map((app, index) => {
@@ -429,9 +430,9 @@
           ${!app.isFinalSubmission ? `<button class="btn btn-sm btn-warning me-1" onclick="editApplication('${safeAppID}')" title="Edit Application">
             <i class="bi bi-pencil"></i> Edit
           </button>` : ''}
-          <button class="btn btn-sm btn-primary" onclick="viewFormattedDocument('${safeAppID}')" title="View & Auto-Download Document (Downloads automatically)">
-              <i class="bi bi-file-earmark-pdf"></i> View & Download
-            </button>
+          <button class="btn btn-sm btn-success" onclick="downloadApplicationLetter('${safeAppID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter">
+            <i class="bi bi-download"></i> Download
+          </button>
         </td>
       `;
       tbody.appendChild(tr);
