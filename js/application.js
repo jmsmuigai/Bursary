@@ -567,7 +567,7 @@
       }
     };
 
-    // Save application to admin portal
+    // Save application to admin portal (SAME DATABASE)
     const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     applications.push(applicationData);
     localStorage.setItem('mbms_applications', JSON.stringify(applications));
@@ -582,6 +582,8 @@
     console.log('✅ Application submitted and saved:', appID);
     console.log('📊 Total applications now:', updatedApps.length);
     console.log('📋 Status: Pending Ward Review - Awaiting approval');
+    console.log('💾 Database: localStorage (mbms_applications)');
+    console.log('✅ Same database admin portal reads from');
     
     // Show success message
     alert('✅ Application submitted successfully!\n\n📋 Your application has been submitted and is now in the "Pending Ward Review" status.\n\n🔄 Your application will appear on the admin dashboard and is awaiting review.\n\n📧 You will be notified once a decision is made (Awarded or Rejected).\n\n⚠️ IMPORTANT: This is a FINAL SUBMISSION. You CANNOT edit this application.\n\nIf you need to make changes, please contact the Fund Administrator at fundadmin@garissa.go.ke\n\nYour application ID: ' + appID);
