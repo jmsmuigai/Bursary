@@ -331,7 +331,7 @@
 
     if (!applications || applications.length === 0) {
       console.log('⚠️ No applications to render - showing empty message');
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>No applications found. Click "Load Demo Data" button to load sample data.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>No applications found. Click "Load Demo Data" button to load sample data.</td></tr>';
       return;
     }
     
@@ -358,6 +358,7 @@
 
       const serialNumber = app.awardDetails?.serialNumber || '';
       const appID = app.appID || 'N/A';
+      const rowNumber = index + 1; // Sequential number starting from 1
       
       // Escape quotes in onclick handlers
       const safeAppID = appID.replace(/'/g, "\\'");
@@ -368,6 +369,7 @@
       const dummyBadge = isDummy ? '<span class="badge bg-secondary ms-1" title="Demo Data">DUMMY</span>' : '';
       
       tr.innerHTML = `
+        <td><strong>${rowNumber}</strong></td>
         <td><strong>${appID}</strong>${serialNumber ? `<br><small class="text-muted">Serial: ${serialNumber}</small>` : ''}${dummyBadge}</td>
         <td>${name}${dummyBadge}</td>
         <td>${location} / ${ward}</td>

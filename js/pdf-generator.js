@@ -775,21 +775,6 @@ function getJSPDFConstructor() {
   
   throw new Error('jsPDF constructor not found. Please ensure jsPDF library is loaded.');
 }
-  // Try multiple ways jsPDF might be loaded
-  if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF === 'function') {
-    return window.jspdf.jsPDF;
-  }
-  if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF === 'function') {
-    return window.jsPDF.jsPDF;
-  }
-  if (typeof window.jsPDF === 'function') {
-    return window.jsPDF;
-  }
-  if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
-    return window.jspdf.jsPDF;
-  }
-  throw new Error('jsPDF library not loaded. Please refresh the page.');
-}
 
 /**
  * Smart auto-download function - generates and saves PDF automatically
