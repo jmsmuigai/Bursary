@@ -65,7 +65,7 @@
         if (!app.status) {
           app.status = 'Pending Submission';
         }
-        // If application doesn't have location data, try to get from user registration
+        // If application doesn't have location data, try to get from user registration - ENHANCED
         if (!app.subCounty && !app.personalDetails?.subCounty) {
           const users = loadUsers();
           const user = users.find(u => u.email === app.applicantEmail);
@@ -75,6 +75,36 @@
             if (!app.personalDetails) app.personalDetails = {};
             app.personalDetails.subCounty = user.subCounty || 'N/A';
             app.personalDetails.ward = user.ward || 'N/A';
+            app.personalDetails.firstNames = app.personalDetails.firstNames || user.firstName || '';
+            app.personalDetails.lastName = app.personalDetails.lastName || user.lastName || '';
+            app.personalDetails.phoneNumber = app.personalDetails.phoneNumber || user.phoneNumber || '';
+            app.personalDetails.gender = app.personalDetails.gender || user.gender || '';
+          }
+        }
+        
+        // Try to get applicant name from user registration if missing - ENHANCED
+        if (!app.applicantName && app.applicantEmail) {
+          const users = loadUsers();
+          const user = users.find(u => u.email === app.applicantEmail);
+          if (user) {
+            app.applicantName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+            app.subCounty = app.subCounty || user.subCounty || 'N/A';
+            app.ward = app.ward || user.ward || 'N/A';
+            
+            // Also populate personalDetails if missing
+            if (!app.personalDetails) {
+              app.personalDetails = {
+                firstNames: user.firstName || '',
+                lastName: user.lastName || '',
+                subCounty: user.subCounty || 'N/A',
+                ward: user.ward || 'N/A',
+                phoneNumber: user.phoneNumber || '',
+                gender: user.gender || '',
+                dateOfBirth: user.dateOfBirth || ''
+              };
+            }
+            
+            console.log('✅ Enhanced application with user data:', app.appID);
           }
         }
         return app;
