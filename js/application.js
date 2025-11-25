@@ -263,7 +263,7 @@
       applicantEmail: user.email,
       applicantName: `${user.firstName} ${user.lastName}`,
       dateSubmitted: new Date().toISOString(),
-      status: 'Pending Submission',
+      status: 'Pending Ward Review', // Changed to Pending Ward Review - awaiting approval
       // Include location from user registration
       subCounty: user.subCounty || 'N/A',
       ward: user.ward || 'N/A',
@@ -273,7 +273,7 @@
       nemisId: idNumber, // For compatibility
       birthCertificate: birthCertificate,
       dateOfBirth: dateOfBirth,
-      isFinalSubmission: false, // Can be edited until final submission
+      isFinalSubmission: true, // Final submission - cannot be edited
       personalDetails: {
         firstNames: document.getElementById('firstNames').value,
         middleName: document.getElementById('middleName').value,
@@ -327,10 +327,7 @@
       }
     };
 
-    // Mark as final submission - no more editing allowed
-    applicationData.isFinalSubmission = true;
-    
-    // Save application
+    // Save application to admin portal
     const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     applications.push(applicationData);
     localStorage.setItem('mbms_applications', JSON.stringify(applications));
@@ -338,8 +335,16 @@
     // Update counter
     localStorage.setItem('mbms_application_counter', counter.toString());
     
-    // Show warning about no editing after final submission
-    alert('✅ Application submitted successfully!\n\n⚠️ IMPORTANT: This is a FINAL SUBMISSION.\n\nOnce submitted, you CANNOT edit this application.\n\nIf you need to make changes, please contact the Fund Administrator at fundadmin@garissa.go.ke\n\nYour application ID: ' + appID);
+    // CRITICAL: Force localStorage update to trigger events
+    const updatedApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    localStorage.setItem('mbms_applications', JSON.stringify(updatedApps));
+    
+    console.log('✅ Application submitted and saved:', appID);
+    console.log('📊 Total applications now:', updatedApps.length);
+    console.log('📋 Status: Pending Ward Review - Awaiting approval');
+    
+    // Show success message
+    alert('✅ Application submitted successfully!\n\n📋 Your application has been submitted and is now in the "Pending Ward Review" status.\n\n🔄 Your application will appear on the admin dashboard and is awaiting review.\n\n📧 You will be notified once a decision is made (Awarded or Rejected).\n\n⚠️ IMPORTANT: This is a FINAL SUBMISSION. You CANNOT edit this application.\n\nIf you need to make changes, please contact the Fund Administrator at fundadmin@garissa.go.ke\n\nYour application ID: ' + appID);
 
     // Remove draft
     const applicationKey = `mbms_application_${user.email}`;
@@ -351,12 +356,18 @@
     console.log('✅ Application submitted:', appID);
     console.log('📊 Total applications now:', applications.length);
     
-    // Trigger storage event to notify admin dashboard (for real-time updates)
+    // CRITICAL: Trigger multiple events to ensure admin dashboard updates
+    // Event 1: Custom event for admin dashboard
     window.dispatchEvent(new CustomEvent('mbms-data-updated', {
-      detail: { key: 'mbms_applications', action: 'submitted', appID: appID }
+      detail: { 
+        key: 'mbms_applications', 
+        action: 'submitted', 
+        appID: appID,
+        application: applicationData
+      }
     }));
     
-    // Also trigger storage event for cross-tab sync
+    // Event 2: Storage event for cross-tab sync
     try {
       const storageEvent = new StorageEvent('storage', {
         key: 'mbms_applications',
@@ -369,12 +380,28 @@
       console.log('Storage event dispatch:', e);
     }
     
-    // Force localStorage update to trigger cross-tab events
+    // Event 3: Force localStorage update (triggers storage events)
     const currentApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     localStorage.setItem('mbms_applications', JSON.stringify(currentApps));
-
-    alert('✅ Application submitted successfully! Redirecting to dashboard...');
-    window.location.href = 'applicant_dashboard.html';
+    
+    // Event 4: Additional trigger after a short delay
+    setTimeout(() => {
+      localStorage.setItem('mbms_applications', JSON.stringify(currentApps));
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { 
+          key: 'mbms_applications', 
+          action: 'submitted', 
+          appID: appID 
+        }
+      }));
+    }, 500);
+    
+    console.log('✅ All events triggered - Admin dashboard should update automatically');
+    
+    // Redirect to applicant dashboard
+    setTimeout(() => {
+      window.location.href = 'applicant_dashboard.html';
+    }, 1500);
   });
 
   // Initialize

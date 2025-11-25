@@ -735,8 +735,19 @@
       // Show success message
       alert('✅ Successfully awarded!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Copy sent to fundadmin@garissa.go.ke\n\n📥 Award letter has been automatically downloaded!');
       
-      // Refresh display
+      // Refresh display and visualizations
       refreshApplications();
+      updateMetrics();
+      updateBudgetDisplay();
+      applyFilters();
+      
+      // Refresh visualizations with updated data
+      setTimeout(() => {
+        if (typeof refreshVisualizations === 'function') {
+          refreshVisualizations();
+          console.log('✅ Visualizations updated after award');
+        }
+      }, 500);
     }
   };
 
@@ -2158,14 +2169,46 @@
     console.log('📢 Data update event received:', event.detail);
     if (event.detail && event.detail.key === 'mbms_applications') {
       console.log('🔄 New application detected - refreshing dashboard...');
+      
+      // Immediate refresh
+      refreshApplications();
+      updateMetrics();
+      updateBudgetDisplay();
+      
+      // Refresh after short delay
       setTimeout(() => {
         refreshApplications();
         updateMetrics();
         updateBudgetDisplay();
+        applyFilters();
+        
+        // Refresh visualizations
         if (typeof refreshVisualizations === 'function') {
           refreshVisualizations();
+          console.log('✅ Visualizations refreshed with new data');
         }
+        
         console.log('✅ Dashboard refreshed with new application');
+        
+        // Show notification
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '400px';
+        notification.innerHTML = `
+          <strong>🆕 New Application Received!</strong><br>
+          <div class="mt-2">
+            A new application has been submitted and is now in the "Pending Ward Review" list.<br>
+            <small class="text-muted">Application ID: ${event.detail.appID || 'N/A'}</small>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.remove();
+          }
+        }, 5000);
       }, 500);
     }
   });
@@ -2178,6 +2221,7 @@
         refreshApplications();
         updateMetrics();
         updateBudgetDisplay();
+        applyFilters();
         if (typeof refreshVisualizations === 'function') {
           refreshVisualizations();
         }
@@ -2185,21 +2229,22 @@
     }
   });
   
-  // Periodic check for new applications (every 3 seconds)
+  // Periodic check for new applications (every 2 seconds) - more frequent
   setInterval(() => {
     const currentCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
     const apps = loadApplications();
     if (apps.length > currentCount) {
-      console.log('🔄 New applications detected via periodic check');
+      console.log('🔄 New applications detected via periodic check:', apps.length - currentCount, 'new');
       refreshApplications();
       updateMetrics();
       updateBudgetDisplay();
+      applyFilters();
       sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
       if (typeof refreshVisualizations === 'function') {
         refreshVisualizations();
       }
     }
-  }, 3000);
+  }, 2000);
   
   // Setup immediately if DOM is ready, otherwise wait
   if (document.readyState === 'loading') {
