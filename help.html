@@ -246,11 +246,11 @@
                     <h5>Filter Applications</h5>
                     <p class="mb-0">Use the filter options to find specific applications:
                       <ul>
-                        <li>Filter by Sub-County</li>
-                        <li>Filter by Ward</li>
-                        <li>Filter by Status (Pending, Awarded, Rejected)</li>
+                        <li><strong>Filter by Sub-County:</strong> Select from all Garissa sub-counties. Choose "Other (Specify)" if sub-county is not listed. Dropdown is fully populated and enabled.</li>
+                        <li><strong>Filter by Ward:</strong> When a sub-county is selected, shows all wards for that sub-county. When no sub-county is selected, shows ALL wards from ALL sub-counties. Choose "Other (Specify)" if ward is not listed. Dropdown is fully populated and enabled.</li>
+                        <li><strong>Filter by Status:</strong> Pending Ward Review, Pending Committee Review, Awarded, Rejected</li>
                       </ul>
-                      Click "Apply Filters" to update the list.
+                      Filters apply automatically when you change selections, or click "Apply Filters" to update the list.
                     </p>
                   </div>
                 </div>
@@ -289,20 +289,32 @@
                           <ul>
                             <li>Check budget availability (Total Budget: KSH 50,000,000)</li>
                             <li>Generate a unique serial number (GRS/Bursary/001, 002, etc.)</li>
-                            <li>Deduct the amount from available budget</li>
+                            <li><strong>Deduct the amount from available budget IMMEDIATELY</strong></li>
+                            <li>Update all budget displays in real-time</li>
+                            <li><strong>Auto-download award letter</strong> to your default downloads folder</li>
                             <li>Send email notification to fundadmin@garissa.go.ke</li>
-                            <li>Open PDF preview modal for review</li>
-                            <li>Allow you to print or download the award letter</li>
+                            <li>Show success message with download confirmation</li>
                           </ul>
                         </li>
                       </ol>
                       <div class="alert alert-info mt-2 mb-0">
-                        <strong>Budget Management:</strong> The system tracks a total budget of KSH 50,000,000. When you award an application, the amount is automatically deducted from the budget. You'll receive alerts when budget is low (80% used) or exhausted.
+                        <strong>Budget Management:</strong> The system tracks a total budget of KSH 50,000,000. When you award an application, the amount is <strong>automatically deducted immediately</strong> from the budget. You'll receive alerts when budget is low (80% used) or exhausted.
                       </div>
                       <div class="alert alert-success mt-2 mb-0">
+                        <strong>Auto-Download:</strong> Award letters are automatically downloaded to your default downloads folder when you approve an application. The document includes:
+                        <ul class="mb-0">
+                          <li>Garissa County logo</li>
+                          <li>Official signature</li>
+                          <li>Smart stamp</li>
+                          <li>Serial number</li>
+                          <li>Professional formatting</li>
+                          <li>Receipt-style award details</li>
+                        </ul>
+                      </div>
+                      <div class="alert alert-warning mt-2 mb-0">
                         <strong>Email Notifications:</strong> When you award or reject an application, an email notification is automatically sent to fundadmin@garissa.go.ke with all relevant details.
                       </div>
-                      <strong>Note:</strong> The PDF includes serial number, digital signature, and stamp from the Fund Administrator.
+                      <strong>Note:</strong> The PDF includes serial number, digital signature, logo, and stamp from the Fund Administrator.
                     </p>
                   </div>
                 </div>
@@ -323,11 +335,22 @@
                       The system will:
                       <ul>
                         <li>Update status to "Rejected"</li>
+                        <li><strong>Auto-download rejection letter</strong> to your default downloads folder</li>
                         <li>Send email notification to fundadmin@garissa.go.ke</li>
-                        <li>Generate rejection letter with the reason (can be downloaded)</li>
+                        <li>Show success message with download confirmation</li>
                       </ul>
+                      <div class="alert alert-success mt-2 mb-0">
+                        <strong>Rejection Letter Includes:</strong>
+                        <ul class="mb-0">
+                          <li>Garissa County logo</li>
+                          <li>Official signature</li>
+                          <li>Smart stamp</li>
+                          <li>Rejection reason</li>
+                          <li>Professional formatting</li>
+                        </ul>
+                      </div>
                       <div class="alert alert-info mt-2 mb-0">
-                        <strong>Note:</strong> The rejection reason is included in the official rejection letter that applicants can download.
+                        <strong>Note:</strong> The rejection reason is included in the official rejection letter that is automatically downloaded.
                       </div>
                     </p>
                   </div>
@@ -343,9 +366,11 @@
                       <ul>
                         <li>Go to "Reports" section in the admin dashboard</li>
                         <li>Click <strong>"Load Demo Data"</strong> button</li>
-                        <li>This creates 10 realistic applications with different statuses</li>
-                        <li>5 Awarded, 3 Pending, 1 Rejected, 1 Pending Submission</li>
-                        <li>Total awarded: Ksh 1,850,000 (demonstrates budget tracking)</li>
+                        <li>This creates <strong>15 realistic applications</strong> with different statuses</li>
+                        <li>All applications are <strong>Pending Review</strong> (ready for award)</li>
+                        <li>Distributed across all Garissa sub-counties and wards</li>
+                        <li>From different schools and institutions</li>
+                        <li>Use "Clear Demo Data" button to remove all test data</li>
                       </ul>
                       <div class="alert alert-info mt-2 mb-0">
                         <strong>Note:</strong> Demo data is for demonstration purposes only. You can replace it with real applications later.
