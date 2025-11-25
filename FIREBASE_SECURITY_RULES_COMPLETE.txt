@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is admin
+    // For now, we'll use a simple approach - you can enhance this later with Firebase Auth
+    function isAdmin() {
+      // Option 1: Check if user email is admin (requires Firebase Auth)
+      // return request.auth != null && request.auth.token.email == 'fundadmin@garissa.go.ke';
+      
+      // Option 2: Check adminUsers collection (for now, allow if authenticated)
+      // This is a placeholder - you'll need to set up Firebase Auth properly
+      return request.auth != null;
+    }
+    
+    // Rules for the 'applicants' collection
+    match /applicants/{applicantId} {
+      // For now: Allow read/write if authenticated
+      // TODO: Update this to check if user owns the document or is admin
+      allow read, write: if request.auth != null;
+      
+      // Future: More secure rules
+      // allow read: if request.auth != null && (request.auth.uid == applicantId || isAdmin());
+      // allow write: if request.auth != null && (request.auth.uid == applicantId || isAdmin());
+    }
+    
+    // Rules for the 'applications' collection (backward compatibility)
+    match /applications/{applicationId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Rules for the 'adminUsers' collection
+    match /adminUsers/{userId} {
+      // Only admins can read/write admin users
+      allow read, write: if isAdmin();
+    }
+    
+    // Rules for the 'settings' collection (for budget)
+    match /settings/{docId} {
+      // Only admins can read or change the budget
+      allow read, write: if isAdmin();
+    }
+    
+    // Rules for the 'system' collection (backward compatibility)
+    match /system/{docId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Deny access to anything not explicitly allowed above
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

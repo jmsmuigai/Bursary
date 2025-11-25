@@ -74,7 +74,14 @@
     if (useFirebase && db) {
       try {
         console.log('📦 Loading applications from Firebase...');
-        const snapshot = await db.collection('applications').get();
+        // Try 'applicants' collection first (recommended), fallback to 'applications' for backward compatibility
+        let snapshot;
+        try {
+          snapshot = await db.collection('applicants').get();
+        } catch (e) {
+          // Fallback to old collection name
+          snapshot = await db.collection('applications').get();
+        }
         const apps = [];
         snapshot.forEach(doc => {
           const data = doc.data();
@@ -128,14 +135,17 @@
       try {
         console.log('📦 Saving application to Firebase...', application.appID);
         
+        // Use 'applicants' collection (recommended structure)
+        const collectionName = 'applicants';
+        
         if (application.id) {
           // Update existing
-          await db.collection('applications').doc(application.id).set(application, { merge: true });
+          await db.collection(collectionName).doc(application.id).set(application, { merge: true });
           console.log('✅ Application updated in Firebase:', application.id);
         } else {
           // Create new - use appID as document ID for easier lookup
           const docId = application.appID || `app_${Date.now()}`;
-          await db.collection('applications').doc(docId).set(application);
+          await db.collection(collectionName).doc(docId).set(application);
           application.id = docId;
           console.log('✅ Application created in Firebase:', docId);
         }
@@ -193,7 +203,7 @@
         if (!app) {
           console.warn('⚠️ Application not found by appID, trying direct update...');
           // Try to update directly using appID as document ID
-          const docRef = db.collection('applications').doc(appID);
+          const docRef = db.collection('applicants').doc(appID);
           const doc = await docRef.get();
           
           if (doc.exists) {
@@ -210,7 +220,7 @@
         
         // Use app.id if available, otherwise use appID as document ID
         const docId = app.id || appID;
-        await db.collection('applications').doc(docId).update(updates);
+        await db.collection('applicants').doc(docId).update(updates);
         
         console.log('✅ Application status updated in Firebase:', docId);
         
@@ -274,7 +284,7 @@
     if (useFirebase && db) {
       try {
         console.log('📡 Setting up Firebase real-time listener...');
-        return db.collection('applications').onSnapshot((snapshot) => {
+        return db.collection('applicants').onSnapshot((snapshot) => {
           const apps = [];
           snapshot.forEach(doc => {
             const data = doc.data();
@@ -320,7 +330,13 @@
   window.getBudgetData = async function() {
     if (useFirebase && db) {
       try {
-        const doc = await db.collection('system').doc('budget').get();
+        // Try 'settings' collection first (recommended), fallback to 'system' for backward compatibility
+        let doc;
+        try {
+          doc = await db.collection('settings').doc('budget').get();
+        } catch (e) {
+          doc = await db.collection('system').doc('budget').get();
+        }
         if (doc.exists) {
           const data = doc.data();
           // Sync to localStorage
@@ -346,7 +362,8 @@
   window.updateBudgetData = async function(total, allocated) {
     if (useFirebase && db) {
       try {
-        await db.collection('system').doc('budget').set({
+        // Use 'settings' collection (recommended structure)
+        await db.collection('settings').doc('budget').set({
           total: total,
           allocated: allocated,
           lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
