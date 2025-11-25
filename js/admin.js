@@ -234,13 +234,17 @@
       return;
     }
     
-    // Populate sub-counties - ALL Garissa sub-counties
+    // Populate sub-counties - ALL Garissa sub-counties with "Other" option
     scSel.innerHTML = '<option value="">All Sub-Counties</option>';
-    const subCounties = Object.keys(GARISSA_WARDS);
-    subCounties.forEach(sc => {
-      scSel.add(new Option(sc, sc));
-    });
-    scSel.add(new Option('Other (Type below)', 'Other'));
+    if (typeof GARISSA_WARDS !== 'undefined') {
+      const subCounties = Object.keys(GARISSA_WARDS);
+      subCounties.forEach(sc => {
+        const option = new Option(sc, sc);
+        scSel.add(option);
+      });
+    }
+    scSel.add(new Option('Other', 'Other'));
+    console.log('✅ Sub-county filter populated with', (typeof GARISSA_WARDS !== 'undefined' ? Object.keys(GARISSA_WARDS).length : 0) + 1, 'options (including Other)');
 
     // Function to populate wards based on selected sub-county - ALL wards
     function populateFilterWards() {
@@ -265,7 +269,8 @@
       }
       
       // Always add "Other" option for typing custom ward
-      wardSel.add(new Option('Other (Type below)', 'Other'));
+      wardSel.add(new Option('Other', 'Other'));
+      console.log('✅ Ward filter populated with', (selectedSubCounty && selectedSubCounty !== 'Other' && GARISSA_WARDS[selectedSubCounty] ? GARISSA_WARDS[selectedSubCounty].length : (typeof GARISSA_WARDS !== 'undefined' ? [...new Set(Object.values(GARISSA_WARDS).flat())].length : 0)) + 1, 'options (including Other)');
       
       // Enable/disable based on selection
       wardSel.disabled = false;
@@ -524,10 +529,15 @@
             <p class="bg-light p-3 rounded">${app.financialDetails?.justification || 'N/A'}</p>
             <hr>
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h6 class="mb-0">Actions</h6>
-              <button class="btn btn-sm btn-outline-primary" onclick="downloadApplicationPDFFromView('${appID}')" title="Download Application as PDF">
-                <i class="bi bi-download me-1"></i>Download PDF
-              </button>
+              <h6 class="mb-0">Document Actions</h6>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewFormattedDocument('${appID}')" title="View Formatted Document">
+                  <i class="bi bi-file-earmark-pdf me-1"></i>View Document
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="downloadApplicationPDFFromView('${appID}')" title="Download Application as PDF">
+                  <i class="bi bi-download me-1"></i>Download PDF
+                </button>
+              </div>
             </div>
             <h6>Admin Action</h6>
             <div class="input-group mb-3">
@@ -823,29 +833,84 @@
       loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating and downloading PDF...';
       document.body.appendChild(loadingAlert);
 
+      let filename = '';
+      let documentType = '';
+      
       if (app.status === 'Awarded') {
         // Download award letter
-    if (!app.awardDetails) {
+        if (!app.awardDetails) {
           loadingAlert.remove();
-      alert('⚠️ Award details not found. Please award this application first.');
-      return;
-    }
+          alert('⚠️ Award details not found. Please award this application first.');
+          return;
+        }
 
-      const awardDetails = {
-        ...app.awardDetails,
-        serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
-      };
-      
-      await downloadPDFDirect(app, awardDetails);
+        const awardDetails = {
+          ...app.awardDetails,
+          serialNumber: app.awardDetails.serialNumber || getNextSerialNumber()
+        };
+        
+        // Generate and auto-download award letter
+        if (typeof generateOfferLetterPDF !== 'undefined') {
+          const applicantName = app.applicantName || 
+            `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+          const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+          filename = `Garissa_Bursary_Award_${sanitizedName}_${awardDetails.serialNumber}_${app.appID}.pdf`;
+          documentType = 'award';
+          
+          const doc = await generateOfferLetterPDF(app, awardDetails, { preview: false });
+          if (doc && typeof doc.save === 'function') {
+            doc.save(filename);
+            console.log('✅ Award letter auto-downloaded:', filename);
+          }
+        } else {
+          // Fallback
+          await downloadPDFDirect(app, awardDetails);
+        }
         loadingAlert.remove();
       } else if (app.status === 'Rejected') {
         // Download rejection letter
-        await downloadRejectionLetter(app);
+        if (typeof generateRejectionLetterPDF !== 'undefined') {
+          const applicantName = app.applicantName || 
+            `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+          const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+          filename = `Garissa_Bursary_Rejection_${sanitizedName}_${app.appID}.pdf`;
+          documentType = 'rejection';
+          
+          const doc = await generateRejectionLetterPDF(app);
+          if (doc && typeof doc.save === 'function') {
+            doc.save(filename);
+            console.log('✅ Rejection letter auto-downloaded:', filename);
+          }
+        } else {
+          await downloadRejectionLetter(app);
+        }
         loadingAlert.remove();
       } else {
         // Download status letter for pending applications
-        await downloadStatusLetter(app);
+        if (typeof generateStatusLetterPDF !== 'undefined') {
+          const applicantName = app.applicantName || 
+            `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+          const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+          filename = `Garissa_Bursary_Status_${sanitizedName}_${app.appID}.pdf`;
+          documentType = 'status';
+          
+          const doc = await generateStatusLetterPDF(app);
+          if (doc && typeof doc.save === 'function') {
+            doc.save(filename);
+            console.log('✅ Status letter auto-downloaded:', filename);
+          }
+        } else {
+          await downloadStatusLetter(app);
+        }
         loadingAlert.remove();
+      }
+      
+      // Auto-send email to fundadmin@garissa.go.ke after download
+      if (filename && typeof sendEmailDraft !== 'undefined') {
+        setTimeout(() => {
+          sendEmailDraft(app, documentType || 'summary', filename, app.awardDetails || null);
+          console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
+        }, 1000);
       }
     } catch (error) {
       console.error('PDF download error:', error);
