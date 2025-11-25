@@ -1231,9 +1231,27 @@ async function generateRejectionLetterPDF(application) {
       `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim() || 'Applicant';
     const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
     const filename = `Garissa_Bursary_Rejection_${sanitizedName}_${application.appID}.pdf`;
-    doc.save(filename);
     
-    return { filename };
+    // Auto-download
+    try {
+      doc.save(filename);
+      console.log('✅ Rejection letter auto-downloaded:', filename);
+    } catch (e) {
+      console.error('Auto-download error:', e);
+      // Fallback for mobile devices
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    }
+    
+    return { doc, filename };
   } catch (error) {
     console.error('Rejection letter generation error:', error);
     throw new Error(`Error generating rejection letter: ${error.message}`);
@@ -1384,9 +1402,27 @@ async function generateStatusLetterPDF(application) {
     // Generate filename with applicant name for uniqueness
     const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
     const filename = `Garissa_Bursary_Status_${sanitizedName}_${application.appID}.pdf`;
-    doc.save(filename);
     
-    return { filename };
+    // Auto-download
+    try {
+      doc.save(filename);
+      console.log('✅ Status letter auto-downloaded:', filename);
+    } catch (e) {
+      console.error('Auto-download error:', e);
+      // Fallback for mobile devices
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    }
+    
+    return { doc, filename };
   } catch (error) {
     console.error('Status letter generation error:', error);
     throw new Error(`Error generating status letter: ${error.message}`);

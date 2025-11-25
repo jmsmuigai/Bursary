@@ -851,55 +851,73 @@
         
         // Generate and auto-download award letter
         if (typeof generateOfferLetterPDF !== 'undefined') {
+          documentType = 'award';
+          const result = await generateOfferLetterPDF(app, awardDetails, { preview: false });
+          if (result && result.filename) {
+            filename = result.filename;
+            console.log('✅ Award letter auto-downloaded:', filename);
+          } else {
+            // Fallback filename
+            const applicantName = app.applicantName || 
+              `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+            const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+            filename = `Garissa_Bursary_Award_${sanitizedName}_${awardDetails.serialNumber}_${app.appID}.pdf`;
+          }
+        } else {
+          // Fallback
           const applicantName = app.applicantName || 
             `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
           const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
           filename = `Garissa_Bursary_Award_${sanitizedName}_${awardDetails.serialNumber}_${app.appID}.pdf`;
           documentType = 'award';
-          
-          const doc = await generateOfferLetterPDF(app, awardDetails, { preview: false });
-          if (doc && typeof doc.save === 'function') {
-            doc.save(filename);
-            console.log('✅ Award letter auto-downloaded:', filename);
-          }
-        } else {
-          // Fallback
           await downloadPDFDirect(app, awardDetails);
         }
         loadingAlert.remove();
       } else if (app.status === 'Rejected') {
         // Download rejection letter
         if (typeof generateRejectionLetterPDF !== 'undefined') {
+          documentType = 'rejection';
+          const result = await generateRejectionLetterPDF(app);
+          if (result && result.filename) {
+            filename = result.filename;
+            console.log('✅ Rejection letter auto-downloaded:', filename);
+          } else {
+            // Fallback filename
+            const applicantName = app.applicantName || 
+              `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+            const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+            filename = `Garissa_Bursary_Rejection_${sanitizedName}_${app.appID}.pdf`;
+          }
+        } else {
           const applicantName = app.applicantName || 
             `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
           const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
           filename = `Garissa_Bursary_Rejection_${sanitizedName}_${app.appID}.pdf`;
           documentType = 'rejection';
-          
-          const doc = await generateRejectionLetterPDF(app);
-          if (doc && typeof doc.save === 'function') {
-            doc.save(filename);
-            console.log('✅ Rejection letter auto-downloaded:', filename);
-          }
-        } else {
           await downloadRejectionLetter(app);
         }
         loadingAlert.remove();
       } else {
         // Download status letter for pending applications
         if (typeof generateStatusLetterPDF !== 'undefined') {
+          documentType = 'status';
+          const result = await generateStatusLetterPDF(app);
+          if (result && result.filename) {
+            filename = result.filename;
+            console.log('✅ Status letter auto-downloaded:', filename);
+          } else {
+            // Fallback filename
+            const applicantName = app.applicantName || 
+              `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+            const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+            filename = `Garissa_Bursary_Status_${sanitizedName}_${app.appID}.pdf`;
+          }
+        } else {
           const applicantName = app.applicantName || 
             `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
           const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
           filename = `Garissa_Bursary_Status_${sanitizedName}_${app.appID}.pdf`;
           documentType = 'status';
-          
-          const doc = await generateStatusLetterPDF(app);
-          if (doc && typeof doc.save === 'function') {
-            doc.save(filename);
-            console.log('✅ Status letter auto-downloaded:', filename);
-          }
-        } else {
           await downloadStatusLetter(app);
         }
         loadingAlert.remove();
