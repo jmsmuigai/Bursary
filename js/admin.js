@@ -1257,10 +1257,13 @@
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="mb-0"><i class="bi bi-file-earmark-pdf me-1"></i>Document Actions</h6>
                 <div class="btn-group">
-                  <button class="btn btn-sm btn-success" onclick="safeDownloadApplication('${appID}'); bootstrap.Modal.getInstance(document.getElementById('viewApplicationModal')).hide();" title="Download Document (Auto-downloads)">
+                  <button class="btn btn-sm btn-success" onclick="safeDownloadApplication('${appID}')" title="Download Document (Auto-downloads to your default folder)">
                     <i class="bi bi-download me-1"></i>Download Document
                   </button>
                 </div>
+              </div>
+              <div class="alert alert-info">
+                <small><i class="bi bi-info-circle me-1"></i>Click "Download Document" to automatically download the ${app.status === 'Awarded' ? 'award letter' : app.status === 'Rejected' ? 'rejection letter' : 'status letter'} to your default downloads folder.</small>
               </div>
               ${app.status !== 'Awarded' && app.status !== 'Rejected' ? `
               <hr>
@@ -1281,8 +1284,10 @@
               ` : ''}
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" onclick="safeDownloadApplication('${appID}')">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle me-1"></i>Close
+              </button>
+              <button type="button" class="btn btn-success" onclick="safeDownloadApplication('${appID}')" title="Auto-downloads document to your default folder">
                 <i class="bi bi-download me-1"></i>Download Document
               </button>
             </div>
