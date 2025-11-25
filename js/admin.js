@@ -1128,11 +1128,6 @@
   };
 
   // Download application PDF from view modal - AUTO-DOWNLOADS with success message
-  window.downloadApplicationLetter = async function(appID) {
-    // Alias for downloadApplicationPDFFromView
-    return window.downloadApplicationPDFFromView(appID);
-  };
-  
   window.downloadApplicationPDFFromView = async function(appID) {
     try {
       const apps = loadApplications();
@@ -1366,7 +1361,11 @@
     const apps = loadApplications();
     const app = apps.find(a => a.appID === appID);
     if (app && app.status === 'Awarded') {
-      await downloadApplicationLetter(appID);
+      if (typeof window.downloadApplicationLetter === 'function') {
+        await window.downloadApplicationLetter(appID);
+      } else if (typeof window.safeDownloadApplication === 'function') {
+        await window.safeDownloadApplication(appID);
+      }
     } else {
       alert('⚠️ Preview is only available for awarded applications. Use Download instead.');
     }
@@ -1402,7 +1401,12 @@
     }
   };
   
-  window.downloadPDF = window.downloadApplicationLetter;
+  // Create downloadApplicationLetter as alias to downloadApplicationPDFFromView
+  window.downloadApplicationLetter = async function(appID) {
+    return await window.downloadApplicationPDFFromView(appID);
+  };
+  
+  window.downloadPDF = window.downloadApplicationPDFFromView;
   
   // Safe View Application wrapper - ENHANCED: Always works
   window.safeViewApplication = function(appID) {
