@@ -528,6 +528,278 @@ body {
   }
 }
 
+/* Enhanced Mobile Navigation */
+@media (max-width: 768px) {
+  /* Navbar mobile adjustments */
+  .navbar {
+    padding: 0.75rem 1rem;
+  }
+  
+  .navbar-brand {
+    font-size: 1rem;
+  }
+  
+  .navbar .ms-auto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+  .navbar .btn-sm {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  /* Mobile-friendly applicant dashboard cards */
+  .row.g-4 > [class*="col-"] {
+    margin-bottom: 1rem;
+  }
+  
+  /* Mobile-friendly card body */
+  .card-body {
+    padding: 1rem 0.75rem;
+  }
+  
+  /* Mobile-friendly buttons in cards */
+  .card-body .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .card-body .btn:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Mobile-friendly text alignment */
+  .text-center-mobile {
+    text-align: center;
+  }
+  
+  /* Mobile-friendly spacing */
+  .mb-4-mobile {
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Mobile-friendly icons */
+  .fs-1 {
+    font-size: 2.5rem !important;
+  }
+  
+  /* Mobile-friendly status badges */
+  .badge {
+    display: inline-block;
+    margin: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  
+  /* Mobile-friendly filter section */
+  .filter-section {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Mobile-friendly chart containers */
+  .chart-container {
+    height: 250px !important;
+    margin-bottom: 1rem;
+  }
+  
+  /* Mobile-friendly table actions */
+  .table .btn-group {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .table .btn-group .btn {
+    width: 100%;
+    margin: 0;
+  }
+  
+  /* Mobile-friendly modals - full screen on small devices */
+  @media (max-width: 480px) {
+    .modal-dialog {
+      margin: 0;
+      max-width: 100%;
+      height: 100%;
+    }
+    
+    .modal-content {
+      height: 100%;
+      border-radius: 0;
+    }
+    
+    .modal-header {
+      border-radius: 0;
+    }
+    
+    .modal-body {
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+  }
+  
+  /* Mobile-friendly form inputs */
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--primary-700);
+    box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+  }
+  
+  /* Mobile-friendly scrollbars */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Mobile-friendly loading states */
+  .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  /* Mobile-friendly alerts */
+  .alert {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Mobile-friendly progress indicators */
+  .progress {
+    height: 8px;
+  }
+  
+  /* Mobile-friendly step indicators */
+  .step-indicator {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.6rem;
+    margin: 0.25rem;
+  }
+  
+  /* Mobile-friendly footer */
+  footer {
+    padding: 1.5rem 1rem !important;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  
+  footer p {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Mobile-friendly registration form */
+  .card.rounded-4 {
+    border-radius: 1rem !important;
+  }
+  
+  /* Mobile-friendly form sections */
+  .form-section h5 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Mobile-friendly input groups in forms */
+  .row.g-3 > [class*="col-"] {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Mobile-friendly validation messages */
+  .invalid-feedback,
+  .valid-feedback {
+    font-size: 0.8rem;
+  }
+  
+  /* Mobile-friendly submit buttons */
+  .btn-primary-700,
+  .btn-success,
+  .btn-primary {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  /* Mobile-friendly back buttons */
+  .btn-outline-light,
+  .btn-secondary {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Mobile-friendly card headers */
+  .card-header {
+    padding: 1rem 0.75rem;
+  }
+  
+  .card-header h4 {
+    font-size: 1.1rem;
+  }
+  
+  /* Mobile-friendly logo in headers */
+  .card-header .logo-circle {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* Mobile-friendly progress bar container */
+  .progress.mt-3 {
+    margin-top: 0.75rem !important;
+  }
+  
+  /* Mobile-friendly step indicators container */
+  .d-flex.justify-content-between.mt-2 {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  /* Mobile-friendly step indicator text */
+  .step-indicator {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.5rem;
+    white-space: nowrap;
+  }
+  
+  /* Mobile-friendly autosave indicator */
+  .autosave-indicator {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1050;
+    max-width: calc(100vw - 20px);
+  }
+  
+  .autosave-indicator .alert {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    margin-bottom: 0;
+  }
+  
+  /* Mobile-friendly form navigation buttons */
+  .d-flex.justify-content-between.mt-4 {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .d-flex.justify-content-between.mt-4 button {
+    width: 100%;
+    margin: 0;
+  }
+  
+  /* Mobile-friendly ms-auto container */
+  .ms-auto {
+    width: 100%;
+  }
+  
+  .ms-auto button {
+    width: 100%;
+  }
+}
+
 /* Print styles */
 @media print {
   aside, .mobile-menu-toggle, .btn, footer {

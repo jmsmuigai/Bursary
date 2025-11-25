@@ -1351,16 +1351,44 @@
         return;
       }
       
-      // Generate PDF based on status
-      if (app.status === 'Awarded' && typeof generateOfferLetterPDF === 'function') {
-        await generateOfferLetterPDF(app, app.awardDetails || {}, { preview: false });
-      } else if (app.status === 'Rejected' && typeof generateRejectionLetterPDF === 'function') {
-        await generateRejectionLetterPDF(app);
-      } else if (typeof generateStatusLetterPDF === 'function') {
-        await generateStatusLetterPDF(app);
+      // Generate PDF based on status - ENHANCED: Multiple fallbacks
+      let pdfGenerated = false;
+      
+      if (app.status === 'Awarded') {
+        if (typeof generateOfferLetterPDF === 'function') {
+          try {
+            await generateOfferLetterPDF(app, app.awardDetails || {}, { preview: false });
+            pdfGenerated = true;
+            console.log('✅ Award letter PDF generated');
+          } catch (error) {
+            console.error('generateOfferLetterPDF error:', error);
+          }
+        }
+      } else if (app.status === 'Rejected') {
+        if (typeof generateRejectionLetterPDF === 'function') {
+          try {
+            await generateRejectionLetterPDF(app);
+            pdfGenerated = true;
+            console.log('✅ Rejection letter PDF generated');
+          } catch (error) {
+            console.error('generateRejectionLetterPDF error:', error);
+          }
+        }
       } else {
+        if (typeof generateStatusLetterPDF === 'function') {
+          try {
+            await generateStatusLetterPDF(app);
+            pdfGenerated = true;
+            console.log('✅ Status letter PDF generated');
+          } catch (error) {
+            console.error('generateStatusLetterPDF error:', error);
+          }
+        }
+      }
+      
+      if (!pdfGenerated) {
         loadingAlert.remove();
-        alert('⚠️ PDF generation functions not available. Please refresh the page.');
+        alert('⚠️ PDF generation functions not available. Please refresh the page.\n\nIf the problem persists, check the browser console (F12) for errors.');
         return;
       }
       
