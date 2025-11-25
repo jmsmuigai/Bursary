@@ -446,12 +446,44 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
 
     // If directSave option, save directly and return doc for further use
     if (options.directSave) {
-      doc.save(filename);
+      try {
+        doc.save(filename);
+        console.log(`✅ PDF saved: ${filename}`);
+      } catch (e) {
+        // Mobile fallback
+        const pdfBlob = doc.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+        console.log(`✅ PDF saved (mobile): ${filename}`);
+      }
       return { filename, serialNumber, doc };
     }
 
-    // Save PDF directly (for direct download)
-    doc.save(filename);
+    // Save PDF directly (for direct download) - works on desktop and mobile
+    try {
+      doc.save(filename);
+      console.log(`✅ PDF downloaded: ${filename}`);
+    } catch (e) {
+      // Mobile fallback
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      console.log(`✅ PDF downloaded (mobile): ${filename}`);
+    }
     
     return { filename, serialNumber, doc };
   } catch (error) {
@@ -757,9 +789,28 @@ async function autoDownloadPDF(application, awardDetails, documentType = 'award'
       doc = await createSummaryPDFDoc(application, jsPDF);
     }
     
-    // Auto-save to downloads folder using doc.save() - most reliable
+    // Auto-save to downloads folder - works on both desktop and mobile
     if (doc && typeof doc.save === 'function') {
-      doc.save(filename);
+      try {
+        // Try direct save first (works on desktop)
+        doc.save(filename);
+        console.log(`✅ PDF auto-downloaded: ${filename}`);
+      } catch (e) {
+        // Fallback for mobile devices - use blob URL approach
+        console.log('Using blob URL fallback for mobile device');
+        const pdfBlob = doc.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // Clean up blob URL after a delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+        console.log(`✅ PDF auto-downloaded (mobile): ${filename}`);
+      }
     } else {
       // Fallback: regenerate and save
       const jsPDF2 = getJSPDFConstructor();

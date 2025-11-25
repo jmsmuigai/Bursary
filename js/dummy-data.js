@@ -172,14 +172,24 @@ function generateDummyApplications() {
  */
 function initializeDummyData() {
   try {
+    console.log('🔄 Checking for existing applications...');
     const existingApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    console.log('Found', existingApps.length, 'existing applications');
     
     if (existingApps.length === 0) {
       console.log('🔄 Initializing dummy data (10 records with various statuses)...');
       const dummyApps = generateDummyApplications();
+      console.log('Generated', dummyApps.length, 'dummy applications');
+      
+      // CRITICAL: Verify data structure before saving
+      if (!dummyApps || dummyApps.length === 0) {
+        console.error('❌ CRITICAL: No dummy applications generated!');
+        return false;
+      }
       
       // Save to localStorage
       localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
+      console.log('✅ Saved', dummyApps.length, 'applications to localStorage');
       
       // Update application counter
       localStorage.setItem('mbms_application_counter', '10');
@@ -193,8 +203,16 @@ function initializeDummyData() {
         syncBudgetWithAwards();
       }
       
-      // Verify save
+      // CRITICAL VERIFICATION: Re-read from localStorage to confirm save
       const verify = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      console.log('✅ Verification: Re-read', verify.length, 'applications from localStorage');
+      
+      if (verify.length === 0) {
+        console.error('❌ CRITICAL ERROR: Applications not saved to localStorage!');
+        alert('⚠️ Error: Dummy data could not be saved. Please refresh the page.');
+        return false;
+      }
+      
       const awardedCount = verify.filter(a => a.status === 'Awarded').length;
       const pendingCount = verify.filter(a => a.status?.includes('Pending')).length;
       const rejectedCount = verify.filter(a => a.status === 'Rejected').length;
@@ -210,8 +228,8 @@ function initializeDummyData() {
         id: a.appID, 
         name: a.applicantName, 
         status: a.status,
-        subCounty: a.subCounty,
-        ward: a.ward
+        subCounty: a.subCounty || a.personalDetails?.subCounty,
+        ward: a.ward || a.personalDetails?.ward
       })));
       
       // Force a storage event to trigger updates
@@ -222,14 +240,16 @@ function initializeDummyData() {
           oldValue: null,
           storageArea: localStorage
         }));
+        console.log('✅ Storage event dispatched');
       } catch (e) {
-        console.log('Storage event dispatch:', e);
+        console.log('Storage event dispatch error:', e);
       }
       
       // Also dispatch custom event
       window.dispatchEvent(new CustomEvent('mbms-data-updated', {
         detail: { key: 'mbms_applications', action: 'loaded', count: verify.length }
       }));
+      console.log('✅ Custom event dispatched');
       
       return true;
     } else {
@@ -238,7 +258,8 @@ function initializeDummyData() {
       return true;
     }
   } catch (error) {
-    console.error('Error initializing dummy data:', error);
+    console.error('❌ Error initializing dummy data:', error);
+    alert('Error loading dummy data: ' + error.message);
     return false;
   }
 }

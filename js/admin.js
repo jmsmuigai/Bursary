@@ -167,7 +167,7 @@
       progressBar.setAttribute('aria-valuemax', 100);
       
       // Dynamic color based on utilization (real-time updates)
-        const budgetCard = document.getElementById('budgetCard');
+      const budgetCard = document.getElementById('budgetCard');
       if (status.isExhausted || calculatedBalance <= 0) {
         // Dark red when exhausted
         progressBar.className = 'progress-bar';
@@ -191,23 +191,27 @@
         progressBar.className = 'progress-bar';
         progressBar.style.backgroundColor = '#fd7e14';
         progressBar.style.transition = 'background-color 0.3s ease, width 0.5s ease';
+        if (budgetCard) {
+          budgetCard.style.background = 'linear-gradient(135deg, #fd7e14 0%, #ff9800 100%)';
+          budgetCard.style.transition = 'background 0.3s ease';
+        }
       } else if (percentage >= 50) {
         // Yellow when 50-75% used
         progressBar.className = 'progress-bar';
         progressBar.style.backgroundColor = '#ffc107';
         progressBar.style.transition = 'background-color 0.3s ease, width 0.5s ease';
+        if (budgetCard) {
+          budgetCard.style.background = 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)';
+          budgetCard.style.transition = 'background 0.3s ease';
+        }
       } else {
         // Green when <50% used
         progressBar.className = 'progress-bar bg-success';
         progressBar.style.transition = 'background-color 0.3s ease, width 0.5s ease';
-      } else if (status.isLow) {
-        progressBar.className = 'progress-bar bg-warning';
-        const budgetCard = document.getElementById('budgetCard');
-        if (budgetCard) budgetCard.style.background = 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)';
-      } else {
-        progressBar.className = 'progress-bar bg-success';
-        const budgetCard = document.getElementById('budgetCard');
-        if (budgetCard) budgetCard.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        if (budgetCard) {
+          budgetCard.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          budgetCard.style.transition = 'background 0.3s ease';
+        }
       }
     }
     
@@ -1309,26 +1313,62 @@
     
     console.log('✅ Admin dashboard initialized with', allApps.length, 'applications');
     
-    // FINAL CHECK: If still no apps after 2 seconds, force load dummy data
+    // FINAL CHECK: If still no apps after 1 second, force load dummy data
     setTimeout(() => {
       const finalCheck = loadApplications();
-      console.log('🔍 Final check:', finalCheck.length, 'applications');
+      console.log('🔍 Final check (1s):', finalCheck.length, 'applications');
+      const tbody = document.getElementById('applicationsTableBody');
+      console.log('Table body exists:', !!tbody, 'Rows:', tbody?.children.length || 0);
+      
       if (finalCheck.length === 0) {
-        console.log('⚠️ Still no applications after 2 seconds - forcing dummy data load...');
+        console.log('⚠️ Still no applications - forcing dummy data load...');
         // Force clear and reload
         if (typeof generateDummyApplications === 'function') {
           console.log('🔄 Direct generation as last resort...');
           const dummyApps = generateDummyApplications();
+          console.log('Generated', dummyApps.length, 'dummy applications');
           localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
           localStorage.setItem('mbms_application_counter', '10');
+          localStorage.setItem('mbms_last_serial', '10');
+          
+          // Initialize budget
+          if (typeof initializeBudget !== 'undefined') {
+            initializeBudget();
+          }
+          if (typeof syncBudgetWithAwards !== 'undefined') {
+            syncBudgetWithAwards();
+          }
+          
           const newApps = loadApplications();
+          console.log('Loaded', newApps.length, 'applications after force generation');
           if (newApps.length > 0) {
             updateMetrics();
             updateBudgetDisplay();
             renderTable(newApps);
             applyFilters();
             console.log('✅ Dummy data force-loaded:', newApps.length, 'applications');
-            alert('✅ Demo data loaded! ' + newApps.length + ' applications are now visible.');
+            // Show notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            notification.style.zIndex = '9999';
+            notification.style.minWidth = '500px';
+            notification.innerHTML = `
+              <strong>✅ Demo Data Loaded!</strong><br>
+              <div class="mt-2">
+                📊 ${newApps.length} sample applications created and visible in table<br>
+                <small class="text-info d-block mt-1">✅ All records visible in Application Management</small>
+              </div>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+              if (notification.parentNode) {
+                notification.remove();
+              }
+            }, 8000);
+          } else {
+            console.error('❌ CRITICAL: Generated apps but loadApplications returned empty!');
+            alert('⚠️ Error: Data generated but not loading. Please refresh the page.');
           }
         }
       } else {
@@ -1338,8 +1378,49 @@
         renderTable(finalCheck);
         applyFilters();
         console.log('✅ Forced render with', finalCheck.length, 'applications');
+        
+        // Verify table has rows
+        const tbodyCheck = document.getElementById('applicationsTableBody');
+        if (tbodyCheck && tbodyCheck.children.length === 0 && finalCheck.length > 0) {
+          console.log('⚠️ Table body empty but apps exist - forcing render again');
+          renderTable(finalCheck);
+        }
       }
-    }, 2000);
+    }, 1000);
+    
+    // EXTRA CHECK: Verify table has data after 3 seconds
+    setTimeout(() => {
+      const tbody = document.getElementById('applicationsTableBody');
+      const apps = loadApplications();
+      console.log('🔍 Table verification (3s):', apps.length, 'apps,', tbody?.children.length || 0, 'rows');
+      if (tbody && apps.length > 0 && tbody.children.length === 0) {
+        console.log('⚠️ Table body empty but apps exist - forcing render');
+        renderTable(apps);
+        applyFilters();
+      } else if (tbody && apps.length > 0 && tbody.children.length > 0) {
+        console.log('✅ Table verified: Data is visible');
+      }
+    }, 3000);
+    
+    // FINAL VERIFICATION: After 5 seconds, ensure everything is displayed
+    setTimeout(() => {
+      const apps = loadApplications();
+      const tbody = document.getElementById('applicationsTableBody');
+      const metricTotal = document.getElementById('metricTotal');
+      
+      console.log('🔍 Final verification (5s):');
+      console.log('  - Applications in storage:', apps.length);
+      console.log('  - Table rows:', tbody?.children.length || 0);
+      console.log('  - Metric total:', metricTotal?.textContent || 'N/A');
+      
+      if (apps.length > 0 && (!tbody || tbody.children.length === 0)) {
+        console.log('⚠️ FINAL FIX: Forcing complete refresh...');
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(apps);
+        applyFilters();
+      }
+    }, 5000);
     
     // Listen for new application submissions
     window.addEventListener('mbms-data-updated', function(e) {
