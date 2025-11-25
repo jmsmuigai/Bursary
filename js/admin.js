@@ -388,6 +388,9 @@
       console.log('✅ Ward filter fully populated with', currentWardSel.options.length, 'options');
     }
     
+    // Make populateFilterWards accessible globally for event handlers
+    window.populateFilterWards = populateFilterWards;
+    
     // Get status filter element
     const statusSel = document.getElementById('filterStatus');
     
@@ -399,11 +402,17 @@
       // Handle sub-county change - update wards and apply filters
       scSel.addEventListener('change', function() {
         console.log('📍 Sub-county changed to:', this.value);
-        populateFilterWards();
+        if (typeof window.populateFilterWards === 'function') {
+          window.populateFilterWards();
+        } else if (typeof populateFilterWards === 'function') {
+          populateFilterWards();
+        }
         // Auto-apply filters when sub-county changes
         setTimeout(() => {
           if (typeof window.applyFilters === 'function') {
             window.applyFilters();
+          } else if (typeof applyFilters === 'function') {
+            applyFilters();
           }
         }, 100);
       });
@@ -1156,7 +1165,7 @@
       } else {
         // Fallback to letter download
         loadingAlert.remove();
-        await downloadApplicationLetter(appID);
+        await window.downloadApplicationLetter(appID);
         return; // downloadApplicationLetter will show its own success message
       }
     } catch (error) {
@@ -1366,7 +1375,7 @@
   window.downloadPDFDirect = async function(application, awardDetails) {
     // Handle both appID string and application object
     if (typeof application === 'string') {
-      await downloadApplicationLetter(application);
+      await window.downloadApplicationLetter(application);
       return;
     }
     
@@ -1507,10 +1516,40 @@
           </div>
         </div>
       `;
-      document.body.appendChild(modal);
-      const bsModal = new bootstrap.Modal(modal);
-      bsModal.show();
-      modal.addEventListener('hidden.bs.modal', () => modal.remove());
+    document.body.appendChild(modal);
+    
+    // Initialize and show Bootstrap modal
+    try {
+      if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const bsModal = new bootstrap.Modal(modal, {
+          backdrop: true,
+          keyboard: true
+        });
+        bsModal.show();
+        console.log('✅ Modal opened via Bootstrap');
+      } else {
+        // Fallback: show modal manually
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        document.body.classList.add('modal-open');
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.id = 'modalBackdrop';
+        document.body.appendChild(backdrop);
+        console.log('✅ Modal opened via fallback');
+      }
+    } catch (error) {
+      console.error('Modal error:', error);
+      // Fallback: show as alert
+      alert(`Application: ${app.appID}\nName: ${app.applicantName}\nStatus: ${app.status}`);
+    }
+    
+    // Clean up on close
+    modal.addEventListener('hidden.bs.modal', function() {
+      const backdrop = document.getElementById('modalBackdrop');
+      if (backdrop) backdrop.remove();
+      modal.remove();
+    });
       
       console.log('✅ View modal displayed successfully');
     } catch (error) {
