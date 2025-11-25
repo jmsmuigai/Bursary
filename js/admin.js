@@ -334,8 +334,15 @@
 
     // RECONSTRUCT: Function to populate wards based on selected sub-county - ALL wards
     function populateFilterWards() {
-      wardSel.innerHTML = '<option value="">All Wards</option>';
-      const selectedSubCounty = scSel.value;
+      const currentWardSel = document.getElementById('filterWard');
+      const currentScSel = document.getElementById('filterSubCounty');
+      if (!currentWardSel || !currentScSel) {
+        console.error('Filter elements not found in populateFilterWards');
+        return;
+      }
+      
+      currentWardSel.innerHTML = '<option value="">All Wards</option>';
+      const selectedSubCounty = currentScSel.value;
       
       if (selectedSubCounty && selectedSubCounty !== 'Other' && typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS[selectedSubCounty]) {
         // Show wards for selected sub-county
@@ -520,19 +527,64 @@
         <td><span class="badge ${statusClass}">${status}</span></td>
         <td>Ksh ${amount.toLocaleString()}</td>
         <td>
-          <button class="btn btn-sm btn-info me-1" onclick="safeViewApplication('${safeAppID}')" title="View Application Details" style="min-width: 70px; min-height: 38px;">
+          <button class="btn btn-sm btn-info me-1 action-btn" data-action="view" data-appid="${safeAppID}" title="View Application Details" style="min-width: 70px; min-height: 38px; cursor: pointer; pointer-events: auto;">
             <i class="bi bi-eye"></i> View
           </button>
-          ${!app.isFinalSubmission ? `<button class="btn btn-sm btn-warning me-1" onclick="editApplication('${safeAppID}')" title="Edit Application" style="min-width: 70px; min-height: 38px;">
+          ${!app.isFinalSubmission ? `<button class="btn btn-sm btn-warning me-1 action-btn" data-action="edit" data-appid="${safeAppID}" title="Edit Application" style="min-width: 70px; min-height: 38px; cursor: pointer; pointer-events: auto;">
             <i class="bi bi-pencil"></i> Edit
           </button>` : ''}
-          <button class="btn btn-sm btn-success" onclick="safeDownloadApplication('${safeAppID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter" style="min-width: 90px; min-height: 38px;">
+          <button class="btn btn-sm btn-success action-btn" data-action="download" data-appid="${safeAppID}" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter" style="min-width: 90px; min-height: 38px; cursor: pointer; pointer-events: auto;">
             <i class="bi bi-download"></i> Download
           </button>
         </td>
       `;
       tbody.appendChild(tr);
     });
+    
+    // Attach event listeners to all action buttons using event delegation
+    tbody.addEventListener('click', function(e) {
+      const btn = e.target.closest('.action-btn');
+      if (!btn) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const action = btn.getAttribute('data-action');
+      const appID = btn.getAttribute('data-appid');
+      
+      if (!appID) {
+        console.error('No appID found for button');
+        return;
+      }
+      
+      console.log(`🔘 ${action} button clicked for:`, appID);
+      
+      if (action === 'view') {
+        if (typeof window.safeViewApplication === 'function') {
+          window.safeViewApplication(appID);
+        } else if (typeof window.viewApplication === 'function') {
+          window.viewApplication(appID);
+        } else {
+          alert('View function not available. Please refresh the page.');
+        }
+      } else if (action === 'edit') {
+        if (typeof window.editApplication === 'function') {
+          window.editApplication(appID);
+        } else {
+          alert('Edit function not available. Please refresh the page.');
+        }
+      } else if (action === 'download') {
+        if (typeof window.safeDownloadApplication === 'function') {
+          window.safeDownloadApplication(appID);
+        } else if (typeof window.downloadApplicationLetter === 'function') {
+          window.downloadApplicationLetter(appID);
+        } else {
+          alert('Download function not available. Please refresh the page.');
+        }
+      }
+    });
+    
+    console.log('✅ Event delegation attached to table buttons');
     
     // VERIFY RENDERING
     const renderedRows = tbody.children.length;
@@ -636,9 +688,19 @@
       return;
     }
 
-    // Create and show modal (simplified - in production use Bootstrap modal)
+    // Remove any existing modal first
+    const existingModal = document.getElementById('viewApplicationModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+    
+    // Create and show modal using Bootstrap
     const modal = document.createElement('div');
     modal.className = 'modal fade';
+    modal.id = 'viewApplicationModal';
+    modal.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-labelledby', 'viewApplicationModalLabel');
+    modal.setAttribute('aria-hidden', 'true');
     modal.innerHTML = `
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -696,8 +758,39 @@
       </div>
     `;
     document.body.appendChild(modal);
-    const bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
+    
+    // Initialize and show Bootstrap modal
+    try {
+      if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const bsModal = new bootstrap.Modal(modal, {
+          backdrop: true,
+          keyboard: true
+        });
+        bsModal.show();
+        console.log('✅ Modal opened via Bootstrap');
+      } else {
+        // Fallback: show modal manually
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        document.body.classList.add('modal-open');
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.id = 'modalBackdrop';
+        document.body.appendChild(backdrop);
+        console.log('✅ Modal opened via fallback');
+      }
+    } catch (error) {
+      console.error('Modal error:', error);
+      // Fallback: show as alert
+      alert(`Application: ${app.appID}\nName: ${app.applicantName}\nStatus: ${app.status}`);
+    }
+    
+    // Clean up on close
+    modal.addEventListener('hidden.bs.modal', function() {
+      const backdrop = document.getElementById('modalBackdrop');
+      if (backdrop) backdrop.remove();
+      modal.remove();
+    });
     modal.addEventListener('hidden.bs.modal', () => modal.remove());
   };
 
@@ -1026,6 +1119,11 @@
   };
 
   // Download application PDF from view modal - AUTO-DOWNLOADS with success message
+  window.downloadApplicationLetter = async function(appID) {
+    // Alias for downloadApplicationPDFFromView
+    return window.downloadApplicationPDFFromView(appID);
+  };
+  
   window.downloadApplicationPDFFromView = async function(appID) {
     try {
       const apps = loadApplications();
@@ -1301,6 +1399,10 @@
   window.safeViewApplication = function(appID) {
     try {
       console.log('👁️ View button clicked for:', appID);
+      console.log('🔍 Available functions:', {
+        viewApplication: typeof window.viewApplication,
+        safeViewApplication: typeof window.safeViewApplication
+      });
       
       // Ensure appID is a string
       if (typeof appID === 'object') {
@@ -1308,13 +1410,18 @@
         alert('⚠️ Invalid application ID. Please refresh the page.');
         return;
       }
-      appID = String(appID);
+      appID = String(appID).trim();
       
       // Always use viewApplication if it exists
       if (typeof window.viewApplication === 'function') {
-        window.viewApplication(appID);
-        console.log('✅ View function called successfully');
-        return;
+        try {
+          window.viewApplication(appID);
+          console.log('✅ View function called successfully');
+          return;
+        } catch (error) {
+          console.error('Error in viewApplication:', error);
+          alert('Error opening application: ' + error.message);
+        }
       }
       
       // Fallback: Direct implementation
@@ -1416,6 +1523,11 @@
   window.safeDownloadApplication = async function(appID) {
     try {
       console.log('📥 Download button clicked for:', appID);
+      console.log('🔍 Available functions:', {
+        downloadApplicationLetter: typeof window.downloadApplicationLetter,
+        safeDownloadApplication: typeof window.safeDownloadApplication,
+        downloadPDFDirect: typeof window.downloadPDFDirect
+      });
       
       // Ensure appID is a string
       if (typeof appID === 'object') {
@@ -1423,7 +1535,7 @@
         alert('⚠️ Invalid application ID. Please refresh the page.');
         return;
       }
-      appID = String(appID);
+      appID = String(appID).trim();
       
       // Show loading indicator
       const loadingAlert = document.createElement('div');
@@ -1433,9 +1545,9 @@
       document.body.appendChild(loadingAlert);
       
       // Try downloadApplicationLetter first
-      if (typeof downloadApplicationLetter === 'function') {
+      if (typeof window.downloadApplicationLetter === 'function') {
         try {
-          await downloadApplicationLetter(appID);
+          await window.downloadApplicationLetter(appID);
           console.log('✅ Download completed via downloadApplicationLetter');
           setTimeout(() => {
             if (loadingAlert.parentNode) loadingAlert.remove();
