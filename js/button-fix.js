@@ -87,39 +87,57 @@
   }
   
   /**
-   * Fix Save button with robust error handling
+   * Fix Save button with robust error handling - ENHANCED
    */
   function fixSaveButton() {
     const saveBtn = document.getElementById('saveBtn');
     if (!saveBtn) {
-      console.warn('Save button not found');
+      console.warn('Save button not found - will retry');
+      setTimeout(fixSaveButton, 500);
       return;
     }
     
     safeButtonClick(saveBtn, function(e) {
       console.log('💾 Save button clicked');
       
-      // Get save function
-      if (typeof manualSave === 'function') {
-        manualSave();
-        
-        // Visual feedback
-        this.classList.add('btn-success');
-        const originalHTML = this.innerHTML;
-        this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Saved!';
-        
-        setTimeout(() => {
-          this.classList.remove('btn-success');
-          this.classList.add('btn-warning');
-          this.innerHTML = originalHTML;
-        }, 2000);
-        
-        console.log('✅ Save completed');
-      } else if (typeof autosave === 'function') {
-        autosave();
-        console.log('✅ Auto-save triggered');
-      } else {
-        alert('Save function not available. Please refresh the page.');
+      try {
+        // Get save function
+        if (typeof manualSave === 'function') {
+          manualSave();
+          
+          // Visual feedback
+          this.classList.add('btn-success');
+          const originalHTML = this.innerHTML;
+          this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Saved!';
+          
+          setTimeout(() => {
+            this.classList.remove('btn-success');
+            this.classList.add('btn-warning');
+            this.innerHTML = originalHTML;
+          }, 2000);
+          
+          console.log('✅ Save completed');
+        } else if (typeof autosave === 'function') {
+          autosave();
+          
+          // Visual feedback
+          this.classList.add('btn-success');
+          const originalHTML = this.innerHTML;
+          this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Saved!';
+          
+          setTimeout(() => {
+            this.classList.remove('btn-success');
+            this.classList.add('btn-warning');
+            this.innerHTML = originalHTML;
+          }, 2000);
+          
+          console.log('✅ Auto-save triggered');
+        } else {
+          alert('Save function not available. Please refresh the page.');
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        alert('Error saving. Please try again.\n\nError: ' + error.message);
       }
     }, {
       loadingText: '<i class="bi bi-hourglass-split me-1"></i>Saving...',
@@ -130,56 +148,73 @@
   }
   
   /**
-   * Fix Next button with robust error handling
+   * Fix Next button with robust error handling - ENHANCED
    */
   function fixNextButton() {
     const nextBtn = document.getElementById('nextBtn');
     if (!nextBtn) {
-      console.warn('Next button not found');
+      console.warn('Next button not found - will retry');
+      setTimeout(fixNextButton, 500);
       return;
     }
     
     safeButtonClick(nextBtn, function(e) {
       console.log('➡️ Next button clicked');
       
-      // Auto-save before proceeding
-      if (typeof autosave === 'function') {
-        autosave();
-      }
-      
-      // Get current step and sections
-      const sections = document.querySelectorAll('.form-section');
-      const currentStep = Array.from(sections).findIndex(s => s.classList.contains('active'));
-      const totalSteps = sections.length;
-      
-      if (currentStep < totalSteps - 1) {
-        // Move to next step
-        sections.forEach((s, i) => {
-          s.classList.toggle('active', i === currentStep + 1);
-        });
-        
-        // Update progress bar
-        const progressBar = document.getElementById('progressBar');
-        if (progressBar) {
-          const progress = ((currentStep + 2) / totalSteps) * 100;
-          progressBar.style.width = `${progress}%`;
+      try {
+        // Auto-save before proceeding
+        if (typeof autosave === 'function') {
+          autosave();
         }
         
-        // Update buttons
-        const prevBtn = document.getElementById('prevBtn');
-        if (prevBtn) {
-          prevBtn.style.display = 'block';
+        // Get current step and sections
+        const sections = document.querySelectorAll('.form-section');
+        if (sections.length === 0) {
+          alert('Form sections not found. Please refresh the page.');
+          return;
         }
         
-        if (currentStep + 1 === totalSteps - 1) {
-          this.style.display = 'none';
-          const submitBtn = document.getElementById('submitBtn');
-          if (submitBtn) {
-            submitBtn.style.display = 'block';
+        const currentStep = Array.from(sections).findIndex(s => s.classList.contains('active'));
+        if (currentStep === -1) {
+          // No active section, activate first one
+          sections[0].classList.add('active');
+          return;
+        }
+        
+        const totalSteps = sections.length;
+        
+        if (currentStep < totalSteps - 1) {
+          // Move to next step
+          sections.forEach((s, i) => {
+            s.classList.toggle('active', i === currentStep + 1);
+          });
+          
+          // Update progress bar
+          const progressBar = document.getElementById('progressBar');
+          if (progressBar) {
+            const progress = ((currentStep + 2) / totalSteps) * 100;
+            progressBar.style.width = `${progress}%`;
           }
+          
+          // Update buttons
+          const prevBtn = document.getElementById('prevBtn');
+          if (prevBtn) {
+            prevBtn.style.display = 'block';
+          }
+          
+          if (currentStep + 1 === totalSteps - 1) {
+            this.style.display = 'none';
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+              submitBtn.style.display = 'block';
+            }
+          }
+          
+          console.log('✅ Moved to step', currentStep + 2);
         }
-        
-        console.log('✅ Moved to step', currentStep + 2);
+      } catch (error) {
+        console.error('Next button error:', error);
+        alert('Error navigating. Please try again.\n\nError: ' + error.message);
       }
     }, {
       loadingText: '<i class="bi bi-arrow-right me-1"></i>Loading...',

@@ -335,16 +335,26 @@
       };
 
       // Save to UNIFIED DATABASE (SAME DATABASE as admin portal and applications)
-      if (typeof saveUser !== 'undefined') {
-        // Use unified database access layer
-        saveUser(payload);
-        console.log('✅ User registered and saved to UNIFIED DATABASE:', payload.email);
-      } else {
-        // Fallback to direct localStorage access
-        const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
-        users.push(payload);
-        localStorage.setItem('mbms_users', JSON.stringify(users));
-        console.log('✅ User registered and saved (fallback):', payload.email);
+      try {
+        if (typeof saveUser !== 'undefined') {
+          // Use unified database access layer
+          const saved = saveUser(payload);
+          if (saved) {
+            console.log('✅ User registered and saved to UNIFIED DATABASE:', payload.email);
+          } else {
+            throw new Error('Failed to save user');
+          }
+        } else {
+          // Fallback to direct localStorage access
+          const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+          users.push(payload);
+          localStorage.setItem('mbms_users', JSON.stringify(users));
+          console.log('✅ User registered and saved (fallback):', payload.email);
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('Error saving registration. Please try again.\n\nError: ' + error.message);
+        return;
       }
       
       console.log('✅ User registered successfully:', payload.email);

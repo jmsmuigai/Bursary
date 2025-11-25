@@ -1191,33 +1191,198 @@
   
   window.downloadPDF = window.downloadApplicationLetter;
   
-  // Safe View Application wrapper
+  // Safe View Application wrapper - ENHANCED: Always works
   window.safeViewApplication = function(appID) {
     try {
-      if (typeof viewApplication === 'function') {
-        return viewApplication(appID);
-      } else {
-        alert('View function not available. Please refresh the page.');
+      console.log('👁️ View button clicked for:', appID);
+      
+      // Ensure appID is a string
+      if (typeof appID === 'object') {
+        console.error('Invalid appID (object):', appID);
+        alert('⚠️ Invalid application ID. Please refresh the page.');
+        return;
       }
+      appID = String(appID);
+      
+      // Try viewApplication first
+      if (typeof viewApplication === 'function') {
+        viewApplication(appID);
+        console.log('✅ View function called successfully');
+        return;
+      }
+      
+      // Fallback: Direct implementation
+      const apps = loadApplications();
+      const app = apps.find(a => String(a.appID) === appID);
+      
+      if (!app) {
+        alert('⚠️ Application not found.\n\nApplication ID: ' + appID);
+        return;
+      }
+      
+      // Create and show modal
+      const modal = document.createElement('div');
+      modal.className = 'modal fade';
+      modal.id = 'viewApplicationModal';
+      modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title">
+                <i class="bi bi-eye me-2"></i>Application Details - ${app.appID}
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <h6><i class="bi bi-person me-1"></i>Applicant Information</h6>
+                  <p><strong>Name:</strong> ${app.applicantName || 'N/A'}</p>
+                  <p><strong>Location:</strong> ${app.personalDetails?.subCounty || app.subCounty || 'N/A'}, ${app.personalDetails?.ward || app.ward || 'N/A'}</p>
+                  <p><strong>Institution:</strong> ${app.personalDetails?.institution || app.institution || 'N/A'}</p>
+                  <p><strong>Registration No:</strong> ${app.personalDetails?.regNumber || 'N/A'}</p>
+                </div>
+                <div class="col-md-6">
+                  <h6><i class="bi bi-cash-coin me-1"></i>Financial Summary</h6>
+                  <p><strong>Fee Balance:</strong> Ksh ${(app.financialDetails?.feeBalance || 0).toLocaleString()}</p>
+                  <p><strong>Amount Requested:</strong> Ksh ${(app.financialDetails?.amountRequested || 0).toLocaleString()}</p>
+                  <p><strong>Monthly Income:</strong> Ksh ${(app.financialDetails?.monthlyIncome || 0).toLocaleString()}</p>
+                  <p><strong>Status:</strong> <span class="badge bg-${app.status === 'Awarded' ? 'success' : app.status === 'Rejected' ? 'danger' : 'warning'}">${app.status || 'Pending'}</span></p>
+                </div>
+              </div>
+              <hr>
+              <h6><i class="bi bi-file-text me-1"></i>Justification</h6>
+              <p class="bg-light p-3 rounded">${app.financialDetails?.justification || 'N/A'}</p>
+              <hr>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0"><i class="bi bi-file-earmark-pdf me-1"></i>Document Actions</h6>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-success" onclick="safeDownloadApplication('${appID}'); bootstrap.Modal.getInstance(document.getElementById('viewApplicationModal')).hide();" title="Download Document (Auto-downloads)">
+                    <i class="bi bi-download me-1"></i>Download Document
+                  </button>
+                </div>
+              </div>
+              ${app.status !== 'Awarded' && app.status !== 'Rejected' ? `
+              <hr>
+              <h6><i class="bi bi-check-circle me-1"></i>Admin Action</h6>
+              <div class="input-group mb-3">
+                <span class="input-group-text">Award Amount (KES):</span>
+                <input type="number" class="form-control" id="awardAmount" placeholder="e.g. 20000" min="0">
+              </div>
+              <textarea class="form-control mb-3" id="awardJustification" rows="3" placeholder="Recommendation/Justification (Mandatory)"></textarea>
+              <div class="d-flex gap-2">
+                <button class="btn btn-success" onclick="approveApplication('${appID}'); bootstrap.Modal.getInstance(document.getElementById('viewApplicationModal')).hide();">
+                  <i class="bi bi-check-circle me-1"></i> Approve/Award
+                </button>
+                <button class="btn btn-danger" onclick="rejectApplication('${appID}'); bootstrap.Modal.getInstance(document.getElementById('viewApplicationModal')).hide();">
+                  <i class="bi bi-x-circle me-1"></i> Reject
+                </button>
+              </div>
+              ` : ''}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" onclick="safeDownloadApplication('${appID}')">
+                <i class="bi bi-download me-1"></i>Download Document
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      const bsModal = new bootstrap.Modal(modal);
+      bsModal.show();
+      modal.addEventListener('hidden.bs.modal', () => modal.remove());
+      
+      console.log('✅ View modal displayed successfully');
     } catch (error) {
       console.error('View error:', error);
       alert('Error viewing application. Please try again.\n\nError: ' + error.message);
     }
   };
   
-  // Safe Download Application wrapper with auto-download
+  // Safe Download Application wrapper with auto-download - ENHANCED: Always works
   window.safeDownloadApplication = async function(appID) {
     try {
-      console.log('📥 Safe download triggered for:', appID);
+      console.log('📥 Download button clicked for:', appID);
       
-      if (typeof downloadApplicationLetter === 'function') {
-        await downloadApplicationLetter(appID);
-        console.log('✅ Download completed');
-      } else {
-        alert('Download function not available. Please refresh the page.');
+      // Ensure appID is a string
+      if (typeof appID === 'object') {
+        console.error('Invalid appID (object):', appID);
+        alert('⚠️ Invalid application ID. Please refresh the page.');
+        return;
       }
+      appID = String(appID);
+      
+      // Show loading indicator
+      const loadingAlert = document.createElement('div');
+      loadingAlert.className = 'alert alert-info position-fixed top-0 start-50 translate-middle-x mt-3';
+      loadingAlert.style.zIndex = '10000';
+      loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating PDF... Please wait...';
+      document.body.appendChild(loadingAlert);
+      
+      // Try downloadApplicationLetter first
+      if (typeof downloadApplicationLetter === 'function') {
+        try {
+          await downloadApplicationLetter(appID);
+          console.log('✅ Download completed via downloadApplicationLetter');
+          setTimeout(() => {
+            if (loadingAlert.parentNode) loadingAlert.remove();
+          }, 1000);
+          return;
+        } catch (error) {
+          console.error('downloadApplicationLetter error:', error);
+          // Continue to fallback
+        }
+      }
+      
+      // Fallback: Direct download implementation
+      const apps = loadApplications();
+      const app = apps.find(a => String(a.appID) === appID);
+      
+      if (!app) {
+        loadingAlert.remove();
+        alert('⚠️ Application not found.\n\nApplication ID: ' + appID);
+        return;
+      }
+      
+      // Generate PDF based on status
+      if (app.status === 'Awarded' && typeof generateOfferLetterPDF === 'function') {
+        await generateOfferLetterPDF(app, app.awardDetails || {}, { preview: false });
+      } else if (app.status === 'Rejected' && typeof generateRejectionLetterPDF === 'function') {
+        await generateRejectionLetterPDF(app);
+      } else if (typeof generateStatusLetterPDF === 'function') {
+        await generateStatusLetterPDF(app);
+      } else {
+        loadingAlert.remove();
+        alert('⚠️ PDF generation functions not available. Please refresh the page.');
+        return;
+      }
+      
+      // Remove loading indicator
+      setTimeout(() => {
+        if (loadingAlert.parentNode) loadingAlert.remove();
+      }, 1000);
+      
+      // Show success message
+      const successAlert = document.createElement('div');
+      successAlert.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+      successAlert.style.zIndex = '10000';
+      successAlert.innerHTML = `
+        <strong>✅ Downloaded Successfully!</strong><br>
+        <small>Document saved to your downloads folder</small>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.body.appendChild(successAlert);
+      setTimeout(() => {
+        if (successAlert.parentNode) successAlert.remove();
+      }, 5000);
+      
+      console.log('✅ Download completed successfully');
     } catch (error) {
       console.error('Download error:', error);
+      const loadingAlert = document.querySelector('.alert-info');
+      if (loadingAlert) loadingAlert.remove();
       alert('Error downloading document. Please try again.\n\nError: ' + error.message);
     }
   };
