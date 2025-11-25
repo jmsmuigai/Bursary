@@ -1191,6 +1191,37 @@
   
   window.downloadPDF = window.downloadApplicationLetter;
   
+  // Safe View Application wrapper
+  window.safeViewApplication = function(appID) {
+    try {
+      if (typeof viewApplication === 'function') {
+        return viewApplication(appID);
+      } else {
+        alert('View function not available. Please refresh the page.');
+      }
+    } catch (error) {
+      console.error('View error:', error);
+      alert('Error viewing application. Please try again.\n\nError: ' + error.message);
+    }
+  };
+  
+  // Safe Download Application wrapper with auto-download
+  window.safeDownloadApplication = async function(appID) {
+    try {
+      console.log('📥 Safe download triggered for:', appID);
+      
+      if (typeof downloadApplicationLetter === 'function') {
+        await downloadApplicationLetter(appID);
+        console.log('✅ Download completed');
+      } else {
+        alert('Download function not available. Please refresh the page.');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error downloading document. Please try again.\n\nError: ' + error.message);
+    }
+  };
+  
   // View formatted document - AUTO-DOWNLOADS by default
   window.viewFormattedDocument = async function(appID) {
     try {
@@ -1203,7 +1234,7 @@
       
       // AUTO-DOWNLOAD the document immediately
       console.log('📥 Auto-downloading document for:', appID);
-      await downloadApplicationLetter(appID);
+      await safeDownloadApplication(appID);
       
       // Show brief preview modal while downloading
       const modal = document.createElement('div');

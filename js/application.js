@@ -374,13 +374,6 @@
       console.log('✅ Previous button activated and working');
     }
 
-  prevBtn.addEventListener('click', function() {
-    if (currentStep > 0) {
-      currentStep--;
-      showStep(currentStep);
-    }
-  });
-
     // Step indicator clicks - ENHANCED
     document.querySelectorAll('.step-indicator').forEach((ind, i) => {
       ind.addEventListener('click', function(e) {
