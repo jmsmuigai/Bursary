@@ -850,36 +850,24 @@
       loadingAlert.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating application summary PDF...';
       document.body.appendChild(loadingAlert);
 
-      let filename = '';
-      
-      // Download application summary PDF
-      if (typeof generateApplicationSummaryPDF !== 'undefined') {
-        const result = await generateApplicationSummaryPDF(app);
-        if (result && result.filename) {
-          filename = result.filename;
-        } else {
-          const applicantName = app.applicantName || 
-            `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
-          const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
-          filename = `Garissa_Bursary_Summary_${sanitizedName}_${app.appID}.pdf`;
-        }
-      } else if (typeof downloadApplicationSummaryPDF !== 'undefined') {
+      // Download application summary PDF - AUTO-DOWNLOADS with success message
+      if (typeof downloadApplicationSummaryPDF !== 'undefined') {
+        // Use downloadApplicationSummaryPDF which handles auto-download and success message
+        loadingAlert.remove();
         await downloadApplicationSummaryPDF(app);
-        const applicantName = app.applicantName || 
-          `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
-        const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
-        filename = `Garissa_Bursary_Summary_${sanitizedName}_${app.appID}.pdf`;
+        return; // downloadApplicationSummaryPDF shows its own success message
+      } else if (typeof generateApplicationSummaryPDF !== 'undefined') {
+        const result = await generateApplicationSummaryPDF(app);
+        loadingAlert.remove();
+        if (result && result.filename) {
+          // Show success message
+          showDownloadSuccess(result.filename, app);
+        }
       } else {
         // Fallback to letter download
+        loadingAlert.remove();
         await downloadApplicationLetter(appID);
         return; // downloadApplicationLetter will show its own success message
-      }
-      
-      loadingAlert.remove();
-      
-      // Show success message
-      if (filename) {
-        showDownloadSuccess(filename, app);
       }
     } catch (error) {
       console.error('Error downloading application summary:', error);
