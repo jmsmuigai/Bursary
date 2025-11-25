@@ -955,6 +955,102 @@
   };
   
   window.downloadPDF = window.downloadApplicationLetter;
+  
+  // View formatted document in modal with county logo, signature, and stamp
+  window.viewFormattedDocument = async function(appID) {
+    try {
+      const apps = loadApplications();
+      const app = apps.find(a => a.appID === appID);
+      if (!app) {
+        alert('Application not found');
+        return;
+      }
+      
+      // Create modal to show formatted document preview
+      const modal = document.createElement('div');
+      modal.className = 'modal fade';
+      modal.id = 'documentViewModal';
+      modal.innerHTML = `
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title">
+                <i class="bi bi-file-earmark-pdf me-2"></i>Formatted Document - ${app.appID}
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+              <div class="text-center mb-3">
+                <img src="Garissa Logo.png" alt="Garissa County Logo" style="max-width: 100px; height: auto;" onerror="this.style.display='none'">
+                <h4 class="mt-2">THE COUNTY GOVERNMENT OF GARISSA</h4>
+                <h5>BURSARY MANAGEMENT SYSTEM</h5>
+              </div>
+              <hr>
+              <div class="document-content">
+                ${app.status === 'Awarded' ? `
+                  <div class="alert alert-success">
+                    <h5><i class="bi bi-trophy me-2"></i>AWARD LETTER</h5>
+                    <p class="mb-0"><strong>Serial Number:</strong> ${app.awardDetails?.serialNumber || 'N/A'}</p>
+                    <p class="mb-0"><strong>Amount Awarded:</strong> Ksh ${(app.awardDetails?.committee_amount_kes || app.awardDetails?.amount || 0).toLocaleString()}</p>
+                  </div>
+                ` : app.status === 'Rejected' ? `
+                  <div class="alert alert-danger">
+                    <h5><i class="bi bi-x-circle me-2"></i>REJECTION LETTER</h5>
+                    <p class="mb-0"><strong>Reason:</strong> ${app.rejectionReason || 'Application did not meet requirements'}</p>
+                  </div>
+                ` : `
+                  <div class="alert alert-info">
+                    <h5><i class="bi bi-hourglass-split me-2"></i>STATUS LETTER</h5>
+                    <p class="mb-0"><strong>Current Status:</strong> ${app.status || 'Pending'}</p>
+                  </div>
+                `}
+                <div class="card mt-3">
+                  <div class="card-body">
+                    <h6>Applicant Information</h6>
+                    <p><strong>Name:</strong> ${app.applicantName || 'N/A'}</p>
+                    <p><strong>Application ID:</strong> ${app.appID || 'N/A'}</p>
+                    <p><strong>Institution:</strong> ${app.personalDetails?.institution || 'N/A'}</p>
+                    <p><strong>Location:</strong> ${app.personalDetails?.subCounty || app.subCounty || 'N/A'}, ${app.personalDetails?.ward || app.ward || 'N/A'}</p>
+                    ${app.status === 'Awarded' && app.awardDetails ? `
+                      <p><strong>Amount Awarded:</strong> Ksh ${(app.awardDetails.committee_amount_kes || app.awardDetails.amount || 0).toLocaleString()}</p>
+                      <p><strong>Serial Number:</strong> ${app.awardDetails.serialNumber || 'N/A'}</p>
+                      <p><strong>Date Awarded:</strong> ${new Date(app.awardDetails.date_awarded || new Date()).toLocaleDateString()}</p>
+                    ` : ''}
+                  </div>
+                </div>
+                <div class="mt-4 text-center">
+                  <div class="border p-3 d-inline-block" style="border-radius: 50%; width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                    <strong>OFFICIAL</strong>
+                    <strong>STAMP</strong>
+                    <small>GARISSA COUNTY</small>
+                  </div>
+                  <p class="mt-3"><strong>Digital Signature</strong></p>
+                  <p>Fund Administrator<br>fundadmin@garissa.go.ke</p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" onclick="downloadApplicationLetter('${appID}')">
+                <i class="bi bi-download me-1"></i>Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      const bsModal = new bootstrap.Modal(modal);
+      bsModal.show();
+      
+      modal.addEventListener('hidden.bs.modal', () => {
+        modal.remove();
+      });
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      alert('Error viewing document: ' + error.message);
+    }
+  };
 
   // Generate comprehensive summary report
   window.generateSummaryReport = function() {
