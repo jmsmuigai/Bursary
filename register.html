@@ -258,14 +258,31 @@
     });
     populateWards();
 
-    // Check for duplicate registration
-    function checkDuplicate(email, idNumber) {
+    // Check for duplicate registration - checks both users and applications
+    function checkDuplicate(email, idNumber, birthCertificate, dateOfBirth) {
+      // Check users
       const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
-      return users.some(u => 
+      const userDuplicate = users.some(u => 
         u.email?.toLowerCase() === email.toLowerCase() || 
         u.nemisId === idNumber || 
         u.idNumber === idNumber
       );
+      
+      if (userDuplicate) return true;
+      
+      // Check applications for duplicate ID number or birth certificate
+      const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      const appDuplicate = applications.some(app => {
+        const appIdNum = app.idNumber || app.nemisId || app.personalDetails?.idNumber || app.personalDetails?.nemisId || '';
+        const appBirthCert = app.birthCertificate || app.personalDetails?.birthCertificate || '';
+        const appDob = app.dateOfBirth || app.personalDetails?.dateOfBirth || '';
+        
+        return (idNumber && appIdNum && appIdNum.toLowerCase() === idNumber.toLowerCase()) ||
+               (birthCertificate && appBirthCert && appBirthCert.toLowerCase() === birthCertificate.toLowerCase()) ||
+               (dateOfBirth && appDob && appDob === dateOfBirth);
+      });
+      
+      return appDuplicate;
     }
 
     document.getElementById('applicantRegistrationForm').addEventListener('submit', (e) => {
@@ -288,10 +305,12 @@
 
       const email = document.getElementById('emailAddress').value.trim();
       const idNumber = document.getElementById('nemisId').value.trim();
+      const birthCertificate = ''; // Add if field exists
+      const dateOfBirth = dateOfBirthInput.value;
 
-      // Check for duplicates
-      if (checkDuplicate(email, idNumber)) {
-        alert('⚠️ Applicant already registered!\n\nThis email or ID number is already in use. If you have an account, please login instead.');
+      // Check for duplicates (ID number, birth certificate, or date of birth)
+      if (checkDuplicate(email, idNumber, birthCertificate, dateOfBirth)) {
+        alert('⚠️ DUPLICATE ENTRY DETECTED!\n\nThis email, ID number, or birth certificate is already registered in the system.\n\nPlease contact the Fund Administrator at fundadmin@garissa.go.ke for more details.\n\nIf you believe this is an error, please contact support immediately.');
         return;
       }
 
