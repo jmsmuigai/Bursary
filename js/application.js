@@ -35,40 +35,71 @@
     return userStr ? JSON.parse(userStr) : null;
   }
 
-  // Autosave functionality
-  function autosave() {
-    const user = getCurrentUser();
-    if (!user) return;
+    // Autosave functionality - ENHANCED: Saves on every step change and input
+    function autosave() {
+      try {
+        const user = getCurrentUser();
+        if (!user) {
+          console.warn('⚠️ No user logged in - cannot save');
+          return;
+        }
 
-    const formData = new FormData(form);
-    const data = {};
-    for (let [key, value] of formData.entries()) {
-      data[key] = value;
-    }
+        const currentForm = document.getElementById('applicationForm');
+        if (!currentForm) {
+          console.warn('⚠️ Form not found');
+          return;
+        }
 
-    // Get all form inputs
-    const inputs = form.querySelectorAll('input, select, textarea');
-    inputs.forEach(input => {
-      if (input.type === 'radio') {
-        if (input.checked) data[input.name] = input.value;
-      } else if (input.type === 'checkbox') {
-        data[input.name] = input.checked;
-      } else {
-        data[input.id] = input.value;
+        const formData = new FormData(currentForm);
+        const data = {};
+        
+        // Try FormData first (modern browsers)
+        try {
+          for (let [key, value] of formData.entries()) {
+            data[key] = value;
+          }
+        } catch (e) {
+          console.warn('FormData iteration not supported, using fallback');
+        }
+
+        // Get all form inputs (fallback for older browsers)
+        const inputs = currentForm.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+          if (input.type === 'radio') {
+            if (input.checked) data[input.name] = input.value;
+          } else if (input.type === 'checkbox') {
+            data[input.name] = input.checked;
+          } else if (input.id) {
+            data[input.id] = input.value;
+          }
+        });
+
+        const applicationKey = `mbms_application_${user.email}`;
+        const applicationData = {
+          ...data,
+          lastSaved: new Date().toISOString(),
+          step: currentStep,
+          status: 'Draft',
+          applicantEmail: user.email,
+          applicantName: `${user.firstName || ''} ${user.lastName || ''}`.trim()
+        };
+
+        localStorage.setItem(applicationKey, JSON.stringify(applicationData));
+        console.log('✅ Auto-saved application progress - Step', currentStep + 1);
+        
+        // Show subtle save indicator (only if not already showing)
+        if (saveStatus && saveStatusText) {
+          saveStatusText.textContent = 'Progress saved automatically';
+          saveStatus.className = 'alert alert-info alert-sm mb-0 shadow-sm';
+          saveStatus.style.display = 'block';
+          setTimeout(() => {
+            if (saveStatus) saveStatus.style.display = 'none';
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('Autosave error:', error);
       }
-    });
-
-    const applicationKey = `mbms_application_${user.email}`;
-    const applicationData = {
-      ...data,
-      lastSaved: new Date().toISOString(),
-      step: currentStep,
-      status: 'Draft'
-    };
-
-    localStorage.setItem(applicationKey, JSON.stringify(applicationData));
-    showSaveStatus('Auto-saved', 'success');
-  }
+    }
 
   // Manual save
   function manualSave() {
@@ -197,31 +228,71 @@
     });
   }, 100);
 
-  // Navigation
-  nextBtn.addEventListener('click', function() {
-    const currentSection = sections[currentStep];
-    const inputs = currentSection.querySelectorAll('input[required], select[required], textarea[required]');
-    let valid = true;
+    // Navigation - ENHANCED: Friendly Next button with auto-save
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        try {
+          console.log('➡️ Next button clicked - Step', currentStep + 1);
+          
+          // Auto-save current step data before proceeding
+          autosave();
+          
+          // Show friendly message
+          const currentSection = sections[currentStep];
+          const requiredInputs = currentSection.querySelectorAll('input[required], select[required], textarea[required]');
+          let missingFields = [];
+          
+          requiredInputs.forEach(input => {
+            if (!input.value.trim()) {
+              input.classList.add('is-invalid');
+              missingFields.push(input.previousElementSibling?.textContent || input.placeholder || 'field');
+            } else {
+              input.classList.remove('is-invalid');
+            }
+          });
 
-    inputs.forEach(input => {
-      if (!input.value.trim()) {
-        input.classList.add('is-invalid');
-        valid = false;
-      } else {
-        input.classList.remove('is-invalid');
-      }
-    });
+          // Allow proceeding even if some fields are missing (user-friendly)
+          if (missingFields.length > 0) {
+            // Show friendly warning but allow proceeding
+            const proceed = confirm(`⚠️ Some required fields are not filled:\n\n${missingFields.slice(0, 3).join(', ')}${missingFields.length > 3 ? '...' : ''}\n\nYour progress has been saved. You can continue and fill them later.\n\nDo you want to proceed to the next step?`);
+            
+            if (!proceed) {
+              // Focus on first missing field
+              const firstInvalid = currentSection.querySelector(':invalid');
+              if (firstInvalid) {
+                firstInvalid.focus();
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+              return;
+            }
+          }
 
-    if (valid) {
-      if (currentStep < totalSteps - 1) {
-        currentStep++;
-        showStep(currentStep);
-        autosave();
-      }
-    } else {
-      alert('Please fill all required fields before proceeding.');
+          // Proceed to next step
+          if (currentStep < totalSteps - 1) {
+            currentStep++;
+            showStep(currentStep);
+            
+            // Auto-save again after moving to next step
+            setTimeout(() => {
+              autosave();
+              showSaveStatus('Progress saved automatically', 'info');
+            }, 500);
+            
+            console.log('✅ Moved to step', currentStep + 1);
+          }
+        } catch (error) {
+          console.error('Next button error:', error);
+          alert('Error navigating. Please try again.');
+        }
+      });
+      
+      nextBtn.disabled = false;
+      nextBtn.style.cursor = 'pointer';
+      console.log('✅ Next button activated and friendly');
     }
-  });
 
   prevBtn.addEventListener('click', function() {
     if (currentStep > 0) {

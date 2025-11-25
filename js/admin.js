@@ -108,7 +108,13 @@
   // Update metrics
   function updateMetrics() {
     const apps = loadApplications();
+    const users = loadUsers();
+    const registeredUsers = users.filter(u => u.role === 'applicant');
     const counter = getApplicationCounter();
+    
+    // Include registered users who haven't submitted applications yet
+    const totalRegistered = registeredUsers.length;
+    const totalWithApplications = apps.filter(a => a.appID && !a.appID.startsWith('USER-')).length;
     
     document.getElementById('metricTotal').textContent = counter || apps.length;
     document.getElementById('counterValue').textContent = counter || apps.length;

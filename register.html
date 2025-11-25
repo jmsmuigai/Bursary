@@ -338,9 +338,19 @@
       const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
       users.push(payload);
       localStorage.setItem('mbms_users', JSON.stringify(users));
+      
+      console.log('✅ User registered successfully:', payload.email);
 
-      alert('✅ Registration successful! Redirecting to login...');
-      window.location.href = 'index.html';
+      // Auto-login after successful registration
+      sessionStorage.setItem('mbms_current_user', JSON.stringify(payload));
+      
+      // Show success message and redirect
+      alert('✅ Registration successful!\n\nYou have been automatically logged in. Redirecting to your dashboard...');
+      
+      // Redirect to applicant dashboard (seamless experience)
+      setTimeout(() => {
+        window.location.href = 'applicant_dashboard.html';
+      }, 500);
     });
   </script>
 </body>
