@@ -251,26 +251,31 @@
       wardSel.innerHTML = '<option value="">All Wards</option>';
       const selectedSubCounty = scSel.value;
       
-      if (selectedSubCounty && selectedSubCounty !== 'Other' && GARISSA_WARDS[selectedSubCounty]) {
+      if (selectedSubCounty && selectedSubCounty !== 'Other' && typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS[selectedSubCounty]) {
         // Show wards for selected sub-county
         const wards = GARISSA_WARDS[selectedSubCounty];
-        wards.forEach(w => wardSel.add(new Option(w, w)));
-      } else if (selectedSubCounty === '') {
+        wards.sort().forEach(w => wardSel.add(new Option(w, w)));
+        console.log('✅ Ward filter populated with', wards.length, 'wards for', selectedSubCounty);
+      } else if (selectedSubCounty === '' || !selectedSubCounty) {
         // If no sub-county selected, show ALL wards from ALL sub-counties
-        const allWards = [];
-        Object.values(GARISSA_WARDS).forEach(wardArray => {
-          wardArray.forEach(ward => {
-            if (!allWards.includes(ward)) {
-              allWards.push(ward);
-            }
+        if (typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS) {
+          const allWards = [];
+          Object.values(GARISSA_WARDS).forEach(wardArray => {
+            wardArray.forEach(ward => {
+              if (!allWards.includes(ward)) {
+                allWards.push(ward);
+              }
+            });
           });
-        });
-        allWards.sort().forEach(w => wardSel.add(new Option(w, w)));
+          allWards.sort().forEach(w => wardSel.add(new Option(w, w)));
+          console.log('✅ Ward filter populated with ALL', allWards.length, 'wards');
+        } else {
+          console.warn('⚠️ GARISSA_WARDS not available for ward population');
+        }
       }
       
       // Always add "Other" option for typing custom ward
       wardSel.add(new Option('Other', 'Other'));
-      console.log('✅ Ward filter populated with', (selectedSubCounty && selectedSubCounty !== 'Other' && GARISSA_WARDS[selectedSubCounty] ? GARISSA_WARDS[selectedSubCounty].length : (typeof GARISSA_WARDS !== 'undefined' ? [...new Set(Object.values(GARISSA_WARDS).flat())].length : 0)) + 1, 'options (including Other)');
       
       // Enable/disable based on selection
       wardSel.disabled = false;
@@ -388,8 +393,8 @@
           ${!app.isFinalSubmission ? `<button class="btn btn-sm btn-warning me-1" onclick="editApplication('${safeAppID}')" title="Edit Application">
             <i class="bi bi-pencil"></i> Edit
           </button>` : ''}
-          <button class="btn btn-sm btn-success" onclick="downloadApplicationLetter('${safeAppID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter">
-              <i class="bi bi-download"></i> Download
+          <button class="btn btn-sm btn-primary" onclick="viewFormattedDocument('${safeAppID}')" title="View & Auto-Download Document (Downloads automatically)">
+              <i class="bi bi-file-earmark-pdf"></i> View & Download
             </button>
         </td>
       `;
@@ -1027,7 +1032,7 @@
   
   window.downloadPDF = window.downloadApplicationLetter;
   
-  // View formatted document in modal with county logo, signature, and stamp
+  // View formatted document - AUTO-DOWNLOADS by default
   window.viewFormattedDocument = async function(appID) {
     try {
       const apps = loadApplications();
@@ -1037,73 +1042,51 @@
         return;
       }
       
-      // Create modal to show formatted document preview
+      // AUTO-DOWNLOAD the document immediately
+      console.log('📥 Auto-downloading document for:', appID);
+      await downloadApplicationLetter(appID);
+      
+      // Show brief preview modal while downloading
       const modal = document.createElement('div');
       modal.className = 'modal fade';
       modal.id = 'documentViewModal';
       modal.innerHTML = `
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-lg">
           <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-success text-white">
               <h5 class="modal-title">
-                <i class="bi bi-file-earmark-pdf me-2"></i>Formatted Document - ${app.appID}
+                <i class="bi bi-download me-2"></i>Document Auto-Downloaded - ${app.appID}
               </h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
-              <div class="text-center mb-3">
-                <img src="Garissa Logo.png" alt="Garissa County Logo" style="max-width: 100px; height: auto;" onerror="this.style.display='none'">
-                <h4 class="mt-2">THE COUNTY GOVERNMENT OF GARISSA</h4>
-                <h5>BURSARY MANAGEMENT SYSTEM</h5>
+            <div class="modal-body text-center">
+              <div class="mb-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">Document Downloaded Successfully!</h4>
+                <p class="text-muted">The document has been automatically downloaded to your default downloads folder.</p>
               </div>
-              <hr>
-              <div class="document-content">
-                ${app.status === 'Awarded' ? `
-                  <div class="alert alert-success">
-                    <h5><i class="bi bi-trophy me-2"></i>AWARD LETTER</h5>
-                    <p class="mb-0"><strong>Serial Number:</strong> ${app.awardDetails?.serialNumber || 'N/A'}</p>
-                    <p class="mb-0"><strong>Amount Awarded:</strong> Ksh ${(app.awardDetails?.committee_amount_kes || app.awardDetails?.amount || 0).toLocaleString()}</p>
-                  </div>
-                ` : app.status === 'Rejected' ? `
-                  <div class="alert alert-danger">
-                    <h5><i class="bi bi-x-circle me-2"></i>REJECTION LETTER</h5>
-                    <p class="mb-0"><strong>Reason:</strong> ${app.rejectionReason || 'Application did not meet requirements'}</p>
-                  </div>
-                ` : `
-                  <div class="alert alert-info">
-                    <h5><i class="bi bi-hourglass-split me-2"></i>STATUS LETTER</h5>
-                    <p class="mb-0"><strong>Current Status:</strong> ${app.status || 'Pending'}</p>
-                  </div>
-                `}
-                <div class="card mt-3">
-                  <div class="card-body">
-                    <h6>Applicant Information</h6>
-                    <p><strong>Name:</strong> ${app.applicantName || 'N/A'}</p>
-                    <p><strong>Application ID:</strong> ${app.appID || 'N/A'}</p>
-                    <p><strong>Institution:</strong> ${app.personalDetails?.institution || 'N/A'}</p>
-                    <p><strong>Location:</strong> ${app.personalDetails?.subCounty || app.subCounty || 'N/A'}, ${app.personalDetails?.ward || app.ward || 'N/A'}</p>
-                    ${app.status === 'Awarded' && app.awardDetails ? `
-                      <p><strong>Amount Awarded:</strong> Ksh ${(app.awardDetails.committee_amount_kes || app.awardDetails.amount || 0).toLocaleString()}</p>
-                      <p><strong>Serial Number:</strong> ${app.awardDetails.serialNumber || 'N/A'}</p>
-                      <p><strong>Date Awarded:</strong> ${new Date(app.awardDetails.date_awarded || new Date()).toLocaleDateString()}</p>
-                    ` : ''}
-                  </div>
+              <div class="card">
+                <div class="card-body text-start">
+                  <h6>Document Details:</h6>
+                  <p><strong>Application ID:</strong> ${app.appID || 'N/A'}</p>
+                  <p><strong>Applicant:</strong> ${app.applicantName || 'N/A'}</p>
+                  <p><strong>Status:</strong> ${app.status || 'N/A'}</p>
+                  ${app.status === 'Awarded' && app.awardDetails ? `
+                    <p><strong>Amount Awarded:</strong> Ksh ${(app.awardDetails.committee_amount_kes || app.awardDetails.amount || 0).toLocaleString()}</p>
+                    <p><strong>Serial Number:</strong> ${app.awardDetails.serialNumber || 'N/A'}</p>
+                  ` : app.status === 'Rejected' ? `
+                    <p><strong>Rejection Reason:</strong> ${app.rejectionReason || 'N/A'}</p>
+                  ` : ''}
                 </div>
-                <div class="mt-4 text-center">
-                  <div class="border p-3 d-inline-block" style="border-radius: 50%; width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                    <strong>OFFICIAL</strong>
-                    <strong>STAMP</strong>
-                    <small>GARISSA COUNTY</small>
-                  </div>
-                  <p class="mt-3"><strong>Digital Signature</strong></p>
-                  <p>Fund Administrator<br>fundadmin@garissa.go.ke</p>
-                </div>
+              </div>
+              <div class="alert alert-info mt-3">
+                <small><i class="bi bi-info-circle me-1"></i>Check your downloads folder for the PDF document. An email notification has also been sent to fundadmin@garissa.go.ke</small>
               </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
               <button type="button" class="btn btn-primary" onclick="downloadApplicationLetter('${appID}')">
-                <i class="bi bi-download me-1"></i>Download PDF
+                <i class="bi bi-download me-1"></i>Download Again
               </button>
             </div>
           </div>
@@ -1113,6 +1096,13 @@
       document.body.appendChild(modal);
       const bsModal = new bootstrap.Modal(modal);
       bsModal.show();
+      
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        if (bsModal && bsModal.hide) {
+          bsModal.hide();
+        }
+      }, 3000);
       
       modal.addEventListener('hidden.bs.modal', () => {
         modal.remove();
@@ -2237,22 +2227,53 @@
     }
   });
   
-  // Periodic check for new applications (every 2 seconds) - more frequent
+  // Periodic check for new applications (every 1.5 seconds) - very frequent for real-time updates
   setInterval(() => {
-    const currentCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
-    const apps = loadApplications();
-    if (apps.length > currentCount) {
-      console.log('🔄 New applications detected via periodic check:', apps.length - currentCount, 'new');
-      refreshApplications();
-      updateMetrics();
-      updateBudgetDisplay();
-      applyFilters();
-      sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
-      if (typeof refreshVisualizations === 'function') {
-        refreshVisualizations();
+    try {
+      const currentCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
+      const apps = loadApplications();
+      if (apps.length > currentCount) {
+        const newCount = apps.length - currentCount;
+        console.log('🔄 New applications detected via periodic check:', newCount, 'new application(s)');
+        
+        // Force refresh everything
+        refreshApplications();
+        updateMetrics();
+        updateBudgetDisplay();
+        applyFilters();
+        populateFilters(); // Ensure dropdowns are updated
+        
+        sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
+        
+        // Refresh visualizations
+        if (typeof refreshVisualizations === 'function') {
+          refreshVisualizations();
+          console.log('✅ Visualizations updated via periodic check');
+        }
+        
+        // Show notification for new applications
+        if (newCount > 0) {
+          const notification = document.createElement('div');
+          notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow';
+          notification.style.zIndex = '9998';
+          notification.style.minWidth = '350px';
+          notification.innerHTML = `
+            <strong>📊 Dashboard Updated!</strong><br>
+            <small>${newCount} new application(s) detected and added to the list.</small>
+            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.remove();
+            }
+          }, 4000);
+        }
       }
+    } catch (error) {
+      console.error('Error in periodic check:', error);
     }
-  }, 2000);
+  }, 1500);
   
   // Setup immediately if DOM is ready, otherwise wait
   if (document.readyState === 'loading') {
