@@ -1317,10 +1317,18 @@
           })));
           
           // FORCE UPDATE ALL DISPLAYS IMMEDIATELY
-  updateMetrics();
+          updateMetrics();
           updateBudgetDisplay();
-  renderTable(allApps);
+          renderTable(allApps);
           applyFilters();
+          
+          // Refresh visualizations after a short delay
+          setTimeout(() => {
+            if (typeof refreshVisualizations === 'function') {
+              refreshVisualizations();
+              console.log('✅ Visualizations refreshed with dummy data');
+            }
+          }, 1500);
           
           sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
           
