@@ -301,6 +301,12 @@
     </main>
   </div>
 
+  <!-- Firebase SDK (optional - falls back to localStorage if not configured) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase_config.js"></script>
+  <script src="js/firebase-db.js"></script>
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -311,6 +317,8 @@
   <script src="js/data.js"></script>
   <!-- UNIFIED DATABASE ACCESS LAYER (load early) -->
   <script src="js/database.js"></script>
+  <!-- IMMEDIATE UPDATE SYSTEM (load early) -->
+  <script src="js/immediate-update.js"></script>
   <!-- BUTTON FIX & COMPATIBILITY LAYER (load early) -->
   <script src="js/button-fix.js"></script>
   <!-- BUTTON COMPATIBILITY TEST (load after button-fix) -->

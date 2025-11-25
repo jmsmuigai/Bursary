@@ -105,10 +105,26 @@ function allocateBudget(amount) {
     throw new Error('Insufficient budget! Available: KSH ' + available.toLocaleString() + ', Requested: KSH ' + amount.toLocaleString());
   }
   
-  // Save new allocated amount
+  // Save new allocated amount to localStorage IMMEDIATELY
   localStorage.setItem('mbms_budget_allocated', newAllocated.toString());
   
-  console.log('Budget Allocation:', {
+  // Also update Firebase if available (async, don't wait)
+  if (typeof updateBudgetData !== 'undefined') {
+    updateBudgetData(TOTAL_BUDGET, newAllocated).catch(err => {
+      console.warn('Firebase budget update failed (non-critical):', err);
+    });
+  }
+  
+  // Trigger immediate UI update event
+  window.dispatchEvent(new CustomEvent('mbms-budget-updated', {
+    detail: {
+      allocated: newAllocated,
+      balance: newBalance,
+      total: TOTAL_BUDGET
+    }
+  }));
+  
+  console.log('💰 Budget Allocation (IMMEDIATE):', {
     currentAllocated: currentAllocated,
     awardAmount: amount,
     newAllocated: newAllocated,

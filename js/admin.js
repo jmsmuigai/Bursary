@@ -38,11 +38,34 @@
   // Load applications from UNIFIED DATABASE (SAME DATABASE as registration and application form)
   function loadApplications() {
     try {
-      // Use unified database access layer
+      // Use unified database access layer (Firebase or localStorage)
+      // Note: getApplications is async, but we make this sync for backward compatibility
       if (typeof getApplications !== 'undefined') {
-        const apps = getApplications();
-        console.log('✅ Loaded', apps.length, 'applications from UNIFIED DATABASE');
-        return apps;
+        // For async Firebase, we'll use a promise but return sync for now
+        // In production, this should be properly async
+        const appsPromise = getApplications();
+        if (appsPromise && typeof appsPromise.then === 'function') {
+          // Async - return empty array for now, will be updated by listener
+          console.log('📦 Loading applications from Firebase (async)...');
+          // Set up listener for real-time updates
+          if (typeof listenForUpdates !== 'undefined') {
+            listenForUpdates((apps) => {
+              console.log('✅ Real-time update:', apps.length, 'applications');
+              renderTable(apps);
+              updateMetrics();
+            });
+          }
+          // Return cached data immediately
+          const cached = localStorage.getItem('mbms_applications');
+          if (cached) {
+            const apps = JSON.parse(cached);
+            return Array.isArray(apps) ? apps : [];
+          }
+          return [];
+        } else {
+          // Sync - return directly
+          return appsPromise || [];
+        }
       }
       
       // Fallback to direct localStorage access
@@ -741,9 +764,9 @@
         amount: awardAmount // For compatibility
       };
       
-      // Save applications to UNIFIED DATABASE
-      if (typeof updateApplication !== 'undefined') {
-        updateApplication(appID, {
+      // Save applications to UNIFIED DATABASE (Firebase or localStorage)
+      if (typeof updateApplicationStatus !== 'undefined') {
+        await updateApplicationStatus(appID, {
           status: 'Awarded',
           awardDetails: app.awardDetails
         });
