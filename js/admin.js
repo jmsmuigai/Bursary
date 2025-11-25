@@ -348,9 +348,13 @@
       const safeAppID = appID.replace(/'/g, "\\'");
       const safeName = name.replace(/'/g, "\\'");
       
+      // Check if this is dummy data (by checking if email contains 'example.com')
+      const isDummy = app.applicantEmail && app.applicantEmail.includes('example.com');
+      const dummyBadge = isDummy ? '<span class="badge bg-secondary ms-1" title="Demo Data">DUMMY</span>' : '';
+      
       tr.innerHTML = `
-        <td><strong>${appID}</strong>${serialNumber ? `<br><small class="text-muted">Serial: ${serialNumber}</small>` : ''}</td>
-        <td>${name}</td>
+        <td><strong>${appID}</strong>${serialNumber ? `<br><small class="text-muted">Serial: ${serialNumber}</small>` : ''}${dummyBadge}</td>
+        <td>${name}${dummyBadge}</td>
         <td>${location} / ${ward}</td>
         <td>${institution}</td>
         <td><span class="badge ${statusClass}">${status}</span></td>
@@ -1765,6 +1769,15 @@
                 // Update active state
                 document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
+                
+                // Special handling for visualizations section
+                if (sectionId === 'visualizations') {
+                  setTimeout(() => {
+                    if (typeof refreshVisualizations === 'function') {
+                      refreshVisualizations();
+                    }
+                  }, 300);
+                }
               }
             }
           }

@@ -30,17 +30,25 @@ function initializeBudget() {
 
 /**
  * Sync budget allocation with existing awarded applications
+ * EXCLUDES dummy data - budget stays at 50M until first real award
  */
 function syncBudgetWithAwards() {
   try {
     const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-    const awarded = applications.filter(a => a.status === 'Awarded' && a.awardDetails);
+    // Only count REAL awards (exclude dummy data with example.com emails)
+    const awarded = applications.filter(a => 
+      a.status === 'Awarded' && 
+      a.awardDetails &&
+      a.applicantEmail &&
+      !a.applicantEmail.includes('example.com') // Exclude dummy data
+    );
     
     const totalAllocated = awarded.reduce((sum, app) => {
       return sum + (app.awardDetails?.committee_amount_kes || app.awardDetails?.amount || 0);
     }, 0);
     
     localStorage.setItem('mbms_budget_allocated', totalAllocated.toString());
+    console.log('💰 Budget synced: Real awards =', awarded.length, ', Total allocated = KSH', totalAllocated.toLocaleString());
   } catch (error) {
     console.error('Error syncing budget:', error);
     if (!localStorage.getItem('mbms_budget_allocated')) {
