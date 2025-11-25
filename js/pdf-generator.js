@@ -466,12 +466,18 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
       return { filename, serialNumber, doc };
     }
 
-    // Save PDF directly (for direct download) - works on desktop and mobile
+    // Save PDF directly (for direct download) - ENHANCED with browser compatibility
     try {
-      doc.save(filename);
-      console.log(`✅ PDF downloaded: ${filename}`);
+      // Try standard save first
+      if (typeof doc.save === 'function') {
+        doc.save(filename);
+        console.log(`✅ PDF downloaded: ${filename}`);
+      } else {
+        throw new Error('doc.save is not a function');
+      }
     } catch (e) {
-      // Mobile fallback
+      console.warn('Standard save failed, using fallback:', e);
+      // Mobile/older browser fallback
       const pdfBlob = doc.output('blob');
       const blobUrl = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');

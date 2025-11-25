@@ -877,9 +877,11 @@
     }
   };
 
-  // Download application letter (works for all statuses: Awarded, Rejected, Pending)
+  // Download application letter (works for all statuses: Awarded, Rejected, Pending) - ENHANCED with browser compatibility
   window.downloadApplicationLetter = async function(appID) {
     try {
+      console.log('📥 Download triggered for appID:', appID);
+      
       const apps = loadApplications();
       if (!apps || apps.length === 0) {
         alert('⚠️ No applications found. Please load demo data or wait for applications to be submitted.');
@@ -893,14 +895,19 @@
         return;
       }
       
-    const app = apps.find(a => a.appID === appID);
+      // Ensure appID is a string
+      appID = String(appID);
+      
+      const app = apps.find(a => String(a.appID) === appID);
       
       if (!app) {
         console.error('Application not found. AppID:', appID);
         console.log('Available applications:', apps.map(a => a.appID));
         alert('⚠️ Application not found.\n\nApplication ID: ' + appID + '\n\nPlease refresh the page and try again.');
-      return;
-    }
+        return;
+      }
+      
+      console.log('✅ Application found:', app.appID);
 
       // Show loading indicator
       const loadingAlert = document.createElement('div');

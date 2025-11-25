@@ -1,16 +1,33 @@
-// Application Form Handler with Autosave
+// Application Form Handler with Autosave - ENHANCED with browser compatibility
 (function() {
-  let currentStep = 0;
-  const totalSteps = 5;
-  const sections = document.querySelectorAll('.form-section');
-  const progressBar = document.getElementById('progressBar');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const submitBtn = document.getElementById('submitBtn');
-  const form = document.getElementById('applicationForm');
-  const saveBtn = document.getElementById('saveBtn');
-  const saveStatus = document.getElementById('saveStatus');
-  const saveStatusText = document.getElementById('saveStatusText');
+  // Wait for DOM to be fully ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApplicationForm);
+  } else {
+    initializeApplicationForm();
+  }
+  
+  function initializeApplicationForm() {
+    let currentStep = 0;
+    const totalSteps = 5;
+    const sections = document.querySelectorAll('.form-section');
+    const progressBar = document.getElementById('progressBar');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('applicationForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const saveStatus = document.getElementById('saveStatus');
+    const saveStatusText = document.getElementById('saveStatusText');
+    
+    // Ensure all elements exist before proceeding
+    if (!form || !saveBtn || !submitBtn) {
+      console.error('⚠️ Critical form elements not found. Retrying...');
+      setTimeout(initializeApplicationForm, 500);
+      return;
+    }
+    
+    console.log('✅ Application form initialized - all elements found');
 
   // Get current user from session
   function getCurrentUser() {
@@ -213,18 +230,46 @@
     }
   });
 
-  // Step indicator clicks
-  document.querySelectorAll('.step-indicator').forEach((ind, i) => {
-    ind.addEventListener('click', function() {
-      if (i <= currentStep) {
-        currentStep = i;
-        showStep(currentStep);
-      }
+    // Step indicator clicks - ENHANCED
+    document.querySelectorAll('.step-indicator').forEach((ind, i) => {
+      ind.addEventListener('click', function(e) {
+        e.preventDefault();
+        try {
+          if (i <= currentStep) {
+            currentStep = i;
+            showStep(currentStep);
+            console.log('✅ Navigated to step', currentStep + 1, 'via indicator');
+          }
+        } catch (error) {
+          console.error('Step indicator error:', error);
+        }
+      });
+      ind.style.cursor = 'pointer';
     });
-  });
 
-  // Save button
-  saveBtn.addEventListener('click', manualSave);
+    // Save button - ENHANCED with error handling and browser compatibility
+    if (saveBtn) {
+      // Remove any existing listeners to prevent duplicates
+      const newSaveBtn = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+      
+      newSaveBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          manualSave();
+          console.log('✅ Manual save triggered');
+        } catch (error) {
+          console.error('Save error:', error);
+          alert('Error saving progress. Please try again.');
+        }
+      });
+      
+      // Ensure button is always active
+      newSaveBtn.disabled = false;
+      newSaveBtn.style.cursor = 'pointer';
+      console.log('✅ Save button activated and working');
+    }
 
   // Autosave on input change (debounced)
   let autosaveTimeout;
@@ -233,25 +278,60 @@
     autosaveTimeout = setTimeout(autosave, 2000);
   });
 
-  // Form submission
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
+    // Form submission - ENHANCED with error handling and browser compatibility
+    // Remove any existing listeners to prevent duplicates
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
     
-    if (!form.checkValidity()) {
+    newForm.addEventListener('submit', function(e) {
+      e.preventDefault();
       e.stopPropagation();
-      form.classList.add('was-validated');
-      return;
-    }
+      
+      console.log('📝 Form submission triggered');
+      
+      // Ensure submit button is enabled
+      const currentSubmitBtn = document.getElementById('submitBtn');
+      if (currentSubmitBtn) {
+        currentSubmitBtn.disabled = false;
+      }
+      
+      if (!newForm.checkValidity()) {
+        console.warn('⚠️ Form validation failed');
+        newForm.classList.add('was-validated');
+        
+        // Show validation errors
+        const firstInvalid = newForm.querySelector(':invalid');
+        if (firstInvalid) {
+          firstInvalid.focus();
+          firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      
+      console.log('✅ Form validation passed - proceeding with submission');
 
-    const user = getCurrentUser();
-    if (!user) {
-      alert('Please login to submit your application.');
-      window.location.href = 'index.html';
-      return;
-    }
+      const user = getCurrentUser();
+      if (!user) {
+        alert('Please login to submit your application.');
+        window.location.href = 'index.html';
+        return;
+      }
 
-    // Collect all form data
-    const formData = new FormData(form);
+      // Collect all form data - ENHANCED for browser compatibility
+      const formData = new FormData(newForm);
+      
+      // Also collect data from all inputs directly (fallback for older browsers)
+      const allFormData = {};
+      const inputs = newForm.querySelectorAll('input, select, textarea');
+      inputs.forEach(input => {
+        if (input.type === 'radio') {
+          if (input.checked) allFormData[input.name] = input.value;
+        } else if (input.type === 'checkbox') {
+          allFormData[input.name] = input.checked;
+        } else if (input.id) {
+          allFormData[input.id] = input.value;
+        }
+      });
     
     // Generate unique application ID
     const year = new Date().getFullYear();
@@ -275,55 +355,55 @@
       dateOfBirth: dateOfBirth,
       isFinalSubmission: true, // Final submission - cannot be edited
       personalDetails: {
-        firstNames: document.getElementById('firstNames').value,
-        middleName: document.getElementById('middleName').value,
-        lastName: document.getElementById('lastNameApp').value,
-        gender: document.getElementById('genderApp').value,
-        studentPhone: document.getElementById('studentPhone').value,
-        parentPhone: document.getElementById('parentPhone').value,
-        institution: document.getElementById('institutionName').value,
-        regNumber: document.getElementById('regNumber').value,
-        yearForm: document.getElementById('yearForm').value,
-        courseNature: document.getElementById('courseNature').value,
-        courseDuration: document.getElementById('courseDuration').value,
+        firstNames: allFormData['firstNames'] || document.getElementById('firstNames')?.value || '',
+        middleName: allFormData['middleName'] || document.getElementById('middleName')?.value || '',
+        lastName: allFormData['lastNameApp'] || document.getElementById('lastNameApp')?.value || '',
+        gender: allFormData['genderApp'] || document.getElementById('genderApp')?.value || '',
+        studentPhone: allFormData['studentPhone'] || document.getElementById('studentPhone')?.value || '',
+        parentPhone: allFormData['parentPhone'] || document.getElementById('parentPhone')?.value || '',
+        institution: allFormData['institutionName'] || document.getElementById('institutionName')?.value || '',
+        regNumber: allFormData['regNumber'] || document.getElementById('regNumber')?.value || '',
+        yearForm: allFormData['yearForm'] || document.getElementById('yearForm')?.value || '',
+        courseNature: allFormData['courseNature'] || document.getElementById('courseNature')?.value || '',
+        courseDuration: allFormData['courseDuration'] || document.getElementById('courseDuration')?.value || '',
         // Include location in personalDetails too for compatibility
         subCounty: user.subCounty || 'N/A',
         ward: user.ward || 'N/A'
       },
       familyDetails: {
-        parentStatus: form.querySelector('input[name="parentStatus"]:checked')?.value,
-        hasDisability: form.querySelector('input[name="hasDisability"]:checked')?.value,
-        disabilityDescription: document.getElementById('disabilityDescription').value,
-        fatherName: document.getElementById('fatherName').value,
-        fatherOccupation: document.getElementById('fatherOccupation').value,
-        motherName: document.getElementById('motherName').value,
-        motherOccupation: document.getElementById('motherOccupation').value,
-        guardianName: document.getElementById('guardianName').value,
-        guardianOccupation: document.getElementById('guardianOccupation').value,
-        totalSiblings: parseInt(document.getElementById('totalSiblings').value || 0),
-        guardianChildren: parseInt(document.getElementById('guardianChildren').value || 0),
-        siblingsWorking: parseInt(document.getElementById('siblingsWorking').value || 0),
-        siblingsSecondary: parseInt(document.getElementById('siblingsSecondary').value || 0),
-        siblingsPostSecondary: parseInt(document.getElementById('siblingsPostSecondary').value || 0),
-        educationPayer: form.querySelector('input[name="educationPayer"]:checked')?.value,
-        payerOtherSpecify: document.getElementById('payerOtherSpecify').value,
-        previousBenefit: form.querySelector('input[name="previousBenefit"]:checked')?.value,
-        previousAmount: parseInt(document.getElementById('previousAmount').value || 0),
-        previousYear: parseInt(document.getElementById('previousYear').value || 0)
+        parentStatus: newForm.querySelector('input[name="parentStatus"]:checked')?.value || allFormData['parentStatus'] || '',
+        hasDisability: newForm.querySelector('input[name="hasDisability"]:checked')?.value || allFormData['hasDisability'] || '',
+        disabilityDescription: allFormData['disabilityDescription'] || document.getElementById('disabilityDescription')?.value || '',
+        fatherName: allFormData['fatherName'] || document.getElementById('fatherName')?.value || '',
+        fatherOccupation: allFormData['fatherOccupation'] || document.getElementById('fatherOccupation')?.value || '',
+        motherName: allFormData['motherName'] || document.getElementById('motherName')?.value || '',
+        motherOccupation: allFormData['motherOccupation'] || document.getElementById('motherOccupation')?.value || '',
+        guardianName: allFormData['guardianName'] || document.getElementById('guardianName')?.value || '',
+        guardianOccupation: allFormData['guardianOccupation'] || document.getElementById('guardianOccupation')?.value || '',
+        totalSiblings: parseInt(allFormData['totalSiblings'] || document.getElementById('totalSiblings')?.value || 0),
+        guardianChildren: parseInt(allFormData['guardianChildren'] || document.getElementById('guardianChildren')?.value || 0),
+        siblingsWorking: parseInt(allFormData['siblingsWorking'] || document.getElementById('siblingsWorking')?.value || 0),
+        siblingsSecondary: parseInt(allFormData['siblingsSecondary'] || document.getElementById('siblingsSecondary')?.value || 0),
+        siblingsPostSecondary: parseInt(allFormData['siblingsPostSecondary'] || document.getElementById('siblingsPostSecondary')?.value || 0),
+        educationPayer: newForm.querySelector('input[name="educationPayer"]:checked')?.value || allFormData['educationPayer'] || '',
+        payerOtherSpecify: allFormData['payerOtherSpecify'] || document.getElementById('payerOtherSpecify')?.value || '',
+        previousBenefit: newForm.querySelector('input[name="previousBenefit"]:checked')?.value || allFormData['previousBenefit'] || '',
+        previousAmount: parseInt(allFormData['previousAmount'] || document.getElementById('previousAmount')?.value || 0),
+        previousYear: parseInt(allFormData['previousYear'] || document.getElementById('previousYear')?.value || 0)
       },
       institutionDetails: {
-        principalName: document.getElementById('principalName').value,
-        principalPhone: document.getElementById('principalPhone').value,
-        principalComments: document.getElementById('principalComments').value,
-        discipline: form.querySelector('input[name="discipline"]:checked')?.value,
-        outstandingFees: parseInt(document.getElementById('outstandingFees').value || 0)
+        principalName: allFormData['principalName'] || document.getElementById('principalName')?.value || '',
+        principalPhone: allFormData['principalPhone'] || document.getElementById('principalPhone')?.value || '',
+        principalComments: allFormData['principalComments'] || document.getElementById('principalComments')?.value || '',
+        discipline: newForm.querySelector('input[name="discipline"]:checked')?.value || allFormData['discipline'] || '',
+        outstandingFees: parseInt(allFormData['outstandingFees'] || document.getElementById('outstandingFees')?.value || 0)
       },
       financialDetails: {
-        monthlyIncome: parseInt(document.getElementById('monthlyIncome').value || 0),
-        totalAnnualFees: parseInt(document.getElementById('totalAnnualFees').value || 0),
-        feeBalance: parseInt(document.getElementById('feeBalance').value || 0),
-        amountRequested: parseInt(document.getElementById('amountRequested').value || 0),
-        justification: document.getElementById('justification').value
+        monthlyIncome: parseInt(allFormData['monthlyIncome'] || document.getElementById('monthlyIncome')?.value || 0),
+        totalAnnualFees: parseInt(allFormData['totalAnnualFees'] || document.getElementById('totalAnnualFees')?.value || 0),
+        feeBalance: parseInt(allFormData['feeBalance'] || document.getElementById('feeBalance')?.value || 0),
+        amountRequested: parseInt(allFormData['amountRequested'] || document.getElementById('amountRequested')?.value || 0),
+        justification: allFormData['justification'] || document.getElementById('justification')?.value || ''
       }
     };
 
@@ -398,14 +478,46 @@
     
     console.log('✅ All events triggered - Admin dashboard should update automatically');
     
-    // Redirect to applicant dashboard
-    setTimeout(() => {
-      window.location.href = 'applicant_dashboard.html';
-    }, 1500);
+      // Redirect to applicant dashboard - ENHANCED with browser compatibility
+      setTimeout(() => {
+        try {
+          window.location.href = 'applicant_dashboard.html';
+        } catch (error) {
+          console.error('Redirect error:', error);
+          // Fallback for older browsers
+          window.location = 'applicant_dashboard.html';
+        }
+      }, 1500);
   });
 
-  // Initialize
-  loadSavedApplication();
-  showStep(currentStep);
+    // Initialize
+    loadSavedApplication();
+    showStep(currentStep);
+    
+    // Ensure all buttons are active and responsive
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.style.cursor = 'pointer';
+      saveBtn.style.opacity = '1';
+    }
+    
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.style.cursor = 'pointer';
+      submitBtn.style.opacity = '1';
+    }
+    
+    // Ensure all form inputs are active
+    const allInputs = form.querySelectorAll('input, select, textarea, button');
+    allInputs.forEach(input => {
+      if (input.type !== 'hidden') {
+        input.disabled = false;
+        input.style.pointerEvents = 'auto';
+        input.style.opacity = '1';
+      }
+    });
+    
+    console.log('✅ All buttons and inputs activated');
+  }
 })();
 
