@@ -1,8 +1,8 @@
-# 🌟 Garissa County Modern Bursary Management System (MBMS) v3.1
+# 🌟 Garissa County Modern Bursary Management System (MBMS) v3.0
 
 A comprehensive, modern, and secure bursary management system for Garissa County, Kenya. This system streamlines the entire bursary lifecycle from online application to fund allocation and reporting.
 
-**Version:** 3.1  
+**Version:** 3.0  
 **Release Date:** January 2025  
 **Status:** ✅ **PRODUCTION READY - FULLY TESTED & MOBILE-OPTIMIZED**  
 **Developed by:** jmsmuigai@gmail.com  
