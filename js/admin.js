@@ -1987,6 +1987,54 @@
     }
   }
   
+  // Listen for new application submissions - auto-refresh when new applicants join
+  window.addEventListener('mbms-data-updated', function(event) {
+    console.log('📢 Data update event received:', event.detail);
+    if (event.detail && event.detail.key === 'mbms_applications') {
+      console.log('🔄 New application detected - refreshing dashboard...');
+      setTimeout(() => {
+        refreshApplications();
+        updateMetrics();
+        updateBudgetDisplay();
+        if (typeof refreshVisualizations === 'function') {
+          refreshVisualizations();
+        }
+        console.log('✅ Dashboard refreshed with new application');
+      }, 500);
+    }
+  });
+  
+  // Also listen for storage events (cross-tab sync)
+  window.addEventListener('storage', function(event) {
+    if (event.key === 'mbms_applications') {
+      console.log('📢 Storage event detected - new application added');
+      setTimeout(() => {
+        refreshApplications();
+        updateMetrics();
+        updateBudgetDisplay();
+        if (typeof refreshVisualizations === 'function') {
+          refreshVisualizations();
+        }
+      }, 500);
+    }
+  });
+  
+  // Periodic check for new applications (every 3 seconds)
+  setInterval(() => {
+    const currentCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
+    const apps = loadApplications();
+    if (apps.length > currentCount) {
+      console.log('🔄 New applications detected via periodic check');
+      refreshApplications();
+      updateMetrics();
+      updateBudgetDisplay();
+      sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
+      if (typeof refreshVisualizations === 'function') {
+        refreshVisualizations();
+      }
+    }
+  }, 3000);
+  
   // Setup immediately if DOM is ready, otherwise wait
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
