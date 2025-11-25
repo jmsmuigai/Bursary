@@ -1816,6 +1816,13 @@
       // Delay initAdminDashboard slightly to ensure all scripts are loaded
       setTimeout(() => {
         initAdminDashboard();
+        // Initialize visualizations after dashboard is ready
+        setTimeout(() => {
+          if (typeof initializeVisualizations === 'function') {
+            initializeVisualizations();
+            console.log('✅ Visualizations initialized');
+          }
+        }, 2000);
       }, 100);
     });
   } else {
@@ -1823,6 +1830,13 @@
     // Delay initAdminDashboard slightly to ensure all scripts are loaded
     setTimeout(() => {
       initAdminDashboard();
+      // Initialize visualizations after dashboard is ready
+      setTimeout(() => {
+        if (typeof initializeVisualizations === 'function') {
+          initializeVisualizations();
+          console.log('✅ Visualizations initialized');
+        }
+      }, 2000);
     }, 100);
   }
 
