@@ -264,11 +264,16 @@
       applicantName: `${user.firstName} ${user.lastName}`,
       dateSubmitted: new Date().toISOString(),
       status: 'Pending Submission',
-      dateSubmitted: new Date().toISOString(),
       // Include location from user registration
       subCounty: user.subCounty || 'N/A',
       ward: user.ward || 'N/A',
       village: user.village || '',
+      // CRITICAL: Add ID number and birth certificate for duplicate detection
+      idNumber: idNumber,
+      nemisId: idNumber, // For compatibility
+      birthCertificate: birthCertificate,
+      dateOfBirth: dateOfBirth,
+      isFinalSubmission: false, // Can be edited until final submission
       personalDetails: {
         firstNames: document.getElementById('firstNames').value,
         middleName: document.getElementById('middleName').value,
@@ -322,10 +327,19 @@
       }
     };
 
+    // Mark as final submission - no more editing allowed
+    applicationData.isFinalSubmission = true;
+    
     // Save application
     const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     applications.push(applicationData);
     localStorage.setItem('mbms_applications', JSON.stringify(applications));
+    
+    // Update counter
+    localStorage.setItem('mbms_application_counter', counter.toString());
+    
+    // Show warning about no editing after final submission
+    alert('✅ Application submitted successfully!\n\n⚠️ IMPORTANT: This is a FINAL SUBMISSION.\n\nOnce submitted, you CANNOT edit this application.\n\nIf you need to make changes, please contact the Fund Administrator at fundadmin@garissa.go.ke\n\nYour application ID: ' + appID);
 
     // Remove draft
     const applicationKey = `mbms_application_${user.email}`;

@@ -363,6 +363,9 @@
           <button class="btn btn-sm btn-info me-1" onclick="viewApplication('${safeAppID}')" title="View Application Details">
             <i class="bi bi-eye"></i> View
           </button>
+          ${!app.isFinalSubmission ? `<button class="btn btn-sm btn-warning me-1" onclick="editApplication('${safeAppID}')" title="Edit Application">
+            <i class="bi bi-pencil"></i> Edit
+          </button>` : ''}
           <button class="btn btn-sm btn-success" onclick="downloadApplicationLetter('${safeAppID}')" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter">
               <i class="bi bi-download"></i> Download
             </button>
@@ -1255,15 +1258,16 @@
     // Initialize filters
   populateFilters();
   
-  // Load and display all applications on page load
-    let allApps = loadApplications();
-    console.log('📊 Initial applications loaded:', allApps.length);
-    
-    // FORCE LOAD DUMMY DATA - Always ensure data is visible
-    console.log('🔄 Checking applications... Current count:', allApps.length);
-    
-    // If no applications, FORCE load dummy data
-    if (allApps.length === 0) {
+  // ALWAYS FORCE LOAD DUMMY DATA ON PAGE LOAD - Ensure data is visible
+  console.log('🔄 FORCING DUMMY DATA LOAD ON PAGE LOAD...');
+  
+  // Load existing applications
+  let allApps = loadApplications();
+  console.log('📊 Initial applications loaded:', allApps.length);
+  
+  // ALWAYS ensure we have 10 dummy records - Force load if less than 10
+  if (allApps.length < 10) {
+    console.log('🔄 LESS THAN 10 APPLICATIONS - FORCING DUMMY DATA LOAD...');
       console.log('🔄 NO APPLICATIONS FOUND - FORCING DUMMY DATA LOAD...');
       
       try {
@@ -1356,6 +1360,30 @@
     } else {
       console.log('✅ Applications already exist:', allApps.length);
       console.log('Sample:', allApps.slice(0, 2).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
+      
+      // Even if apps exist, ensure we have at least 10 for demo
+      if (allApps.length < 10) {
+        console.log('⚠️ Less than 10 applications - loading more dummy data...');
+        try {
+          if (typeof generateDummyApplications === 'function') {
+            const existingIds = new Set(allApps.map(a => a.appID));
+            const dummyApps = generateDummyApplications();
+            const newApps = dummyApps.filter(a => !existingIds.has(a.appID));
+            if (newApps.length > 0) {
+              const combined = [...allApps, ...newApps.slice(0, 10 - allApps.length)];
+              localStorage.setItem('mbms_applications', JSON.stringify(combined));
+              allApps = loadApplications();
+              console.log('✅ Added dummy data. Total now:', allApps.length);
+              updateMetrics();
+              updateBudgetDisplay();
+              renderTable(allApps);
+              applyFilters();
+            }
+          }
+        } catch (e) {
+          console.error('Error adding more dummy data:', e);
+        }
+      }
     }
     
     // FORCE MULTIPLE REFRESHES TO ENSURE DATA IS VISIBLE

@@ -78,6 +78,14 @@ function generateDummyApplications() {
     const feeBalance = amountRequested + Math.floor(Math.random() * 20000);
     const monthlyIncome = Math.floor(Math.random() * 15000) + 5000;
     
+    // Generate unique ID number and birth certificate
+    const idNumber = `${now.getFullYear()}${String(1000000 + i).padStart(7, '0')}`; // Unique 11-digit ID
+    const birthYear = 1995 + (i % 10); // Birth years between 1995-2004
+    const birthMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+    const birthDay = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+    const dateOfBirth = `${birthYear}-${birthMonth}-${birthDay}`;
+    const birthCertificate = `BC/${birthYear}/${String(1000 + i).padStart(4, '0')}`;
+    
     // Create application object
     const app = {
       appID: `GSA/${now.getFullYear()}/${String(1000 + i).padStart(4, '0')}`,
@@ -88,6 +96,13 @@ function generateDummyApplications() {
       subCounty: subCounty, // CRITICAL: Set at root level for filtering
       ward: ward, // CRITICAL: Set at root level for filtering
       village: `${ward} Village`,
+      // CRITICAL: Add ID number and birth certificate for duplicate detection
+      idNumber: idNumber,
+      nemisId: idNumber, // For compatibility
+      birthCertificate: birthCertificate,
+      dateOfBirth: dateOfBirth,
+      isDummy: true, // Mark as dummy for identification
+      isFinalSubmission: false, // Can be edited until final submission
       personalDetails: {
         firstNames: `${name.first} ${name.middle}`,
         middleName: name.middle,
@@ -101,7 +116,10 @@ function generateDummyApplications() {
         courseNature: ['Degree', 'Diploma', 'Certificate', 'Secondary'][i % 4],
         courseDuration: ['4 Years', '3 Years', '2 Years', '4 Years'][i % 4],
         subCounty: subCounty,
-        ward: ward
+        ward: ward,
+        idNumber: idNumber,
+        birthCertificate: birthCertificate,
+        dateOfBirth: dateOfBirth
       },
       familyDetails: {
         parentStatus: ['Both alive', 'One dead', 'Both alive', 'One dead'][i % 4],
