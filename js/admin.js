@@ -271,23 +271,38 @@
       wardSel.disabled = false;
     }
     
-    // Handle "Other" option for sub-county
+    // Handle sub-county change - update wards and apply filters
     scSel.addEventListener('change', function() {
       populateFilterWards();
-      // If "Other" selected, show input field (if exists) or allow typing
-      if (this.value === 'Other') {
-        console.log('Other sub-county selected - user can type custom value');
-      }
+      // Auto-apply filters when sub-county changes
+      setTimeout(() => applyFilters(), 100);
     });
     
-    // Handle "Other" option for ward
+    // Handle ward change - apply filters
     wardSel.addEventListener('change', function() {
-      if (this.value === 'Other') {
-        console.log('Other ward selected - user can type custom value');
-      }
+      setTimeout(() => applyFilters(), 100);
     });
+    
+    // Handle status change - apply filters
+    if (statusSel) {
+      statusSel.addEventListener('change', function() {
+        setTimeout(() => applyFilters(), 100);
+      });
+    }
+    
+    // Find and attach Apply Filters button
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn') || 
+                           document.querySelector('button[onclick*="applyFilters"]') ||
+                           document.querySelector('button:contains("Apply Filters")');
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        applyFilters();
+      });
+    }
     
     populateFilterWards(); // Initial population
+    console.log('✅ All filter event listeners attached');
   }
 
   // Render applications table - ENHANCED with better logging and Excel-like format
@@ -1258,17 +1273,19 @@
     // Initialize filters
   populateFilters();
   
-  // ALWAYS FORCE LOAD DUMMY DATA ON PAGE LOAD - Ensure data is visible
-  console.log('🔄 FORCING DUMMY DATA LOAD ON PAGE LOAD...');
+  // CRITICAL: FORCE LOAD AND DISPLAY DUMMY DATA IMMEDIATELY
+  console.log('🔄 FORCING DUMMY DATA LOAD AND DISPLAY ON PAGE LOAD...');
+  
+  // Clear any existing dummy data flag to force reload
+  localStorage.removeItem('mbms_dummy_data_loaded');
   
   // Load existing applications
   let allApps = loadApplications();
   console.log('📊 Initial applications loaded:', allApps.length);
   
-  // ALWAYS ensure we have 10 dummy records - Force load if less than 10
+  // ALWAYS ensure we have exactly 10 dummy records - Force load if less than 10
   if (allApps.length < 10) {
-    console.log('🔄 LESS THAN 10 APPLICATIONS - FORCING DUMMY DATA LOAD...');
-      console.log('🔄 NO APPLICATIONS FOUND - FORCING DUMMY DATA LOAD...');
+    console.log('🔄 LESS THAN 10 APPLICATIONS - FORCING DUMMY DATA GENERATION AND DISPLAY...');
       
       try {
         // Method 1: Try initializeDummyData
@@ -1281,16 +1298,18 @@
           }
         }
         
-        // Method 2: Direct generation if Method 1 didn't work
-        if (allApps.length === 0 && typeof generateDummyApplications === 'function') {
-          console.log('🔄 Method 1 failed, trying direct generation...');
+        // Method 2: Direct generation - ALWAYS generate fresh dummy data
+        if (allApps.length < 10 && typeof generateDummyApplications === 'function') {
+          console.log('🔄 Generating fresh dummy data directly...');
           const dummyApps = generateDummyApplications();
-          console.log('Generated', dummyApps.length, 'dummy applications');
+          console.log('✅ Generated', dummyApps.length, 'dummy applications');
           
           if (dummyApps && dummyApps.length > 0) {
+            // Clear existing and set fresh dummy data
             localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
             localStorage.setItem('mbms_application_counter', '10');
             localStorage.setItem('mbms_last_serial', '10');
+            localStorage.setItem('mbms_dummy_data_loaded', 'true');
             
             // Initialize budget
             if (typeof initializeBudget !== 'undefined') {
@@ -1300,8 +1319,19 @@
               syncBudgetWithAwards();
             }
             
+            // Reload applications
             allApps = loadApplications();
-            console.log('✅ Method 2 success:', allApps.length, 'applications');
+            console.log('✅ Method 2 success - Loaded', allApps.length, 'applications from localStorage');
+            
+            // VERIFY data is actually in localStorage
+            const verify = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+            console.log('✅ Verification: localStorage contains', verify.length, 'applications');
+            console.log('Sample apps:', verify.slice(0, 3).map(a => ({
+              id: a.appID,
+              name: a.applicantName,
+              subCounty: a.subCounty,
+              ward: a.ward
+            })));
           }
         }
         
@@ -1316,19 +1346,48 @@
             ward: a.ward || a.personalDetails?.ward || 'N/A'
           })));
           
-          // FORCE UPDATE ALL DISPLAYS IMMEDIATELY
+          // FORCE UPDATE ALL DISPLAYS IMMEDIATELY - MULTIPLE TIMES TO ENSURE VISIBILITY
+          console.log('🔄 FORCING IMMEDIATE UI UPDATE...');
+          
+          // Update 1: Immediate
           updateMetrics();
           updateBudgetDisplay();
           renderTable(allApps);
           applyFilters();
           
-          // Refresh visualizations after a short delay
+          // Update 2: After 100ms
           setTimeout(() => {
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(allApps);
+            applyFilters();
+            console.log('✅ UI Update 2 completed');
+          }, 100);
+          
+          // Update 3: After 500ms
+          setTimeout(() => {
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(allApps);
+            applyFilters();
+            console.log('✅ UI Update 3 completed');
+          }, 500);
+          
+          // Update 4: After 1000ms (final)
+          setTimeout(() => {
+            updateMetrics();
+            updateBudgetDisplay();
+            renderTable(allApps);
+            applyFilters();
+            
+            // Refresh visualizations
             if (typeof refreshVisualizations === 'function') {
               refreshVisualizations();
               console.log('✅ Visualizations refreshed with dummy data');
             }
-          }, 1500);
+            
+            console.log('✅ FINAL UI Update completed - All', allApps.length, 'records should be visible');
+          }, 1000);
           
           sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
           
