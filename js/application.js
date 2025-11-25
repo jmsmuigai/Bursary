@@ -81,10 +81,16 @@
           step: currentStep,
           status: 'Draft',
           applicantEmail: user.email,
-          applicantName: `${user.firstName || ''} ${user.lastName || ''}`.trim()
+          applicantName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+          // Include user registration data for consistency
+          subCounty: user.subCounty || '',
+          ward: user.ward || '',
+          village: user.village || ''
         };
 
+        // Save to localStorage (same database used by admin portal)
         localStorage.setItem(applicationKey, JSON.stringify(applicationData));
+        console.log('💾 Saved to database (localStorage):', applicationKey, '- Step', currentStep + 1);
         console.log('✅ Auto-saved application progress - Step', currentStep + 1);
         
         // Show subtle save indicator (only if not already showing)
