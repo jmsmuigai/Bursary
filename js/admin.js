@@ -1325,19 +1325,20 @@
           notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
           notification.style.zIndex = '9999';
           notification.style.minWidth = '500px';
-          notification.innerHTML = `
-            <strong>✅ Demo Data Auto-Loaded!</strong><br>
-            <div class="mt-2">
-              📊 <strong>10 sample applications</strong> created and visible in table:<br>
-              &nbsp;&nbsp;• 3 Awarded applications<br>
-              &nbsp;&nbsp;• 3 Pending Review applications<br>
-              &nbsp;&nbsp;• 2 Rejected applications<br>
-              &nbsp;&nbsp;• 2 Pending Submission applications<br>
-              <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (with 3 awards totaling KSH 530,000)</small>
-              <small class="text-success d-block mt-1"><strong>✅ Scroll down to see all records in the table!</strong></small>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          `;
+              notification.innerHTML = `
+                <strong>✅ Demo Data Auto-Loaded!</strong><br>
+                <div class="mt-2">
+                  📊 <strong>10 sample applications</strong> created and visible in table:<br>
+                  &nbsp;&nbsp;• All applications are <strong>PENDING REVIEW</strong> (ready for award)<br>
+                  &nbsp;&nbsp;• Distributed across all Garissa sub-counties and wards<br>
+                  &nbsp;&nbsp;• From different schools and institutions<br>
+                  &nbsp;&nbsp;• <strong>NONE AWARDED</strong> - ready for first review and award<br>
+                  <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (Baseline - ready for first award)</small>
+                  <small class="text-success d-block mt-1"><strong>✅ Scroll down to see all 10 records in the scrollable table!</strong></small>
+                  <small class="text-info d-block mt-1">📊 Visualizations will show data once you scroll to that section</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              `;
           document.body.appendChild(notification);
           setTimeout(() => {
             if (notification.parentNode) {
@@ -1444,6 +1445,15 @@
             updateBudgetDisplay();
             renderTable(newApps);
             applyFilters();
+            
+            // Refresh visualizations if available
+            setTimeout(() => {
+              if (typeof refreshVisualizations === 'function') {
+                refreshVisualizations();
+                console.log('✅ Visualizations refreshed with new data');
+              }
+            }, 1000);
+            
             console.log('✅ Dummy data force-loaded:', newApps.length, 'applications');
             // Show notification
             const notification = document.createElement('div');

@@ -20,15 +20,36 @@ function initializeVisualizations() {
  */
 function refreshVisualizations() {
   // Get loadApplications function from admin.js scope
-  const loadApps = typeof loadApplications !== 'undefined' ? loadApplications : function() {
+  const loadApps = typeof window.loadApplications !== 'undefined' ? window.loadApplications : function() {
     try {
-      return JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      const apps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      console.log('📊 Loading applications for visualizations:', apps.length);
+      return apps;
     } catch (e) {
+      console.error('Error loading applications:', e);
       return [];
     }
   };
   
   const apps = loadApps();
+  console.log('📊 Refreshing visualizations with', apps.length, 'applications');
+  
+  if (apps.length === 0) {
+    console.warn('⚠️ No applications found for visualizations');
+    // Show message in chart containers
+    ['statusPieChart', 'subCountyBarChart', 'budgetTrendChart', 'genderChart'].forEach(id => {
+      const canvas = document.getElementById(id);
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#999';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available. Load demo data first.', canvas.width / 2, canvas.height / 2);
+      }
+    });
+    return;
+  }
   
   // Destroy existing charts
   Object.values(chartInstances).forEach(chart => {

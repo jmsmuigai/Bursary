@@ -35,12 +35,21 @@ function generateDummyApplications() {
   const applications = [];
   const now = new Date();
   
-  // Award amounts for awarded applications
-  const awardAmounts = [150000, 200000, 180000];
-  
-  // Create 10 records with various statuses to demonstrate system functionality
-  // 3 Awarded, 3 Pending Review, 2 Rejected, 2 Pending Submission
-  const statuses = ['Awarded', 'Awarded', 'Awarded', 'Pending Ward Review', 'Pending Ward Review', 'Pending Committee Review', 'Rejected', 'Rejected', 'Pending Submission', 'Pending Submission'];
+  // Create 10 records - ALL PENDING (none awarded) - ready for review and award
+  // Statuses: Mix of Pending Ward Review, Pending Committee Review, and Pending Submission
+  // This demonstrates the system is ready for the first applicant
+  const statuses = [
+    'Pending Ward Review', 
+    'Pending Ward Review', 
+    'Pending Ward Review', 
+    'Pending Committee Review', 
+    'Pending Committee Review', 
+    'Pending Committee Review', 
+    'Pending Submission', 
+    'Pending Submission', 
+    'Pending Ward Review', 
+    'Pending Committee Review'
+  ];
   
   // Distribute across all sub-counties and their wards
   const allSubCounties = Object.keys(GARISSA_WARDS);
@@ -131,35 +140,9 @@ function generateDummyApplications() {
       }
     };
     
-    // Add award details for awarded applications (3 awarded)
-    if (status === 'Awarded') {
-      const awardAmounts = [150000, 200000, 180000];
-      // Count how many awarded we've seen so far
-      const awardedSoFar = statuses.slice(0, i).filter(s => s === 'Awarded').length;
-      const awardAmount = awardAmounts[awardedSoFar] || 150000;
-      const serialNumber = `GRS/Bursary/${String(1000 + awardedSoFar + 1).padStart(3, '0')}`;
-      
-      app.awardDetails = {
-        committee_amount_kes: awardAmount,
-        date_awarded: new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)).toISOString(),
-        justification: `Student demonstrates financial need and meets all eligibility criteria. Family income is below threshold and academic performance is satisfactory.`,
-        admin_assigned_uid: 'fundadmin@garissa.go.ke',
-        serialNumber: serialNumber,
-        amount: awardAmount
-      };
-    }
-    
-    // Add rejection details for rejected applications (2 rejected)
-    if (status === 'Rejected') {
-      const rejectionReasons = [
-        'Application did not meet the minimum academic requirements for bursary allocation.',
-        'Incomplete documentation provided. Missing required supporting documents.'
-      ];
-      // Count how many rejected we've seen so far
-      const rejectedSoFar = statuses.slice(0, i).filter(s => s === 'Rejected').length;
-      app.rejectionDate = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)).toISOString();
-      app.rejectionReason = rejectionReasons[rejectedSoFar] || 'Application did not meet the minimum requirements for bursary allocation.';
-    }
+    // NO AWARD DETAILS - All records are pending review
+    // Awards will be created when admin reviews and approves applications
+    // NO REJECTION DETAILS - All records are pending, ready for review
     
     applications.push(app);
   }
@@ -296,7 +279,7 @@ window.forceLoadDummyData = function() {
     }
     
     // Show success message
-    alert('✅ Dummy data loaded successfully!\n\n10 records created:\n- 3 Awarded\n- 3 Pending Review\n- 2 Rejected\n- 2 Pending Submission\n\nData is now visible on the dashboard.');
+    alert('✅ Dummy data loaded successfully!\n\n10 records created:\n- ALL PENDING REVIEW (ready for award)\n- Distributed across all Garissa sub-counties\n- From different schools and institutions\n- NONE AWARDED - ready for first review\n\nData is now visible in the scrollable table!\n\n📊 Visualizations will show data automatically.');
     
     // Reload page to ensure display
     setTimeout(() => {
