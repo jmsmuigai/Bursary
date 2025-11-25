@@ -16,31 +16,40 @@ function initializeVisualizations() {
 }
 
 /**
- * Refresh all visualizations with latest data
+ * Refresh all visualizations with latest data - ENHANCED: Uses UNIFIED DATABASE
  */
 function refreshVisualizations() {
-  // Get loadApplications function from admin.js scope
-  const loadApps = typeof window.loadApplications !== 'undefined' ? window.loadApplications : function() {
+  // Use UNIFIED DATABASE access layer (SAME DATABASE as all components)
+  let apps = [];
+  
+  if (typeof getApplications !== 'undefined') {
+    // Use unified database access
+    apps = getApplications();
+    console.log('📊 Visualizations: Loaded', apps.length, 'applications from UNIFIED DATABASE');
+  } else if (typeof window.loadApplications !== 'undefined') {
+    // Fallback to admin.js function
+    apps = window.loadApplications();
+    console.log('📊 Visualizations: Loaded', apps.length, 'applications from admin.js');
+  } else {
+    // Last resort: direct localStorage access
     try {
-      const apps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-      console.log('📊 Loading applications for visualizations:', apps.length);
-      return apps;
+      apps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      console.log('📊 Visualizations: Loaded', apps.length, 'applications from localStorage');
     } catch (e) {
       console.error('Error loading applications:', e);
-      return [];
+      return;
     }
-  };
+  }
   
-  const apps = loadApps();
-  console.log('📊 Refreshing visualizations with', apps.length, 'applications');
+  console.log('📊 Refreshing visualizations with', apps.length, 'applications from SAME DATABASE');
   
-  // Force reload from localStorage to get latest data
+  // Force reload from unified database to get latest data
   try {
-    const latestApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    const latestApps = typeof getApplications !== 'undefined' ? getApplications() : 
+                      JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     if (latestApps.length !== apps.length) {
-      console.log('🔄 Data mismatch detected - using latest data from localStorage');
-      apps.length = 0;
-      apps.push(...latestApps);
+      console.log('🔄 Data mismatch detected - using latest data from UNIFIED DATABASE');
+      apps = latestApps;
     }
   } catch (e) {
     console.error('Error refreshing data:', e);

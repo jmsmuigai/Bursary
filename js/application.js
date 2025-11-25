@@ -88,11 +88,16 @@
           village: user.village || ''
         };
 
-        // Save to localStorage (SAME DATABASE used by admin portal)
-        localStorage.setItem(applicationKey, JSON.stringify(applicationData));
-        console.log('💾 Auto-saved to database (localStorage):', applicationKey, '- Step', currentStep + 1);
-        console.log('📊 Database: localStorage (mbms_application_' + user.email + ')');
-        console.log('✅ Same database as admin portal reads from');
+        // Save to UNIFIED DATABASE (SAME DATABASE used by admin portal)
+        if (typeof saveDraftApplication !== 'undefined') {
+          saveDraftApplication(user.email, applicationData);
+          console.log('💾 Auto-saved to UNIFIED DATABASE:', applicationKey, '- Step', currentStep + 1);
+        } else {
+          localStorage.setItem(applicationKey, JSON.stringify(applicationData));
+          console.log('💾 Auto-saved to database (fallback):', applicationKey, '- Step', currentStep + 1);
+        }
+        console.log('📊 Database: UNIFIED DATABASE (mbms_application_' + user.email + ')');
+        console.log('✅ Same database as admin portal, reports, and visualizations read from');
         
         // Show subtle save indicator (only if not already showing)
         if (saveStatus && saveStatusText) {
@@ -567,23 +572,34 @@
       }
     };
 
-    // Save application to admin portal (SAME DATABASE)
-    const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-    applications.push(applicationData);
-    localStorage.setItem('mbms_applications', JSON.stringify(applications));
+    // Save application to UNIFIED DATABASE (SAME DATABASE as admin portal)
+    if (typeof saveApplication !== 'undefined') {
+      // Use unified database access layer
+      saveApplication(applicationData);
+      console.log('✅ Application submitted and saved to UNIFIED DATABASE:', appID);
+    } else {
+      // Fallback to direct localStorage access
+      const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      applications.push(applicationData);
+      localStorage.setItem('mbms_applications', JSON.stringify(applications));
+      console.log('✅ Application submitted and saved (fallback):', appID);
+    }
     
-    // Update counter
-    localStorage.setItem('mbms_application_counter', counter.toString());
+    // Update counter using unified database
+    if (typeof incrementApplicationCounter !== 'undefined') {
+      incrementApplicationCounter();
+    } else {
+      localStorage.setItem('mbms_application_counter', counter.toString());
+    }
     
-    // CRITICAL: Force localStorage update to trigger events
-    const updatedApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-    localStorage.setItem('mbms_applications', JSON.stringify(updatedApps));
+    // Get updated count
+    const updatedApps = typeof getApplications !== 'undefined' ? getApplications() : 
+                       JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     
-    console.log('✅ Application submitted and saved:', appID);
     console.log('📊 Total applications now:', updatedApps.length);
     console.log('📋 Status: Pending Ward Review - Awaiting approval');
-    console.log('💾 Database: localStorage (mbms_applications)');
-    console.log('✅ Same database admin portal reads from');
+    console.log('💾 Database: UNIFIED DATABASE (mbms_applications)');
+    console.log('✅ Same database admin portal, reports, and visualizations read from');
     
     // Show success message
     alert('✅ Application submitted successfully!\n\n📋 Your application has been submitted and is now in the "Pending Ward Review" status.\n\n🔄 Your application will appear on the admin dashboard and is awaiting review.\n\n📧 You will be notified once a decision is made (Awarded or Rejected).\n\n⚠️ IMPORTANT: This is a FINAL SUBMISSION. You CANNOT edit this application.\n\nIf you need to make changes, please contact the Fund Administrator at fundadmin@garissa.go.ke\n\nYour application ID: ' + appID);

@@ -35,9 +35,17 @@
     return;
   }
 
-  // Load applications from localStorage (SAME DATABASE as registration and application form)
+  // Load applications from UNIFIED DATABASE (SAME DATABASE as registration and application form)
   function loadApplications() {
     try {
+      // Use unified database access layer
+      if (typeof getApplications !== 'undefined') {
+        const apps = getApplications();
+        console.log('✅ Loaded', apps.length, 'applications from UNIFIED DATABASE');
+        return apps;
+      }
+      
+      // Fallback to direct localStorage access
       const appsStr = localStorage.getItem('mbms_applications');
       if (!appsStr) {
         console.log('📊 No applications in database (localStorage: mbms_applications)');
@@ -128,6 +136,11 @@
 
   // Load users to get applicant details
   function loadUsers() {
+    // Use unified database access layer
+    if (typeof getUsers !== 'undefined') {
+      return getUsers();
+    }
+    // Fallback to direct localStorage access
     return JSON.parse(localStorage.getItem('mbms_users') || '[]');
   }
 
@@ -261,38 +274,56 @@
     });
   }
 
-  // Populate filters with all sub-counties and wards - ENHANCED
+  // Populate filters with all sub-counties and wards - ENHANCED & RECONSTRUCTED
   function populateFilters() {
     const scSel = document.getElementById('filterSubCounty');
     const wardSel = document.getElementById('filterWard');
     
     if (!scSel || !wardSel) {
-      console.error('Filter elements not found');
+      console.error('❌ Filter elements not found - retrying...');
+      setTimeout(populateFilters, 500);
       return;
     }
     
-    // Populate sub-counties - ALL Garissa sub-counties with "Other" option
+    // RECONSTRUCT: Populate sub-counties - ALL Garissa sub-counties with "Other" option
     scSel.innerHTML = '<option value="">All Sub-Counties</option>';
-    if (typeof GARISSA_WARDS !== 'undefined') {
-      const subCounties = Object.keys(GARISSA_WARDS);
+    
+    if (typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS) {
+      const subCounties = Object.keys(GARISSA_WARDS).sort();
       subCounties.forEach(sc => {
-        const option = new Option(sc, sc);
-        scSel.add(option);
+        const option = document.createElement('option');
+        option.value = sc;
+        option.textContent = sc;
+        scSel.appendChild(option);
       });
+      console.log('✅ Sub-county filter populated with', subCounties.length, 'sub-counties:', subCounties.join(', '));
+    } else {
+      console.error('❌ GARISSA_WARDS not defined - cannot populate sub-counties');
     }
-    scSel.add(new Option('Other', 'Other'));
-    console.log('✅ Sub-county filter populated with', (typeof GARISSA_WARDS !== 'undefined' ? Object.keys(GARISSA_WARDS).length : 0) + 1, 'options (including Other)');
+    
+    // Always add "Other" option
+    const otherOption = document.createElement('option');
+    otherOption.value = 'Other';
+    otherOption.textContent = 'Other (Specify)';
+    scSel.appendChild(otherOption);
+    
+    console.log('✅ Sub-county filter fully populated with', scSel.options.length, 'options');
 
-    // Function to populate wards based on selected sub-county - ALL wards
+    // RECONSTRUCT: Function to populate wards based on selected sub-county - ALL wards
     function populateFilterWards() {
       wardSel.innerHTML = '<option value="">All Wards</option>';
       const selectedSubCounty = scSel.value;
       
       if (selectedSubCounty && selectedSubCounty !== 'Other' && typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS[selectedSubCounty]) {
         // Show wards for selected sub-county
-        const wards = GARISSA_WARDS[selectedSubCounty];
-        wards.sort().forEach(w => wardSel.add(new Option(w, w)));
-        console.log('✅ Ward filter populated with', wards.length, 'wards for', selectedSubCounty);
+        const wards = [...GARISSA_WARDS[selectedSubCounty]].sort();
+        wards.forEach(w => {
+          const option = document.createElement('option');
+          option.value = w;
+          option.textContent = w;
+          wardSel.appendChild(option);
+        });
+        console.log('✅ Ward filter populated with', wards.length, 'wards for', selectedSubCounty, ':', wards.join(', '));
       } else if (selectedSubCounty === '' || !selectedSubCounty) {
         // If no sub-county selected, show ALL wards from ALL sub-counties
         if (typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS) {
@@ -304,18 +335,27 @@
               }
             });
           });
-          allWards.sort().forEach(w => wardSel.add(new Option(w, w)));
-          console.log('✅ Ward filter populated with ALL', allWards.length, 'wards');
+          allWards.sort().forEach(w => {
+            const option = document.createElement('option');
+            option.value = w;
+            option.textContent = w;
+            wardSel.appendChild(option);
+          });
+          console.log('✅ Ward filter populated with ALL', allWards.length, 'wards from all sub-counties');
         } else {
           console.warn('⚠️ GARISSA_WARDS not available for ward population');
         }
       }
       
       // Always add "Other" option for typing custom ward
-      wardSel.add(new Option('Other', 'Other'));
+      const otherWardOption = document.createElement('option');
+      otherWardOption.value = 'Other';
+      otherWardOption.textContent = 'Other (Specify)';
+      wardSel.appendChild(otherWardOption);
       
       // Enable/disable based on selection
       wardSel.disabled = false;
+      console.log('✅ Ward filter fully populated with', wardSel.options.length, 'options');
     }
     
     // Handle sub-county change - update wards and apply filters
@@ -1223,9 +1263,11 @@
     }
   };
 
-  // Generate comprehensive summary report
+  // Generate comprehensive summary report - ENHANCED: Uses UNIFIED DATABASE
   window.generateSummaryReport = function() {
-    const apps = loadApplications();
+    // Use UNIFIED DATABASE (SAME as all components)
+    const apps = typeof getApplications !== 'undefined' ? getApplications() : loadApplications();
+    console.log('📊 Summary Report: Using', apps.length, 'applications from UNIFIED DATABASE');
     const budget = getBudgetBalance();
     
     // Calculate statistics

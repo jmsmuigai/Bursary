@@ -334,10 +334,18 @@
         createdAt: new Date().toISOString()
       };
 
-      // Save to localStorage (replace with Firebase Auth later)
-      const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
-      users.push(payload);
-      localStorage.setItem('mbms_users', JSON.stringify(users));
+      // Save to UNIFIED DATABASE (SAME DATABASE as admin portal and applications)
+      if (typeof saveUser !== 'undefined') {
+        // Use unified database access layer
+        saveUser(payload);
+        console.log('✅ User registered and saved to UNIFIED DATABASE:', payload.email);
+      } else {
+        // Fallback to direct localStorage access
+        const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+        users.push(payload);
+        localStorage.setItem('mbms_users', JSON.stringify(users));
+        console.log('✅ User registered and saved (fallback):', payload.email);
+      }
       
       console.log('✅ User registered successfully:', payload.email);
 
