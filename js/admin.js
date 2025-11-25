@@ -344,7 +344,7 @@
           const option = document.createElement('option');
           option.value = w;
           option.textContent = w;
-          wardSel.appendChild(option);
+          currentWardSel.appendChild(option);
         });
         console.log('✅ Ward filter populated with', wards.length, 'wards for', selectedSubCounty, ':', wards.join(', '));
       } else if (selectedSubCounty === '' || !selectedSubCounty) {
@@ -362,7 +362,7 @@
             const option = document.createElement('option');
             option.value = w;
             option.textContent = w;
-            wardSel.appendChild(option);
+            currentWardSel.appendChild(option);
           });
           console.log('✅ Ward filter populated with ALL', allWards.length, 'wards from all sub-counties');
         } else {
@@ -374,40 +374,73 @@
       const otherWardOption = document.createElement('option');
       otherWardOption.value = 'Other';
       otherWardOption.textContent = 'Other (Specify)';
-      wardSel.appendChild(otherWardOption);
+      currentWardSel.appendChild(otherWardOption);
       
       // Enable/disable based on selection
-      wardSel.disabled = false;
-      console.log('✅ Ward filter fully populated with', wardSel.options.length, 'options');
+      currentWardSel.disabled = false;
+      console.log('✅ Ward filter fully populated with', currentWardSel.options.length, 'options');
     }
     
-    // Handle sub-county change - update wards and apply filters
-    scSel.addEventListener('change', function() {
-      populateFilterWards();
-      // Auto-apply filters when sub-county changes
-      setTimeout(() => applyFilters(), 100);
-    });
+    // Get status filter element
+    const statusSel = document.getElementById('filterStatus');
     
-    // Handle ward change - apply filters
-    wardSel.addEventListener('change', function() {
-      setTimeout(() => applyFilters(), 100);
-    });
+    // Use event delegation to avoid duplicate listeners
+    // Remove old listeners by using one-time setup flag
+    if (!scSel.dataset.listenersAttached) {
+      scSel.dataset.listenersAttached = 'true';
+      
+      // Handle sub-county change - update wards and apply filters
+      scSel.addEventListener('change', function() {
+        console.log('📍 Sub-county changed to:', this.value);
+        populateFilterWards();
+        // Auto-apply filters when sub-county changes
+        setTimeout(() => {
+          if (typeof window.applyFilters === 'function') {
+            window.applyFilters();
+          }
+        }, 100);
+      });
+    }
+    
+    if (!wardSel.dataset.listenersAttached) {
+      wardSel.dataset.listenersAttached = 'true';
+      
+      // Handle ward change - apply filters
+      wardSel.addEventListener('change', function() {
+        console.log('📍 Ward changed to:', this.value);
+        setTimeout(() => {
+          if (typeof window.applyFilters === 'function') {
+            window.applyFilters();
+          }
+        }, 100);
+      });
+    }
     
     // Handle status change - apply filters
-    if (statusSel) {
+    if (statusSel && !statusSel.dataset.listenersAttached) {
+      statusSel.dataset.listenersAttached = 'true';
       statusSel.addEventListener('change', function() {
-        setTimeout(() => applyFilters(), 100);
+        console.log('📍 Status changed to:', this.value);
+        setTimeout(() => {
+          if (typeof window.applyFilters === 'function') {
+            window.applyFilters();
+          }
+        }, 100);
       });
     }
     
     // Find and attach Apply Filters button
     const applyFiltersBtn = document.getElementById('applyFiltersBtn') || 
-                           document.querySelector('button[onclick*="applyFilters"]') ||
-                           document.querySelector('button:contains("Apply Filters")');
-    if (applyFiltersBtn) {
+                           document.querySelector('button[onclick*="applyFilters"]');
+    if (applyFiltersBtn && !applyFiltersBtn.dataset.listenersAttached) {
+      applyFiltersBtn.dataset.listenersAttached = 'true';
       applyFiltersBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        applyFilters();
+        e.stopPropagation();
+        console.log('🔍 Apply Filters button clicked');
+        if (typeof window.applyFilters === 'function') {
+          window.applyFilters();
+        }
       });
     }
     
@@ -1277,9 +1310,9 @@
       }
       appID = String(appID);
       
-      // Try viewApplication first
-      if (typeof viewApplication === 'function') {
-        viewApplication(appID);
+      // Always use viewApplication if it exists
+      if (typeof window.viewApplication === 'function') {
+        window.viewApplication(appID);
         console.log('✅ View function called successfully');
         return;
       }
@@ -1879,13 +1912,24 @@
     }
   };
 
-  // Refresh applications display (force reload from localStorage)
-  window.refreshApplications = function() {
+  // Refresh applications display (force reload from Firebase or localStorage)
+  window.refreshApplications = async function() {
     try {
       console.log('Refreshing applications...');
       
-      // Force reload from localStorage
-      const apps = loadApplications();
+      // Force reload from unified database
+      let apps;
+      if (typeof window.getApplications !== 'undefined') {
+        try {
+          apps = await window.getApplications();
+          console.log('✅ Refreshed from Firebase:', apps.length, 'applications');
+        } catch (error) {
+          console.warn('Firebase refresh error, using localStorage:', error);
+          apps = loadApplications();
+        }
+      } else {
+        apps = loadApplications();
+      }
       console.log('Loaded applications:', apps.length);
       
       if (apps.length > 0) {
@@ -2564,7 +2608,8 @@
 
   // Sidebar navigation - SIMPLE AND RELIABLE (works immediately)
   // Expose loadApplications globally for visualizations
-  window.loadApplications = loadApplications;
+  window.loadApplications = loadApplications; // Synchronous version for backward compatibility
+  window.loadApplicationsSync = loadApplicationsSync; // Async version for Firebase
   
   function setupSidebarNavigation() {
     try {

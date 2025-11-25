@@ -441,7 +441,7 @@
     const newForm = form.cloneNode(true);
     form.parentNode.replaceChild(newForm, form);
     
-    newForm.addEventListener('submit', function(e) {
+    newForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       e.stopPropagation();
       
@@ -565,11 +565,12 @@
       }
     };
 
-    // Save application to UNIFIED DATABASE (SAME DATABASE as admin portal)
-    if (typeof saveApplication !== 'undefined') {
-      // Use unified database access layer
-      saveApplication(applicationData);
-      console.log('✅ Application submitted and saved to UNIFIED DATABASE:', appID);
+    // Save application to UNIFIED DATABASE (Firebase or localStorage)
+    if (typeof window.saveApplication !== 'undefined') {
+      // Use unified database access layer (async)
+      try {
+        await window.saveApplication(applicationData);
+        console.log('✅ Application submitted and saved to UNIFIED DATABASE:', appID);
     } else {
       // Fallback to direct localStorage access
       const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
@@ -586,7 +587,7 @@
     }
     
     // Get updated count
-    const updatedApps = typeof getApplications !== 'undefined' ? getApplications() : 
+    const updatedApps = typeof window.getApplications !== 'undefined' ? await window.getApplications() : 
                        JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     
     console.log('📊 Total applications now:', updatedApps.length);
