@@ -710,22 +710,27 @@
       
       // Auto-download award letter immediately
       try {
-        await downloadPDFDirect(app, app.awardDetails);
+        if (typeof generateOfferLetterPDF !== 'undefined') {
+          const result = await generateOfferLetterPDF(app, app.awardDetails, { preview: false });
+          if (result && result.filename) {
+            console.log('✅ Award letter auto-downloaded:', result.filename);
+            
+            // Auto-send email to fundadmin@garissa.go.ke
+            setTimeout(() => {
+              if (typeof sendEmailDraft !== 'undefined') {
+                sendEmailDraft(app, 'award', result.filename, app.awardDetails);
+                console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
+              }
+            }, 1000);
+          }
+        } else {
+          // Fallback
+          await downloadPDFDirect(app, app.awardDetails);
+        }
       } catch (pdfError) {
         console.error('PDF download error:', pdfError);
         // Continue even if PDF fails
       }
-      
-      // Send email draft with award letter
-      setTimeout(() => {
-        if (typeof sendEmailDraft !== 'undefined') {
-          const applicantName = app.applicantName || 
-            `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
-          const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
-          const filename = `Garissa_Bursary_Award_${sanitizedName}_${serialNumber}_${app.appID}.pdf`;
-          sendEmailDraft(app, 'award', filename, app.awardDetails);
-        }
-      }, 2000);
       
       // Show success message
       alert('✅ Successfully awarded!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Copy sent to fundadmin@garissa.go.ke\n\n📥 Award letter has been automatically downloaded!');
@@ -950,8 +955,34 @@
     }
   };
   
-  window.downloadPDFDirect = async function(appID) {
-    await downloadApplicationLetter(appID);
+  window.downloadPDFDirect = async function(application, awardDetails) {
+    // Handle both appID string and application object
+    if (typeof application === 'string') {
+      await downloadApplicationLetter(application);
+      return;
+    }
+    
+    // If application object provided, generate PDF directly
+    if (application && awardDetails) {
+      try {
+        if (typeof generateOfferLetterPDF !== 'undefined') {
+          const result = await generateOfferLetterPDF(application, awardDetails, { preview: false });
+          if (result && result.filename) {
+            console.log('✅ PDF auto-downloaded:', result.filename);
+            
+            // Send email
+            if (typeof sendEmailDraft !== 'undefined') {
+              setTimeout(() => {
+                sendEmailDraft(application, 'award', result.filename, awardDetails);
+              }, 1000);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('PDF generation error:', error);
+        alert('Error generating PDF: ' + error.message);
+      }
+    }
   };
   
   window.downloadPDF = window.downloadApplicationLetter;
