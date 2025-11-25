@@ -1653,10 +1653,32 @@ async function generateApplicationSummaryPDF(application) {
     yPos += 5;
     addText('fundadmin@garissa.go.ke', margin, yPos, { fontSize: 10 });
 
-    const filename = `Garissa_Bursary_Application_${application.appID}.pdf`;
-    doc.save(filename);
+    const applicantName = application.applicantName || 
+      `${application.personalDetails?.firstNames || ''} ${application.personalDetails?.lastName || ''}`.trim() || 'Applicant';
+    const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+    const filename = `Garissa_Bursary_Summary_${sanitizedName}_${application.appID}.pdf`;
     
-    return { filename };
+    // Auto-download
+    try {
+      doc.save(filename);
+      console.log('✅ Application summary auto-downloaded:', filename);
+    } catch (e) {
+      console.error('Auto-download error:', e);
+      // Fallback for mobile devices
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      console.log('✅ Application summary auto-downloaded (mobile):', filename);
+    }
+    
+    return { doc, filename };
   } catch (error) {
     console.error('Application summary PDF generation error:', error);
     throw new Error(`Error generating application summary: ${error.message}`);
@@ -1676,7 +1698,34 @@ async function downloadApplicationSummaryPDF(application) {
 
     const result = await generateApplicationSummaryPDF(application);
     loadingAlert.remove();
-    showDownloadSuccess(result.filename);
+    
+    // Show success message (if showDownloadSuccess function exists)
+    if (typeof showDownloadSuccess !== 'undefined') {
+      showDownloadSuccess(result.filename, application);
+    } else {
+      // Fallback success notification
+      const successNotification = document.createElement('div');
+      successNotification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg';
+      successNotification.style.zIndex = '10000';
+      successNotification.style.minWidth = '400px';
+      successNotification.innerHTML = `
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check-circle-fill me-2" style="font-size: 1.5rem;"></i>
+          <div class="flex-grow-1">
+            <strong>✅ Downloaded Successfully!</strong><br>
+            <small class="text-muted">${result.filename}</small><br>
+            <small class="text-muted">Document saved to your downloads folder</small>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+      document.body.appendChild(successNotification);
+      setTimeout(() => {
+        if (successNotification.parentNode) {
+          successNotification.remove();
+        }
+      }, 5000);
+    }
     
     // Send email draft
     setTimeout(() => {
