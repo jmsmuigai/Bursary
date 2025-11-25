@@ -341,32 +341,57 @@
 
   // Apply filters
   function applyFilters() {
-    const apps = loadApplications();
-    const filterSubCounty = document.getElementById('filterSubCounty').value;
-    const filterWard = document.getElementById('filterWard').value;
-    const filterStatus = document.getElementById('filterStatus').value;
+    try {
+      const apps = loadApplications();
+      const filterSubCountyEl = document.getElementById('filterSubCounty');
+      const filterWardEl = document.getElementById('filterWard');
+      const filterStatusEl = document.getElementById('filterStatus');
+      
+      if (!filterSubCountyEl || !filterWardEl || !filterStatusEl) {
+        console.error('Filter elements not found');
+        renderTable(apps); // Show all if filters not available
+        return;
+      }
+      
+      const filterSubCounty = filterSubCountyEl.value;
+      const filterWard = filterWardEl.value;
+      const filterStatus = filterStatusEl.value;
 
-    let filtered = apps;
+      let filtered = apps;
 
-    if (filterSubCounty) {
-      filtered = filtered.filter(a => {
-        const sc = a.personalDetails?.subCounty || a.subCounty;
-        return sc === filterSubCounty || (filterSubCounty === 'Other' && !Object.keys(GARISSA_WARDS).includes(sc));
-      });
+      if (filterSubCounty) {
+        filtered = filtered.filter(a => {
+          const sc = a.subCounty || a.personalDetails?.subCounty;
+          if (filterSubCounty === 'Other') {
+            return sc && !Object.keys(GARISSA_WARDS).includes(sc);
+          }
+          return sc === filterSubCounty;
+        });
+      }
+
+      if (filterWard) {
+        filtered = filtered.filter(a => {
+          const w = a.ward || a.personalDetails?.ward;
+          if (filterWard === 'Other') {
+            const sc = a.subCounty || a.personalDetails?.subCounty;
+            const wards = GARISSA_WARDS[sc] || [];
+            return w && !wards.includes(w);
+          }
+          return w === filterWard;
+        });
+      }
+
+      if (filterStatus) {
+        filtered = filtered.filter(a => a.status === filterStatus);
+      }
+
+      renderTable(filtered);
+      console.log('✅ Filters applied:', { subCounty: filterSubCounty, ward: filterWard, status: filterStatus, result: filtered.length });
+    } catch (error) {
+      console.error('Filter error:', error);
+      const apps = loadApplications();
+      renderTable(apps);
     }
-
-    if (filterWard) {
-      filtered = filtered.filter(a => {
-        const w = a.personalDetails?.ward || a.ward;
-        return w === filterWard || (filterWard === 'Other' && !GARISSA_WARDS[filterSubCounty]?.includes(w));
-      });
-    }
-
-    if (filterStatus) {
-      filtered = filtered.filter(a => a.status === filterStatus);
-    }
-
-    renderTable(filtered);
   }
 
   // View application modal
