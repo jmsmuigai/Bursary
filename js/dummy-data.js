@@ -203,10 +203,11 @@ function initializeDummyData() {
         .reduce((sum, a) => sum + (a.awardDetails?.committee_amount_kes || 0), 0);
       
       console.log('✅ Dummy data initialized:', verify.length, 'applications');
+      console.log(`   - ALL PENDING: ${verify.length} (Ready for review and award)`);
       console.log(`   - Awarded: ${awardedCount} (Total: KSH ${totalAwarded.toLocaleString()})`);
       console.log(`   - Pending: ${pendingCount}`);
       console.log(`   - Rejected: ${rejectedCount}`);
-      console.log(`   - Budget: KSH 50,000,000 (Allocated: KSH ${totalAwarded.toLocaleString()})`);
+      console.log(`   - Budget: KSH 50,000,000 (Baseline - ready for first award)`);
       console.log('Sample applications:', verify.slice(0, 3).map(a => ({ 
         id: a.appID, 
         name: a.applicantName, 
