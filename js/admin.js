@@ -573,7 +573,7 @@
   }
 
   // Apply filters
-  function applyFilters() {
+  window.applyFilters = function() {
     try {
     const apps = loadApplications();
       const filterSubCountyEl = document.getElementById('filterSubCounty');
