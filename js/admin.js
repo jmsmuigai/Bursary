@@ -536,11 +536,11 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h6 class="mb-0">Document Actions</h6>
               <div class="btn-group">
-                <button class="btn btn-sm btn-outline-primary" onclick="viewFormattedDocument('${appID}')" title="View Formatted Document">
-                  <i class="bi bi-file-earmark-pdf me-1"></i>View Document
+                <button class="btn btn-sm btn-primary" onclick="viewFormattedDocument('${appID}')" title="View & Auto-Download Document (Downloads automatically)">
+                  <i class="bi bi-file-earmark-pdf me-1"></i>View & Download
                 </button>
-                <button class="btn btn-sm btn-outline-success" onclick="downloadApplicationPDFFromView('${appID}')" title="Download Application as PDF">
-                  <i class="bi bi-download me-1"></i>Download PDF
+                <button class="btn btn-sm btn-success" onclick="downloadApplicationPDFFromView('${appID}')" title="Download Application Summary PDF">
+                  <i class="bi bi-download me-1"></i>Download Summary
                 </button>
               </div>
             </div>
