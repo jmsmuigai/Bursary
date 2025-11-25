@@ -3,14 +3,29 @@ const TOTAL_BUDGET = 50000000; // KSH 50,000,000
 
 /**
  * Initialize budget if not exists
+ * Budget baseline remains KSH 50,000,000 until first award
  */
 function initializeBudget() {
   if (!localStorage.getItem('mbms_budget_total')) {
     localStorage.setItem('mbms_budget_total', TOTAL_BUDGET.toString());
   }
   
-  // Sync budget with existing awarded applications
+  // Only sync budget with ACTUAL awarded applications (not dummy data)
+  // Budget stays at 50M until first real award
   syncBudgetWithAwards();
+  
+  // Ensure allocated is 0 if no real awards exist
+  const apps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+  const realAwards = apps.filter(a => 
+    a.status === 'Awarded' && 
+    a.awardDetails && 
+    a.applicantEmail && 
+    !a.applicantEmail.includes('example.com') // Exclude dummy data
+  );
+  
+  if (realAwards.length === 0) {
+    localStorage.setItem('mbms_budget_allocated', '0');
+  }
 }
 
 /**

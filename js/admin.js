@@ -224,7 +224,7 @@
     });
   }
 
-  // Populate filters with all sub-counties and wards
+  // Populate filters with all sub-counties and wards - ENHANCED
   function populateFilters() {
     const scSel = document.getElementById('filterSubCounty');
     const wardSel = document.getElementById('filterWard');
@@ -234,33 +234,59 @@
       return;
     }
     
-    // Populate sub-counties
+    // Populate sub-counties - ALL Garissa sub-counties
     scSel.innerHTML = '<option value="">All Sub-Counties</option>';
-    Object.keys(GARISSA_WARDS).forEach(sc => {
+    const subCounties = Object.keys(GARISSA_WARDS);
+    subCounties.forEach(sc => {
       scSel.add(new Option(sc, sc));
     });
-    scSel.add(new Option('Other', 'Other'));
+    scSel.add(new Option('Other (Type below)', 'Other'));
 
-    // Function to populate wards based on selected sub-county
+    // Function to populate wards based on selected sub-county - ALL wards
     function populateFilterWards() {
       wardSel.innerHTML = '<option value="">All Wards</option>';
       const selectedSubCounty = scSel.value;
       
       if (selectedSubCounty && selectedSubCounty !== 'Other' && GARISSA_WARDS[selectedSubCounty]) {
+        // Show wards for selected sub-county
         const wards = GARISSA_WARDS[selectedSubCounty];
-      wards.forEach(w => wardSel.add(new Option(w, w)));
+        wards.forEach(w => wardSel.add(new Option(w, w)));
       } else if (selectedSubCounty === '') {
-        // If no sub-county selected, show all wards from all sub-counties
-        Object.values(GARISSA_WARDS).flat().forEach(w => {
-          if (!Array.from(wardSel.options).some(opt => opt.value === w)) {
-            wardSel.add(new Option(w, w));
-          }
+        // If no sub-county selected, show ALL wards from ALL sub-counties
+        const allWards = [];
+        Object.values(GARISSA_WARDS).forEach(wardArray => {
+          wardArray.forEach(ward => {
+            if (!allWards.includes(ward)) {
+              allWards.push(ward);
+            }
+          });
         });
+        allWards.sort().forEach(w => wardSel.add(new Option(w, w)));
       }
-      wardSel.add(new Option('Other', 'Other'));
+      
+      // Always add "Other" option for typing custom ward
+      wardSel.add(new Option('Other (Type below)', 'Other'));
+      
+      // Enable/disable based on selection
+      wardSel.disabled = false;
     }
     
-    scSel.addEventListener('change', populateFilterWards);
+    // Handle "Other" option for sub-county
+    scSel.addEventListener('change', function() {
+      populateFilterWards();
+      // If "Other" selected, show input field (if exists) or allow typing
+      if (this.value === 'Other') {
+        console.log('Other sub-county selected - user can type custom value');
+      }
+    });
+    
+    // Handle "Other" option for ward
+    wardSel.addEventListener('change', function() {
+      if (this.value === 'Other') {
+        console.log('Other ward selected - user can type custom value');
+      }
+    });
+    
     populateFilterWards(); // Initial population
   }
 
@@ -1715,6 +1741,9 @@
   };
 
   // Sidebar navigation - SIMPLE AND RELIABLE (works immediately)
+  // Expose loadApplications globally for visualizations
+  window.loadApplications = loadApplications;
+  
   function setupSidebarNavigation() {
     try {
       // Sidebar links - use event delegation for reliability

@@ -1227,28 +1227,8 @@ async function generateStatusLetterPDF(application) {
   try {
     await loadJSPDF();
     
-    // Get jsPDF constructor - handle different loading scenarios
-    let jsPDF;
-    if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
-      jsPDF = window.jspdf.jsPDF;
-    } else if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF !== 'undefined') {
-      jsPDF = window.jspdf.jsPDF;
-    } else if (typeof window.jsPDF !== 'undefined' && window.jsPDF.jsPDF) {
-      jsPDF = window.jsPDF.jsPDF;
-    } else if (typeof window.jsPDF !== 'undefined' && typeof window.jsPDF.jsPDF !== 'undefined') {
-      jsPDF = window.jsPDF.jsPDF;
-    } else if (typeof window.jsPDF === 'function') {
-      jsPDF = window.jsPDF;
-    } else if (typeof jspdf !== 'undefined' && jspdf.jsPDF) {
-      jsPDF = jspdf.jsPDF;
-    } else {
-      throw new Error('jsPDF library not available. Please refresh the page.');
-    }
-    
-    // Validate jsPDF is a constructor
-    if (typeof jsPDF !== 'function') {
-      throw new Error('jsPDF is not a constructor. Library may not be loaded correctly.');
-    }
+    // Use the helper function to get jsPDF constructor
+    const jsPDF = getJSPDFConstructor();
 
     const doc = new jsPDF({
       orientation: 'portrait',
