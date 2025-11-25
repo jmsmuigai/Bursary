@@ -806,12 +806,20 @@
       applyFilters();
       refreshApplications();
       
+      // Refresh visualizations with updated data
+      setTimeout(() => {
+        if (typeof refreshVisualizations === 'function') {
+          refreshVisualizations();
+          console.log('✅ Visualizations updated after rejection');
+        }
+      }, 500);
+      
       // Trigger update event
       window.dispatchEvent(new CustomEvent('mbms-data-updated', {
         detail: { key: 'mbms_applications', action: 'rejected', appID: appID }
       }));
       
-      alert('✅ Application rejected successfully!\n\n💰 Budget remains unchanged (Ksh ' + remainingBalance.toLocaleString() + ' available)\n📧 Email notification sent to fundadmin@garissa.go.ke\n\nRejection letter can be downloaded from the applications list.');
+      alert('✅ Application rejected successfully!\n\n💰 Budget remains unchanged (Ksh ' + remainingBalance.toLocaleString() + ' available)\n📧 Email notification sent to fundadmin@garissa.go.ke\n📥 Rejection letter has been automatically downloaded!');
       
       const viewModal = document.querySelector('.modal');
       if (viewModal) {

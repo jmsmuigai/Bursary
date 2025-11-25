@@ -34,6 +34,18 @@ function refreshVisualizations() {
   const apps = loadApps();
   console.log('📊 Refreshing visualizations with', apps.length, 'applications');
   
+  // Force reload from localStorage to get latest data
+  try {
+    const latestApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    if (latestApps.length !== apps.length) {
+      console.log('🔄 Data mismatch detected - using latest data from localStorage');
+      apps.length = 0;
+      apps.push(...latestApps);
+    }
+  } catch (e) {
+    console.error('Error refreshing data:', e);
+  }
+  
   if (apps.length === 0) {
     console.warn('⚠️ No applications found for visualizations');
     // Show message in chart containers
