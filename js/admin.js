@@ -12,28 +12,28 @@
       console.warn('Admin dashboard already initialized');
       return;
     }
-    window.adminDashboardInitialized = true;
+  window.adminDashboardInitialized = true;
 
-    // Check admin access
-    try {
-      const adminStr = sessionStorage.getItem('mbms_admin');
-      if (!adminStr) {
-        alert('Access denied. Admin login required.');
-        window.location.href = 'index.html';
-        return;
-      }
-
-      const admin = JSON.parse(adminStr);
-      const adminEmailEl = document.getElementById('adminEmail');
-      if (adminEmailEl) {
-        adminEmailEl.textContent = admin.email;
-      }
-    } catch (error) {
-      console.error('Admin access check error:', error);
-      alert('Error loading admin session. Please login again.');
+  // Check admin access
+  try {
+    const adminStr = sessionStorage.getItem('mbms_admin');
+    if (!adminStr) {
+      alert('Access denied. Admin login required.');
       window.location.href = 'index.html';
       return;
     }
+
+    const admin = JSON.parse(adminStr);
+    const adminEmailEl = document.getElementById('adminEmail');
+    if (adminEmailEl) {
+      adminEmailEl.textContent = admin.email;
+    }
+  } catch (error) {
+    console.error('Admin access check error:', error);
+    alert('Error loading admin session. Please login again.');
+    window.location.href = 'index.html';
+    return;
+  }
 
   // Load applications from localStorage (all applications, no filtering)
   function loadApplications() {
@@ -167,7 +167,7 @@
       progressBar.setAttribute('aria-valuemax', 100);
       
       // Dynamic color based on utilization (real-time updates)
-      const budgetCard = document.getElementById('budgetCard');
+        const budgetCard = document.getElementById('budgetCard');
       if (status.isExhausted || calculatedBalance <= 0) {
         // Dark red when exhausted
         progressBar.className = 'progress-bar';
@@ -248,7 +248,7 @@
       
       if (selectedSubCounty && selectedSubCounty !== 'Other' && GARISSA_WARDS[selectedSubCounty]) {
         const wards = GARISSA_WARDS[selectedSubCounty];
-        wards.forEach(w => wardSel.add(new Option(w, w)));
+      wards.forEach(w => wardSel.add(new Option(w, w)));
       } else if (selectedSubCounty === '') {
         // If no sub-county selected, show all wards from all sub-counties
         Object.values(GARISSA_WARDS).flat().forEach(w => {
@@ -264,23 +264,37 @@
     populateFilterWards(); // Initial population
   }
 
-  // Render applications table
+  // Render applications table - ENHANCED with better logging and Excel-like format
   function renderTable(applications) {
     const tbody = document.getElementById('applicationsTableBody');
     if (!tbody) {
       console.error('❌ Table body not found - element ID: applicationsTableBody');
+      // Try to find it again after a short delay
+      setTimeout(() => {
+        const retryTbody = document.getElementById('applicationsTableBody');
+        if (retryTbody) {
+          console.log('✅ Table body found on retry');
+          renderTable(applications);
+        } else {
+          console.error('❌ Table body still not found after retry');
+        }
+      }, 100);
       return;
     }
     
-    console.log('🔄 Rendering table with', applications?.length || 0, 'applications');
+    console.log('🔄 RENDERING TABLE with', applications?.length || 0, 'applications');
+    console.log('Applications data:', applications);
     
+    // Clear table
     tbody.innerHTML = '';
 
     if (!applications || applications.length === 0) {
-      console.log('⚠️ No applications to render');
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No applications found. Applications will appear here once submitted.</td></tr>';
+      console.log('⚠️ No applications to render - showing empty message');
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>No applications found. Click "Load Demo Data" button to load sample data.</td></tr>';
       return;
     }
+    
+    console.log('✅ About to render', applications.length, 'applications to table');
 
     // Sort by date submitted (newest first)
     const sortedApps = [...applications].sort((a, b) => {
@@ -327,8 +341,30 @@
       tbody.appendChild(tr);
     });
     
-    console.log('✅ Table rendered successfully with', sortedApps.length, 'rows');
-    console.log('Table body now has', tbody.children.length, 'child elements');
+    // VERIFY RENDERING
+    const renderedRows = tbody.children.length;
+    console.log('✅ TABLE RENDERED SUCCESSFULLY!');
+    console.log('   - Expected rows:', sortedApps.length);
+    console.log('   - Actual rows in DOM:', renderedRows);
+    console.log('   - Table body element:', tbody);
+    console.log('   - First row preview:', tbody.firstElementChild?.textContent?.substring(0, 100));
+    
+    if (renderedRows === 0) {
+      console.error('❌ CRITICAL: Table rendered but no rows visible!');
+      console.error('   - Applications:', applications.length);
+      console.error('   - Sorted apps:', sortedApps.length);
+      console.error('   - Table body:', tbody);
+    } else {
+      console.log('✅ SUCCESS: Table has', renderedRows, 'visible rows - SCROLL DOWN TO SEE THEM!');
+    }
+    
+    // Force table to be visible and scrollable
+    const tableContainer = tbody.closest('.table-responsive');
+    if (tableContainer) {
+      tableContainer.style.display = 'block';
+      tableContainer.style.visibility = 'visible';
+      console.log('✅ Table container is visible');
+    }
   }
 
   function getStatusBadgeClass(status) {
@@ -346,7 +382,7 @@
   // Apply filters
   function applyFilters() {
     try {
-      const apps = loadApplications();
+    const apps = loadApplications();
       const filterSubCountyEl = document.getElementById('filterSubCounty');
       const filterWardEl = document.getElementById('filterWard');
       const filterStatusEl = document.getElementById('filterStatus');
@@ -361,20 +397,20 @@
       const filterWard = filterWardEl.value;
       const filterStatus = filterStatusEl.value;
 
-      let filtered = apps;
+    let filtered = apps;
 
-      if (filterSubCounty) {
-        filtered = filtered.filter(a => {
+    if (filterSubCounty) {
+      filtered = filtered.filter(a => {
           const sc = a.subCounty || a.personalDetails?.subCounty;
           if (filterSubCounty === 'Other') {
             return sc && !Object.keys(GARISSA_WARDS).includes(sc);
           }
           return sc === filterSubCounty;
-        });
-      }
+      });
+    }
 
-      if (filterWard) {
-        filtered = filtered.filter(a => {
+    if (filterWard) {
+      filtered = filtered.filter(a => {
           const w = a.ward || a.personalDetails?.ward;
           if (filterWard === 'Other') {
             const sc = a.subCounty || a.personalDetails?.subCounty;
@@ -382,14 +418,14 @@
             return w && !wards.includes(w);
           }
           return w === filterWard;
-        });
-      }
+      });
+    }
 
-      if (filterStatus) {
-        filtered = filtered.filter(a => a.status === filterStatus);
-      }
+    if (filterStatus) {
+      filtered = filtered.filter(a => a.status === filterStatus);
+    }
 
-      renderTable(filtered);
+    renderTable(filtered);
       console.log('✅ Filters applied:', { subCounty: filterSubCounty, ward: filterWard, status: filterStatus, result: filtered.length });
     } catch (error) {
       console.error('Filter error:', error);
@@ -1177,136 +1213,168 @@
     }
   };
 
-    // DISABLED: Auto-refresh to prevent page freezing
-    // Manual refresh available via Refresh button
-    // Auto-refresh can be re-enabled if needed, but currently disabled for stability
+  // DISABLED: Auto-refresh to prevent page freezing
+  // Manual refresh available via Refresh button
+  // Auto-refresh can be re-enabled if needed, but currently disabled for stability
 
-    // Initialize budget
-    if (typeof initializeBudget !== 'undefined') {
-      initializeBudget();
-    }
-    
+  // Initialize budget
+  if (typeof initializeBudget !== 'undefined') {
+    initializeBudget();
+  }
+  
     // Initialize filters
-    populateFilters();
-    
-    // Load and display all applications on page load
+  populateFilters();
+  
+  // Load and display all applications on page load
     let allApps = loadApplications();
     console.log('📊 Initial applications loaded:', allApps.length);
     
-    // AUTO-LOAD DUMMY DATA if no applications exist (10 records with various statuses)
+    // FORCE LOAD DUMMY DATA - Always ensure data is visible
+    console.log('🔄 Checking applications... Current count:', allApps.length);
+    
+    // If no applications, FORCE load dummy data
     if (allApps.length === 0) {
-      console.log('🔄 No applications found. Auto-loading dummy data...');
+      console.log('🔄 NO APPLICATIONS FOUND - FORCING DUMMY DATA LOAD...');
       
-      // Load immediately (no delay)
       try {
+        // Method 1: Try initializeDummyData
         if (typeof initializeDummyData === 'function') {
+          console.log('✅ Using initializeDummyData...');
           const loaded = initializeDummyData();
-          console.log('Dummy data initialization result:', loaded);
-          
           if (loaded) {
-            // Force reload applications immediately
             allApps = loadApplications();
-            console.log('✅ Dummy data loaded:', allApps.length, 'applications');
-            
-            if (allApps.length > 0) {
-              console.log('Sample apps:', allApps.slice(0, 3).map(a => ({ 
-                id: a.appID, 
-                name: a.applicantName, 
-                status: a.status,
-                subCounty: a.subCounty,
-                ward: a.ward
-              })));
-              
-              // IMMEDIATELY refresh all displays
-              updateMetrics();
-              updateBudgetDisplay();
-              renderTable(allApps);
-              applyFilters();
-              
-              // Update session storage
-              sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
-              
-              // Show notification
-              const notification = document.createElement('div');
-              notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
-              notification.style.zIndex = '9999';
-              notification.style.minWidth = '500px';
-              notification.innerHTML = `
-                <strong>✅ Demo Data Auto-Loaded!</strong><br>
-                <div class="mt-2">
-                  📊 10 sample applications created:<br>
-                  &nbsp;&nbsp;• 3 Awarded applications<br>
-                  &nbsp;&nbsp;• 3 Pending Review applications<br>
-                  &nbsp;&nbsp;• 2 Rejected applications<br>
-                  &nbsp;&nbsp;• 2 Pending Submission applications<br>
-                  <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (with 3 awards totaling KSH 530,000)</small>
-                  <small class="text-info d-block mt-1">✅ All records visible in dashboard and table</small>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-              `;
-              document.body.appendChild(notification);
-              setTimeout(() => {
-                if (notification.parentNode) {
-                  notification.remove();
-                }
-              }, 10000);
-            } else {
-              console.error('❌ Dummy data initialized but no applications loaded!');
-            }
-          }
-        } else {
-          console.error('❌ initializeDummyData function not found!');
-          // Try to generate directly
-          if (typeof generateDummyApplications === 'function') {
-            console.log('🔄 Trying direct generation...');
-            const dummyApps = generateDummyApplications();
-            localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
-            localStorage.setItem('mbms_application_counter', '10');
-            allApps = loadApplications();
-            if (allApps.length > 0) {
-              updateMetrics();
-              updateBudgetDisplay();
-              renderTable(allApps);
-              applyFilters();
-            }
+            console.log('✅ Method 1 success:', allApps.length, 'applications');
           }
         }
+        
+        // Method 2: Direct generation if Method 1 didn't work
+        if (allApps.length === 0 && typeof generateDummyApplications === 'function') {
+          console.log('🔄 Method 1 failed, trying direct generation...');
+          const dummyApps = generateDummyApplications();
+          console.log('Generated', dummyApps.length, 'dummy applications');
+          
+          if (dummyApps && dummyApps.length > 0) {
+            localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
+            localStorage.setItem('mbms_application_counter', '10');
+            localStorage.setItem('mbms_last_serial', '10');
+            
+            // Initialize budget
+            if (typeof initializeBudget !== 'undefined') {
+              initializeBudget();
+            }
+            if (typeof syncBudgetWithAwards !== 'undefined') {
+              syncBudgetWithAwards();
+            }
+            
+            allApps = loadApplications();
+            console.log('✅ Method 2 success:', allApps.length, 'applications');
+          }
+        }
+        
+        // Verify data was loaded
+        if (allApps.length > 0) {
+          console.log('✅ DUMMY DATA LOADED SUCCESSFULLY:', allApps.length, 'applications');
+          console.log('Sample data:', allApps.slice(0, 3).map(a => ({
+            id: a.appID,
+            name: a.applicantName || 'N/A',
+            status: a.status,
+            subCounty: a.subCounty || a.personalDetails?.subCounty || 'N/A',
+            ward: a.ward || a.personalDetails?.ward || 'N/A'
+          })));
+          
+          // FORCE UPDATE ALL DISPLAYS IMMEDIATELY
+  updateMetrics();
+          updateBudgetDisplay();
+  renderTable(allApps);
+          applyFilters();
+          
+          sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
+          
+          // Show success notification
+          const notification = document.createElement('div');
+          notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+          notification.style.zIndex = '9999';
+          notification.style.minWidth = '500px';
+          notification.innerHTML = `
+            <strong>✅ Demo Data Auto-Loaded!</strong><br>
+            <div class="mt-2">
+              📊 <strong>10 sample applications</strong> created and visible in table:<br>
+              &nbsp;&nbsp;• 3 Awarded applications<br>
+              &nbsp;&nbsp;• 3 Pending Review applications<br>
+              &nbsp;&nbsp;• 2 Rejected applications<br>
+              &nbsp;&nbsp;• 2 Pending Submission applications<br>
+              <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (with 3 awards totaling KSH 530,000)</small>
+              <small class="text-success d-block mt-1"><strong>✅ Scroll down to see all records in the table!</strong></small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.remove();
+            }
+          }, 8000);
+        } else {
+          console.error('❌ CRITICAL: Failed to load dummy data!');
+          alert('⚠️ Failed to load dummy data. Please click "Load Demo Data" button manually.');
+        }
       } catch (error) {
-        console.error('Error auto-loading dummy data:', error);
-        alert('Error loading dummy data: ' + error.message);
+        console.error('❌ Error loading dummy data:', error);
+        alert('Error loading dummy data: ' + error.message + '\n\nPlease click "Load Demo Data" button manually.');
       }
     } else {
-      console.log('✅ Applications found:', allApps.length);
+      console.log('✅ Applications already exist:', allApps.length);
       console.log('Sample:', allApps.slice(0, 2).map(a => ({ id: a.appID, name: a.applicantName, status: a.status })));
     }
     
-    // Force multiple refreshes to ensure display (even if data exists)
+    // FORCE MULTIPLE REFRESHES TO ENSURE DATA IS VISIBLE
+    // Refresh 1: Immediate
     setTimeout(() => {
       const verifyApps = loadApplications();
+      console.log('🔄 Refresh 1 (500ms):', verifyApps.length, 'applications');
       if (verifyApps.length > 0) {
         updateMetrics();
         updateBudgetDisplay();
         renderTable(verifyApps);
         applyFilters();
-        console.log('✅ Display refreshed with', verifyApps.length, 'applications');
+        console.log('✅ Refresh 1 completed - Table should show', verifyApps.length, 'rows');
+      } else {
+        console.warn('⚠️ Refresh 1: No applications found!');
       }
     }, 500);
     
+    // Refresh 2: After 1 second
     setTimeout(() => {
       const verifyApps = loadApplications();
+      console.log('🔄 Refresh 2 (1000ms):', verifyApps.length, 'applications');
       if (verifyApps.length > 0) {
         updateMetrics();
         updateBudgetDisplay();
         renderTable(verifyApps);
         applyFilters();
-        console.log('✅ Second refresh completed');
+        console.log('✅ Refresh 2 completed - Table should show', verifyApps.length, 'rows');
+      }
+    }, 1000);
+    
+    // Refresh 3: After 1.5 seconds
+    setTimeout(() => {
+      const verifyApps = loadApplications();
+      console.log('🔄 Refresh 3 (1500ms):', verifyApps.length, 'applications');
+      if (verifyApps.length > 0) {
+        updateMetrics();
+        updateBudgetDisplay();
+        renderTable(verifyApps);
+        applyFilters();
+        console.log('✅ Refresh 3 completed - Table should show', verifyApps.length, 'rows');
       }
     }, 1500);
     
-    // ALWAYS update and render - CRITICAL: This must happen
+    // ALWAYS update and render - CRITICAL: This must happen IMMEDIATELY
+    console.log('🔄 FORCING IMMEDIATE RENDER with', allApps.length, 'applications');
     updateMetrics();
     updateBudgetDisplay();
     renderTable(allApps); // FORCE render table immediately
+    console.log('✅ Immediate render completed');
     
     // Store initial count for comparison
     sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
