@@ -740,6 +740,41 @@ function downloadPDFFromModal(blobUrl, filename) {
  * Get jsPDF constructor - handles all loading scenarios
  */
 function getJSPDFConstructor() {
+  // Try multiple ways to get jsPDF constructor
+  if (typeof window.jspdf !== 'undefined') {
+    if (window.jspdf.jsPDF && typeof window.jspdf.jsPDF === 'function') {
+      return window.jspdf.jsPDF;
+    }
+    if (window.jspdf.default && typeof window.jspdf.default === 'function') {
+      return window.jspdf.default;
+    }
+  }
+  
+  if (typeof window.jsPDF !== 'undefined') {
+    if (window.jsPDF.jsPDF && typeof window.jsPDF.jsPDF === 'function') {
+      return window.jsPDF.jsPDF;
+    }
+    if (typeof window.jsPDF === 'function') {
+      return window.jsPDF;
+    }
+  }
+  
+  if (typeof jspdf !== 'undefined') {
+    if (jspdf.jsPDF && typeof jspdf.jsPDF === 'function') {
+      return jspdf.jsPDF;
+    }
+    if (typeof jspdf === 'function') {
+      return jspdf;
+    }
+  }
+  
+  // Last resort: try global jsPDF
+  if (typeof jsPDF === 'function') {
+    return jsPDF;
+  }
+  
+  throw new Error('jsPDF constructor not found. Please ensure jsPDF library is loaded.');
+}
   // Try multiple ways jsPDF might be loaded
   if (typeof window.jspdf !== 'undefined' && typeof window.jspdf.jsPDF === 'function') {
     return window.jspdf.jsPDF;
