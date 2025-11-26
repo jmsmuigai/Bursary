@@ -1377,6 +1377,26 @@
           if (result && result.filename) {
             filename = result.filename;
             console.log('✅ Award letter auto-downloaded:', filename);
+            
+            // Show success message
+            loadingAlert.remove();
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            successMsg.style.zIndex = '9999';
+            successMsg.style.minWidth = '300px';
+            successMsg.innerHTML = `
+              <strong>✅ Document Downloaded!</strong><br>
+              <small>File: ${filename}</small><br>
+              <small class="text-muted">Saved to your default downloads folder</small>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            setTimeout(() => {
+              if (successMsg.parentNode) {
+                successMsg.remove();
+              }
+            }, 5000);
+            return;
           } else {
             // Fallback filename
             const applicantName = app.applicantName || 
@@ -1402,6 +1422,26 @@
           if (result && result.filename) {
             filename = result.filename;
             console.log('✅ Rejection letter auto-downloaded:', filename);
+            
+            // Show success message
+            loadingAlert.remove();
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            successMsg.style.zIndex = '9999';
+            successMsg.style.minWidth = '300px';
+            successMsg.innerHTML = `
+              <strong>✅ Document Downloaded!</strong><br>
+              <small>File: ${filename}</small><br>
+              <small class="text-muted">Saved to your default downloads folder</small>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            setTimeout(() => {
+              if (successMsg.parentNode) {
+                successMsg.remove();
+              }
+            }, 5000);
+            return;
           } else {
             // Fallback filename
             const applicantName = app.applicantName || 
@@ -1426,6 +1466,26 @@
           if (result && result.filename) {
             filename = result.filename;
             console.log('✅ Status letter auto-downloaded:', filename);
+            
+            // Show success message
+            loadingAlert.remove();
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            successMsg.style.zIndex = '9999';
+            successMsg.style.minWidth = '300px';
+            successMsg.innerHTML = `
+              <strong>✅ Document Downloaded!</strong><br>
+              <small>File: ${filename}</small><br>
+              <small class="text-muted">Saved to your default downloads folder</small>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            setTimeout(() => {
+              if (successMsg.parentNode) {
+                successMsg.remove();
+              }
+            }, 5000);
+            return;
           } else {
             // Fallback filename
             const applicantName = app.applicantName || 
