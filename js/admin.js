@@ -299,6 +299,7 @@
 
   // Populate filters with all sub-counties and wards - ENHANCED & RECONSTRUCTED
   function populateFilters() {
+    console.log('🔧 Populating filter dropdowns...');
     const scSel = document.getElementById('filterSubCounty');
     const wardSel = document.getElementById('filterWard');
     
@@ -308,23 +309,57 @@
       return;
     }
     
-    // RECONSTRUCT: Populate sub-counties - ALL Garissa sub-counties with "Other" option
+    // Load applications to get actual data
+    const apps = loadApplications();
+    console.log('📊 Loaded', apps.length, 'applications for filter population');
+    
+    // Collect unique sub-counties from applications
+    const subCountiesFromApps = new Set();
+    apps.forEach(app => {
+      const sc = app.personalDetails?.subCounty || app.subCounty;
+      if (sc && sc !== 'N/A') {
+        subCountiesFromApps.add(sc);
+      }
+    });
+    
+    // RECONSTRUCT: Populate sub-counties - Start with "All" option
     scSel.innerHTML = '<option value="">All Sub-Counties</option>';
     
+    // Add sub-counties from GARISSA_WARDS (standard list)
     if (typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS) {
-      const subCounties = Object.keys(GARISSA_WARDS).sort();
-      subCounties.forEach(sc => {
+      const standardSubCounties = Object.keys(GARISSA_WARDS).sort();
+      standardSubCounties.forEach(sc => {
         const option = document.createElement('option');
         option.value = sc;
         option.textContent = sc;
+        // Mark if this sub-county has applications
+        const hasApps = subCountiesFromApps.has(sc);
+        if (hasApps) {
+          option.textContent += ` (${apps.filter(a => (a.personalDetails?.subCounty || a.subCounty) === sc).length})`;
+        }
         scSel.appendChild(option);
       });
-      console.log('✅ Sub-county filter populated with', subCounties.length, 'sub-counties:', subCounties.join(', '));
+      console.log('✅ Sub-county filter populated with', standardSubCounties.length, 'standard sub-counties');
     } else {
       console.error('❌ GARISSA_WARDS not defined - cannot populate sub-counties');
     }
     
-    // Always add "Other" option
+    // Add any "Other" sub-counties from applications that aren't in the standard list
+    subCountiesFromApps.forEach(sc => {
+      if (typeof GARISSA_WARDS !== 'undefined' && !Object.keys(GARISSA_WARDS).includes(sc)) {
+        // Check if already added
+        const exists = Array.from(scSel.options).some(opt => opt.value === sc);
+        if (!exists) {
+          const option = document.createElement('option');
+          option.value = sc;
+          option.textContent = `${sc} (${apps.filter(a => (a.personalDetails?.subCounty || a.subCounty) === sc).length})`;
+          scSel.appendChild(option);
+          console.log('✅ Added "Other" sub-county from applications:', sc);
+        }
+      }
+    });
+    
+    // Always add "Other" option at the end
     const otherOption = document.createElement('option');
     otherOption.value = 'Other';
     otherOption.textContent = 'Other (Specify)';
@@ -332,28 +367,70 @@
     
     console.log('✅ Sub-county filter fully populated with', scSel.options.length, 'options');
 
-    // RECONSTRUCT: Function to populate wards based on selected sub-county - ALL wards
+    // ENHANCED: Function to populate wards based on selected sub-county - includes actual application data
     function populateFilterWards() {
       const currentWardSel = document.getElementById('filterWard');
       const currentScSel = document.getElementById('filterSubCounty');
       if (!currentWardSel || !currentScSel) {
-        console.error('Filter elements not found in populateFilterWards');
+        console.error('❌ Filter elements not found in populateFilterWards');
         return;
       }
+      
+      // Load applications to get actual ward data
+      const apps = loadApplications();
       
       currentWardSel.innerHTML = '<option value="">All Wards</option>';
       const selectedSubCounty = currentScSel.value;
       
+      // Collect unique wards from applications
+      const wardsFromApps = new Set();
+      apps.forEach(app => {
+        const sc = app.personalDetails?.subCounty || app.subCounty;
+        const w = app.personalDetails?.ward || app.ward;
+        if (w && w !== 'N/A') {
+          // If sub-county is selected, only include wards from that sub-county
+          if (selectedSubCounty && selectedSubCounty !== 'Other' && selectedSubCounty !== '') {
+            if (sc === selectedSubCounty) {
+              wardsFromApps.add(w);
+            }
+          } else {
+            // If no sub-county selected, include all wards
+            wardsFromApps.add(w);
+          }
+        }
+      });
+      
       if (selectedSubCounty && selectedSubCounty !== 'Other' && typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS[selectedSubCounty]) {
-        // Show wards for selected sub-county
-        const wards = [...GARISSA_WARDS[selectedSubCounty]].sort();
-        wards.forEach(w => {
+        // Show wards for selected sub-county (from standard list)
+        const standardWards = [...GARISSA_WARDS[selectedSubCounty]].sort();
+        standardWards.forEach(w => {
           const option = document.createElement('option');
           option.value = w;
-          option.textContent = w;
+          const appCount = apps.filter(a => {
+            const appSc = a.personalDetails?.subCounty || a.subCounty;
+            const appW = a.personalDetails?.ward || a.ward;
+            return appSc === selectedSubCounty && appW === w;
+          }).length;
+          option.textContent = appCount > 0 ? `${w} (${appCount})` : w;
           currentWardSel.appendChild(option);
         });
-        console.log('✅ Ward filter populated with', wards.length, 'wards for', selectedSubCounty, ':', wards.join(', '));
+        console.log('✅ Ward filter populated with', standardWards.length, 'standard wards for', selectedSubCounty);
+        
+        // Add any "Other" wards from applications that aren't in the standard list
+        wardsFromApps.forEach(w => {
+          if (!standardWards.includes(w)) {
+            const option = document.createElement('option');
+            option.value = w;
+            const appCount = apps.filter(a => {
+              const appSc = a.personalDetails?.subCounty || a.subCounty;
+              const appW = a.personalDetails?.ward || a.ward;
+              return appSc === selectedSubCounty && appW === w;
+            }).length;
+            option.textContent = `${w} (${appCount})`;
+            currentWardSel.appendChild(option);
+            console.log('✅ Added "Other" ward from applications:', w);
+          }
+        });
       } else if (selectedSubCounty === '' || !selectedSubCounty) {
         // If no sub-county selected, show ALL wards from ALL sub-counties
         if (typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS) {
@@ -368,13 +445,29 @@
           allWards.sort().forEach(w => {
             const option = document.createElement('option');
             option.value = w;
-            option.textContent = w;
+            const appCount = apps.filter(a => (a.personalDetails?.ward || a.ward) === w).length;
+            option.textContent = appCount > 0 ? `${w} (${appCount})` : w;
             currentWardSel.appendChild(option);
           });
-          console.log('✅ Ward filter populated with ALL', allWards.length, 'wards from all sub-counties');
+          console.log('✅ Ward filter populated with ALL', allWards.length, 'standard wards from all sub-counties');
         } else {
           console.warn('⚠️ GARISSA_WARDS not available for ward population');
         }
+        
+        // Add any "Other" wards from applications
+        wardsFromApps.forEach(w => {
+          if (typeof GARISSA_WARDS !== 'undefined') {
+            const isStandard = Object.values(GARISSA_WARDS).some(wardArray => wardArray.includes(w));
+            if (!isStandard) {
+              const option = document.createElement('option');
+              option.value = w;
+              const appCount = apps.filter(a => (a.personalDetails?.ward || a.ward) === w).length;
+              option.textContent = `${w} (${appCount})`;
+              currentWardSel.appendChild(option);
+              console.log('✅ Added "Other" ward from applications:', w);
+            }
+          }
+        });
       }
       
       // Always add "Other" option for typing custom ward
@@ -633,58 +726,109 @@
     return classes[status] || 'bg-secondary';
   }
 
-  // Apply filters
+  // ENHANCED: Apply filters with better data matching and logging
   window.applyFilters = function() {
     try {
-    const apps = loadApplications();
+      console.log('🔍 Applying filters...');
+      const apps = loadApplications();
+      console.log('📊 Total applications loaded:', apps.length);
+      
       const filterSubCountyEl = document.getElementById('filterSubCounty');
       const filterWardEl = document.getElementById('filterWard');
       const filterStatusEl = document.getElementById('filterStatus');
       
       if (!filterSubCountyEl || !filterWardEl || !filterStatusEl) {
-        console.error('Filter elements not found');
+        console.error('❌ Filter elements not found');
+        console.log('   - filterSubCounty:', filterSubCountyEl ? 'found' : 'NOT FOUND');
+        console.log('   - filterWard:', filterWardEl ? 'found' : 'NOT FOUND');
+        console.log('   - filterStatus:', filterStatusEl ? 'found' : 'NOT FOUND');
         renderTable(apps); // Show all if filters not available
         return;
       }
       
-      const filterSubCounty = filterSubCountyEl.value;
-      const filterWard = filterWardEl.value;
-      const filterStatus = filterStatusEl.value;
+      const filterSubCounty = filterSubCountyEl.value || '';
+      const filterWard = filterWardEl.value || '';
+      const filterStatus = filterStatusEl.value || '';
 
-    let filtered = apps;
+      console.log('🔍 Filter values:', {
+        subCounty: filterSubCounty || '(all)',
+        ward: filterWard || '(all)',
+        status: filterStatus || '(all)'
+      });
 
-    if (filterSubCounty) {
-      filtered = filtered.filter(a => {
-          const sc = a.subCounty || a.personalDetails?.subCounty;
+      let filtered = [...apps]; // Create a copy to avoid mutating original
+
+      // Filter by Sub-County
+      if (filterSubCounty) {
+        const beforeCount = filtered.length;
+        filtered = filtered.filter(a => {
+          // Try multiple sources for sub-county data
+          const sc = a.personalDetails?.subCounty || a.subCounty || '';
+          
           if (filterSubCounty === 'Other') {
-            return sc && !Object.keys(GARISSA_WARDS).includes(sc);
+            // Match if sub-county is not in the standard list
+            const isOther = sc && sc !== 'N/A' && typeof GARISSA_WARDS !== 'undefined' && !Object.keys(GARISSA_WARDS).includes(sc);
+            return isOther;
           }
-          return sc === filterSubCounty;
-      });
-    }
+          // Exact match (case-insensitive)
+          return sc && sc.toLowerCase() === filterSubCounty.toLowerCase();
+        });
+        console.log(`   📍 Sub-county filter: ${beforeCount} → ${filtered.length} applications`);
+      }
 
-    if (filterWard) {
-      filtered = filtered.filter(a => {
-          const w = a.ward || a.personalDetails?.ward;
+      // Filter by Ward
+      if (filterWard) {
+        const beforeCount = filtered.length;
+        filtered = filtered.filter(a => {
+          // Try multiple sources for ward data
+          const w = a.personalDetails?.ward || a.ward || '';
+          
           if (filterWard === 'Other') {
-            const sc = a.subCounty || a.personalDetails?.subCounty;
-            const wards = GARISSA_WARDS[sc] || [];
-            return w && !wards.includes(w);
+            // Match if ward is not in the standard list for its sub-county
+            const sc = a.personalDetails?.subCounty || a.subCounty || '';
+            const wards = (typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS[sc]) ? GARISSA_WARDS[sc] : [];
+            const isOther = w && w !== 'N/A' && !wards.includes(w);
+            return isOther;
           }
-          return w === filterWard;
+          // Exact match (case-insensitive)
+          return w && w.toLowerCase() === filterWard.toLowerCase();
+        });
+        console.log(`   📍 Ward filter: ${beforeCount} → ${filtered.length} applications`);
+      }
+
+      // Filter by Status
+      if (filterStatus) {
+        const beforeCount = filtered.length;
+        filtered = filtered.filter(a => {
+          const status = a.status || 'Pending Submission';
+          // Exact match (case-insensitive)
+          return status.toLowerCase() === filterStatus.toLowerCase();
+        });
+        console.log(`   📊 Status filter: ${beforeCount} → ${filtered.length} applications`);
+      }
+
+      // Render filtered results
+      renderTable(filtered);
+      
+      console.log('✅ Filters applied successfully:', {
+        total: apps.length,
+        filtered: filtered.length,
+        subCounty: filterSubCounty || '(all)',
+        ward: filterWard || '(all)',
+        status: filterStatus || '(all)'
       });
-    }
-
-    if (filterStatus) {
-      filtered = filtered.filter(a => a.status === filterStatus);
-    }
-
-    renderTable(filtered);
-      console.log('✅ Filters applied:', { subCounty: filterSubCounty, ward: filterWard, status: filterStatus, result: filtered.length });
+      
+      // Show user-friendly message if no results
+      if (filtered.length === 0 && apps.length > 0) {
+        console.warn('⚠️ No applications match the selected filters');
+      }
+      
     } catch (error) {
-      console.error('Filter error:', error);
+      console.error('❌ Filter error:', error);
+      console.error('   Stack:', error.stack);
       const apps = loadApplications();
       renderTable(apps);
+      alert('Error applying filters. Showing all applications.\n\nError: ' + error.message);
     }
   }
 
@@ -947,9 +1091,9 @@
       }
       
       // Close the view modal first
-      const viewModal = document.querySelector('.modal');
-      if (viewModal) {
-        bootstrap.Modal.getInstance(viewModal).hide();
+      const awardViewModal = document.querySelector('.modal');
+      if (awardViewModal) {
+        bootstrap.Modal.getInstance(awardViewModal).hide();
       }
       
       // Notify admin via email
@@ -1087,9 +1231,9 @@
       }
       
       // Close modal
-      const viewModal = document.querySelector('.modal');
-      if (viewModal) {
-        bootstrap.Modal.getInstance(viewModal).hide();
+      const rejectViewModal = document.querySelector('.modal');
+      if (rejectViewModal) {
+        bootstrap.Modal.getInstance(rejectViewModal).hide();
       }
       
       alert('✅ Application rejected successfully!\n\n📄 Rejection letter has been automatically downloaded to your default downloads folder.\n📧 Copy sent to fundadmin@garissa.go.ke');
@@ -1120,9 +1264,9 @@
       
       alert('✅ Application rejected successfully!\n\n💰 Budget remains unchanged (Ksh ' + remainingBalance.toLocaleString() + ' available)\n📧 Email notification sent to fundadmin@garissa.go.ke\n📥 Rejection letter has been automatically downloaded!');
       
-      const viewModal = document.querySelector('.modal');
-      if (viewModal) {
-        bootstrap.Modal.getInstance(viewModal).hide();
+      const rejectViewModal2 = document.querySelector('.modal');
+      if (rejectViewModal2) {
+        bootstrap.Modal.getInstance(rejectViewModal2).hide();
       }
     }
   };
@@ -2179,6 +2323,18 @@
     // Initialize filters
   populateFilters();
   
+  // Setup filter event listeners after a short delay to ensure DOM is ready
+  // Note: setupFilterEventListeners is defined later in the file, so we call it via setTimeout
+  setTimeout(() => {
+    if (typeof window.setupFilterEventListeners === 'function') {
+      window.setupFilterEventListeners();
+    } else if (typeof setupFilterEventListeners === 'function') {
+      setupFilterEventListeners();
+    } else {
+      console.warn('setupFilterEventListeners not yet available, will be called later');
+    }
+  }, 800);
+  
   // CRITICAL: FORCE LOAD AND DISPLAY DUMMY DATA IMMEDIATELY
   console.log('🔄 FORCING DUMMY DATA LOAD AND DISPLAY ON PAGE LOAD...');
   
@@ -2577,8 +2733,6 @@
         sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
       }
     }, 5000);
-  }
-  
   } // End of initAdminDashboard function
   
   // Force reload dummy data (for testing)
@@ -2971,39 +3125,165 @@
     }, 100);
   }
 
-  // Filter event listeners with error handling
-  try {
+  // ENHANCED: Filter event listeners with proper initialization and auto-apply
+  window.setupFilterEventListeners = function() {
+    console.log('🔧 Setting up filter event listeners...');
+    
+    // Apply Filters Button - Use event delegation for reliability
     const applyFiltersBtn = document.getElementById('applyFilters');
     if (applyFiltersBtn) {
-      applyFiltersBtn.addEventListener('click', function(e) {
+      // Remove any existing listeners
+      const newBtn = applyFiltersBtn.cloneNode(true);
+      applyFiltersBtn.parentNode.replaceChild(newBtn, applyFiltersBtn);
+      
+      // Attach fresh listener
+      newBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        console.log('🔍 Apply Filters button clicked');
         try {
-          applyFilters();
+          if (typeof window.applyFilters === 'function') {
+            window.applyFilters();
+          } else if (typeof applyFilters === 'function') {
+            applyFilters();
+          } else {
+            console.error('applyFilters function not found');
+            alert('Filter function not available. Please refresh the page.');
+          }
         } catch (error) {
           console.error('Filter error:', error);
-          alert('Error applying filters. Please try again.');
+          alert('Error applying filters. Please try again.\n\nError: ' + error.message);
         }
       });
+      console.log('✅ Apply Filters button listener attached');
+    } else {
+      console.error('❌ Apply Filters button not found');
     }
     
+    // Sub-County Filter - Auto-populate wards and auto-apply
     const filterSubCounty = document.getElementById('filterSubCounty');
     if (filterSubCounty) {
-      filterSubCounty.addEventListener('change', function() {
+      // Remove any existing listeners
+      const newSubCounty = filterSubCounty.cloneNode(true);
+      filterSubCounty.parentNode.replaceChild(newSubCounty, filterSubCounty);
+      
+      newSubCounty.addEventListener('change', function() {
+        console.log('📍 Sub-county changed to:', this.value);
         try {
+          // Populate wards for selected sub-county
           const wardSel = document.getElementById('filterWard');
           if (wardSel) {
             wardSel.innerHTML = '<option value="">All Wards</option>';
-            const wards = GARISSA_WARDS[this.value] || [];
-            wards.forEach(w => wardSel.add(new Option(w, w)));
-            wardSel.add(new Option('Other', 'Other'));
+            
+            if (this.value && this.value !== 'Other' && typeof GARISSA_WARDS !== 'undefined' && GARISSA_WARDS[this.value]) {
+              const wards = [...GARISSA_WARDS[this.value]].sort();
+              wards.forEach(w => {
+                const option = document.createElement('option');
+                option.value = w;
+                option.textContent = w;
+                wardSel.appendChild(option);
+              });
+              console.log('✅ Populated', wards.length, 'wards for', this.value);
+            } else if (this.value === '') {
+              // Show all wards from all sub-counties
+              if (typeof GARISSA_WARDS !== 'undefined') {
+                const allWards = [];
+                Object.values(GARISSA_WARDS).forEach(wardArray => {
+                  wardArray.forEach(ward => {
+                    if (!allWards.includes(ward)) {
+                      allWards.push(ward);
+                    }
+                  });
+                });
+                allWards.sort().forEach(w => {
+                  const option = document.createElement('option');
+                  option.value = w;
+                  option.textContent = w;
+                  wardSel.appendChild(option);
+                });
+                console.log('✅ Populated ALL', allWards.length, 'wards');
+              }
+            }
+            
+            // Always add "Other" option
+            const otherOption = document.createElement('option');
+            otherOption.value = 'Other';
+            otherOption.textContent = 'Other (Specify)';
+            wardSel.appendChild(otherOption);
+            
+            wardSel.disabled = false;
           }
+          
+          // Auto-apply filters after a short delay
+          setTimeout(() => {
+            if (typeof window.applyFilters === 'function') {
+              window.applyFilters();
+            } else if (typeof applyFilters === 'function') {
+              applyFilters();
+            }
+          }, 100);
         } catch (error) {
           console.error('Filter ward update error:', error);
         }
       });
+      console.log('✅ Sub-county filter listener attached');
+    } else {
+      console.error('❌ Sub-county filter not found');
     }
-  } catch (error) {
-    console.error('Event listener setup error:', error);
-  }
+    
+    // Ward Filter - Auto-apply on change
+    const filterWard = document.getElementById('filterWard');
+    if (filterWard) {
+      // Remove any existing listeners
+      const newWard = filterWard.cloneNode(true);
+      filterWard.parentNode.replaceChild(newWard, filterWard);
+      
+      newWard.addEventListener('change', function() {
+        console.log('📍 Ward changed to:', this.value);
+        // Auto-apply filters after a short delay
+        setTimeout(() => {
+          if (typeof window.applyFilters === 'function') {
+            window.applyFilters();
+          } else if (typeof applyFilters === 'function') {
+            applyFilters();
+          }
+        }, 100);
+      });
+      console.log('✅ Ward filter listener attached');
+    } else {
+      console.error('❌ Ward filter not found');
+    }
+    
+    // Status Filter - Auto-apply on change
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterStatus) {
+      // Remove any existing listeners
+      const newStatus = filterStatus.cloneNode(true);
+      filterStatus.parentNode.replaceChild(newStatus, filterStatus);
+      
+      newStatus.addEventListener('change', function() {
+        console.log('📍 Status changed to:', this.value);
+        // Auto-apply filters after a short delay
+        setTimeout(() => {
+          if (typeof window.applyFilters === 'function') {
+            window.applyFilters();
+          } else if (typeof applyFilters === 'function') {
+            applyFilters();
+          }
+        }, 100);
+      });
+      console.log('✅ Status filter listener attached');
+    } else {
+      console.error('❌ Status filter not found');
+    }
+    
+    console.log('✅ All filter event listeners set up successfully');
+  };
+  
+  // Call setupFilterEventListeners after populateFilters (backup call)
+  setTimeout(() => {
+    if (typeof window.setupFilterEventListeners === 'function') {
+      window.setupFilterEventListeners();
+    }
+  }, 1000);
 })();

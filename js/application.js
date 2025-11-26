@@ -507,10 +507,10 @@
       ward: user.ward || 'N/A',
       village: user.village || '',
       // CRITICAL: Add ID number and birth certificate for duplicate detection
-      idNumber: idNumber,
-      nemisId: idNumber, // For compatibility
-      birthCertificate: birthCertificate,
-      dateOfBirth: dateOfBirth,
+      idNumber: user.nemisId || user.idNumber || '',
+      nemisId: user.nemisId || user.idNumber || '', // For compatibility
+      birthCertificate: user.birthCertificate || '',
+      dateOfBirth: user.dateOfBirth || '',
       isFinalSubmission: true, // Final submission - cannot be edited
       personalDetails: {
         firstNames: allFormData['firstNames'] || document.getElementById('firstNames')?.value || '',
@@ -566,17 +566,25 @@
     };
 
     // Save application to UNIFIED DATABASE (Firebase or localStorage)
-    if (typeof window.saveApplication !== 'undefined') {
-      // Use unified database access layer (async)
-      try {
+    try {
+      if (typeof window.saveApplication !== 'undefined') {
+        // Use unified database access layer (async)
         await window.saveApplication(applicationData);
         console.log('✅ Application submitted and saved to UNIFIED DATABASE:', appID);
-    } else {
-      // Fallback to direct localStorage access
+      } else {
+        // Fallback to direct localStorage access
+        const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+        applications.push(applicationData);
+        localStorage.setItem('mbms_applications', JSON.stringify(applications));
+        console.log('✅ Application submitted and saved (fallback):', appID);
+      }
+    } catch (error) {
+      console.error('❌ Error saving application:', error);
+      // Fallback to localStorage
       const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
       applications.push(applicationData);
       localStorage.setItem('mbms_applications', JSON.stringify(applications));
-      console.log('✅ Application submitted and saved (fallback):', appID);
+      console.log('✅ Application saved via fallback:', appID);
     }
     
     // Update counter using unified database
@@ -606,7 +614,7 @@
     localStorage.setItem('mbms_application_counter', counter.toString());
     
     console.log('✅ Application submitted:', appID);
-    console.log('📊 Total applications now:', applications.length);
+    console.log('📊 Total applications now:', finalApps.length);
     
     // CRITICAL: Trigger multiple events to ensure admin dashboard updates
     // Event 1: Custom event for admin dashboard
