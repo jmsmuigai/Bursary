@@ -83,11 +83,41 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
         return [];
       }
       
-      console.log('✅ Loaded', apps.length, 'applications from database (localStorage: mbms_applications)');
+      // CRITICAL: Filter out ALL test/dummy data before processing
+      const realApps = apps.filter(app => {
+        if (!app || !app.applicantEmail) return false;
+        
+        // Comprehensive test data detection
+        const isTest = 
+          app.applicantEmail.includes('example.com') ||
+          app.applicantEmail.includes('TEST_') ||
+          app.applicantEmail.includes('test@') ||
+          app.appID && (
+            app.appID.includes('TEST_') || 
+            app.appID.includes('Firebase Test') ||
+            app.appID.includes('DUMMY')
+          ) ||
+          app.applicantName && (
+            app.applicantName.includes('DUMMY') ||
+            app.applicantName.includes('Test User')
+          ) ||
+          app.status === 'Deleted' ||
+          app.status === 'Test';
+        
+        return !isTest;
+      });
+      
+      // Auto-save cleaned data if test data was found
+      if (realApps.length !== apps.length) {
+        console.log('🧹 Auto-clearing', apps.length - realApps.length, 'test/dummy records');
+        localStorage.setItem('mbms_applications', JSON.stringify(realApps));
+      }
+      
+      console.log('✅ Loaded', realApps.length, 'REAL applications from database (filtered from', apps.length, 'total)');
       console.log('📊 Database: localStorage (same as registration and application form)');
       
       // Ensure all applications have required fields for backward compatibility
-      return apps.map((app, index) => {
+      return realApps.map((app, index) => {
         // Ensure appID exists
         if (!app.appID) {
           app.appID = `GSA/${new Date().getFullYear()}/${(index + 1).toString().padStart(4, '0')}`;
@@ -2512,20 +2542,82 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
   // SYSTEM PREPARATION: Filter out test data and show blank list if no real applications
   console.log('🔄 PREPARING SYSTEM FOR PRODUCTION...');
   
-  // Load existing applications
+  // CRITICAL: Auto-clear all test/dummy data first
+  try {
+    const allAppsRaw = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    const realAppsFiltered = allAppsRaw.filter(app => {
+      if (!app || !app.applicantEmail) return false;
+      
+      // Comprehensive test data detection
+      const isTest = 
+        app.applicantEmail.includes('example.com') ||
+        app.applicantEmail.includes('TEST_') ||
+        app.applicantEmail.includes('test@') ||
+        app.appID && (
+          app.appID.includes('TEST_') || 
+          app.appID.includes('Firebase Test') ||
+          app.appID.includes('DUMMY')
+        ) ||
+        app.applicantName && (
+          app.applicantName.includes('DUMMY') ||
+          app.applicantName.includes('Test User')
+        ) ||
+        app.status === 'Deleted' ||
+        app.status === 'Test';
+      
+      return !isTest;
+    });
+    
+    // Auto-save cleaned data
+    if (realAppsFiltered.length !== allAppsRaw.length) {
+      console.log('🧹 Auto-clearing', allAppsRaw.length - realAppsFiltered.length, 'test/dummy records');
+      localStorage.setItem('mbms_applications', JSON.stringify(realAppsFiltered));
+      
+      // Also clear from Firebase if available
+      if (typeof firebase !== 'undefined' && typeof firebase.firestore !== 'undefined') {
+        try {
+          const db = firebase.firestore();
+          allAppsRaw.forEach(async (app) => {
+            const isTest = 
+              app.applicantEmail && (
+                app.applicantEmail.includes('example.com') ||
+                app.applicantEmail.includes('TEST_') ||
+                app.applicantEmail.includes('test@')
+              ) ||
+              app.appID && (
+                app.appID.includes('TEST_') || 
+                app.appID.includes('DUMMY') ||
+                app.appID.includes('Firebase Test')
+              ) ||
+              app.applicantName && (
+                app.applicantName.includes('DUMMY') ||
+                app.applicantName.includes('Test')
+              ) ||
+              app.status === 'Deleted' ||
+              app.status === 'Test';
+            
+            if (isTest && app.id) {
+              try {
+                await db.collection('applicants').doc(app.id).delete();
+              } catch (e) {
+                // Ignore Firebase errors
+              }
+            }
+          });
+        } catch (e) {
+          console.warn('Firebase auto-clear error:', e);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Auto-clear error:', e);
+  }
+  
+  // Load existing applications (already filtered by loadApplications)
   let allApps = loadApplications();
+  const realApps = allApps; // loadApplications already filters
   
-  // Filter out test/dummy data
-  const realApps = allApps.filter(app => {
-    if (!app.applicantEmail) return false;
-    return !(
-      app.applicantEmail.includes('example.com') ||
-      app.applicantEmail.includes('TEST_') ||
-      app.appID && (app.appID.includes('TEST_') || app.appID.includes('Firebase Test'))
-    );
-  });
-  
-  console.log('📊 Applications loaded:', allApps.length, 'Total |', realApps.length, 'Real');
+  console.log('📊 Applications loaded:', realApps.length, 'Real applications');
   
   // If no real applications, show blank list with placeholder rows
   if (realApps.length === 0) {

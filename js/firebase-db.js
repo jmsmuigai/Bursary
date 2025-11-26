@@ -113,14 +113,46 @@
   };
   
   /**
-   * Get applications from localStorage (fallback)
+   * Get applications from localStorage (fallback) - ENHANCED: Filters out all test/dummy data
    */
   function getApplicationsFromLocalStorage() {
     try {
       const appsStr = localStorage.getItem('mbms_applications');
       if (!appsStr) return [];
       const apps = JSON.parse(appsStr);
-      return Array.isArray(apps) ? apps : [];
+      if (!Array.isArray(apps)) return [];
+      
+      // CRITICAL: Filter out ALL test/dummy data
+      const realApps = apps.filter(app => {
+        if (!app || !app.applicantEmail) return false;
+        
+        // Comprehensive test data detection
+        const isTest = 
+          app.applicantEmail.includes('example.com') ||
+          app.applicantEmail.includes('TEST_') ||
+          app.applicantEmail.includes('test@') ||
+          app.appID && (
+            app.appID.includes('TEST_') || 
+            app.appID.includes('Firebase Test') ||
+            app.appID.includes('DUMMY')
+          ) ||
+          app.applicantName && (
+            app.applicantName.includes('DUMMY') ||
+            app.applicantName.includes('Test User')
+          ) ||
+          app.status === 'Deleted' ||
+          app.status === 'Test';
+        
+        return !isTest;
+      });
+      
+      // Auto-save cleaned data if test data was found
+      if (realApps.length !== apps.length) {
+        console.log('🧹 Auto-clearing', apps.length - realApps.length, 'test/dummy records from localStorage');
+        localStorage.setItem('mbms_applications', JSON.stringify(realApps));
+      }
+      
+      return realApps;
     } catch (error) {
       console.error('localStorage read error:', error);
       return [];
@@ -286,17 +318,39 @@
         console.log('📡 Setting up Firebase real-time listener...');
         return db.collection('applicants').onSnapshot((snapshot) => {
           const apps = [];
-          snapshot.forEach(doc => {
-            const data = doc.data();
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          
+          // Filter out test data before adding
+          const isTest = 
+            data.applicantEmail && (
+              data.applicantEmail.includes('example.com') ||
+              data.applicantEmail.includes('TEST_') ||
+              data.applicantEmail.includes('test@')
+            ) ||
+            data.appID && (
+              data.appID.includes('TEST_') || 
+              data.appID.includes('DUMMY') ||
+              data.appID.includes('Firebase Test')
+            ) ||
+            data.applicantName && (
+              data.applicantName.includes('DUMMY') ||
+              data.applicantName.includes('Test User')
+            ) ||
+            data.status === 'Deleted' ||
+            data.status === 'Test';
+          
+          if (!isTest) {
             apps.push({ 
               id: doc.id, 
               ...data,
               appID: data.appID || doc.id
             });
-          });
-          
-          // Sync to localStorage
-          localStorage.setItem('mbms_applications', JSON.stringify(apps));
+          }
+        });
+        
+        // Sync to localStorage (only real apps)
+        localStorage.setItem('mbms_applications', JSON.stringify(apps));
           
           // Call callback
           if (typeof callback === 'function') {
