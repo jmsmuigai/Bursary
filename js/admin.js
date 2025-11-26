@@ -1,4 +1,4 @@
-// Enhanced Admin Dashboard with Full Functionality
+ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS ON SUBMIT // Enhanced Admin Dashboard with Full Functionality
 (function() {
   // Prevent multiple initializations
   if (window.adminDashboardInitialized) {
@@ -632,9 +632,7 @@
           <button class="btn btn-sm btn-info me-1 action-btn" data-action="view" data-appid="${safeAppID}" title="View Application Details" style="min-width: 70px; min-height: 38px; cursor: pointer; pointer-events: auto;">
             <i class="bi bi-eye"></i> View
           </button>
-          ${!app.isFinalSubmission ? `<button class="btn btn-sm btn-warning me-1 action-btn" data-action="edit" data-appid="${safeAppID}" title="Edit Application" style="min-width: 70px; min-height: 38px; cursor: pointer; pointer-events: auto;">
-            <i class="bi bi-pencil"></i> Edit
-          </button>` : ''}
+          <!-- Edit button removed - admin cannot edit applications -->
           <button class="btn btn-sm btn-success action-btn" data-action="download" data-appid="${safeAppID}" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter" style="min-width: 90px; min-height: 38px; cursor: pointer; pointer-events: auto;">
             <i class="bi bi-download"></i> Download
           </button>
@@ -668,12 +666,6 @@
           window.viewApplication(appID);
         } else {
           alert('View function not available. Please refresh the page.');
-        }
-      } else if (action === 'edit') {
-        if (typeof window.editApplication === 'function') {
-          window.editApplication(appID);
-        } else {
-          alert('Edit function not available. Please refresh the page.');
         }
       } else if (action === 'download') {
         if (typeof window.safeDownloadApplication === 'function') {

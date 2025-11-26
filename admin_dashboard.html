@@ -177,22 +177,26 @@
               </div>
             </div>
           </div>
-          <div class="table-responsive" style="max-height: 600px; overflow-y: auto; overflow-x: auto; border: 1px solid #dee2e6; border-radius: 0.375rem; background: white;">
-            <table class="table table-hover align-middle table-striped mb-0" style="margin-bottom: 0;">
-              <thead class="table-light sticky-top" style="position: sticky; top: 0; z-index: 10; background: #f8f9fa;">
-                <tr>
-                  <th style="min-width: 60px;">No.</th>
-                  <th style="min-width: 150px;">App ID / Serial</th>
-                  <th>Applicant</th>
-                  <th>Location</th>
-                  <th>Institution</th>
-                  <th>Status</th>
-                  <th>Amount Req.</th>
-                  <th style="min-width: 150px;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="applicationsTableBody"></tbody>
-            </table>
+          <!-- MODERN CARD-BASED LIST (replaces old table) -->
+          <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Applications</h6>
+              <button class="btn btn-sm btn-outline-primary" onclick="window.createNewDummyRecords && window.createNewDummyRecords();" title="Create 20 new test records">
+                <i class="bi bi-plus-circle me-1"></i>Create 20 New Records
+              </button>
+            </div>
+            <div class="card-body" style="max-height: 700px; overflow-y: auto;">
+              <div class="row g-3" id="applicationsTableBody">
+                <!-- Modern card-based list will be rendered here -->
+                <div class="col-12">
+                  <div class="alert alert-info text-center py-5">
+                    <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
+                    <h5>Loading Applications...</h5>
+                    <p class="mb-0">Please wait while we load the applications list.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -346,6 +350,8 @@
   <script src="js/visualizations.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/admin-edit.js"></script>
+  <!-- MODERN APPLICATIONS LIST (load before admin.js to override renderTable) -->
+  <script src="js/modern-applications-list.js"></script>
   <!-- Button Activator - Must load last to ensure all buttons work -->
   <script src="js/button-activator.js"></script>
   <!-- Final Button Fix - Ensures all buttons work -->
