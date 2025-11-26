@@ -356,11 +356,15 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
     addText('Yours sincerely,', margin, yPos, { fontSize: 11 });
     yPos += 20;
 
-    // Signature
+    // Signature Section - Enhanced with name
     if (signatureImg) {
       addImage(signatureImg, margin, yPos, 40, 15);
       yPos += 18;
     } else {
+      // Draw signature line if image not available
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPos, margin + 40, yPos);
       yPos += 10;
     }
 
@@ -369,15 +373,20 @@ async function generateOfferLetterPDF(application, awardDetails, options = {}) {
       fontStyle: 'bold'
     });
     yPos += 5;
+    addText('Garissa County Scholarship Fund', margin, yPos, {
+      fontSize: 10,
+      fontStyle: 'bold'
+    });
+    yPos += 5;
     addText('fundadmin@garissa.go.ke', margin, yPos, {
       fontSize: 10
     });
     yPos += 5;
-    addText('Garissa County Scholarship Fund', margin, yPos, {
+    addText('P.O. Box 1377-70100, Garissa', margin, yPos, {
       fontSize: 10
     });
     yPos += 5;
-    addText('P.O. Box 1377-70100, Garissa', margin, yPos, {
+    addText('Tel: +254-XXX-XXXXXX', margin, yPos, {
       fontSize: 10
     });
 
@@ -1213,26 +1222,36 @@ async function generateRejectionLetterPDF(application) {
     addText('Yours sincerely,', margin, yPos, { fontSize: 11 });
     yPos += 20;
 
-    // Signature
+    // Signature Section - Enhanced with name
     try {
       const signatureImg = await loadImage('assets/signature.png');
       if (signatureImg) {
         doc.addImage(signatureImg, 'PNG', margin, yPos, 40, 15);
         yPos += 18;
       } else {
+        // Draw signature line if image not available
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.5);
+        doc.line(margin, yPos, margin + 40, yPos);
         yPos += 10;
       }
     } catch (e) {
+      // Draw signature line as fallback
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPos, margin + 40, yPos);
       yPos += 10;
     }
 
     addText('Fund Administrator', margin, yPos, { fontSize: 11, fontStyle: 'bold' });
     yPos += 5;
+    addText('Garissa County Scholarship Fund', margin, yPos, { fontSize: 10, fontStyle: 'bold' });
+    yPos += 5;
     addText('fundadmin@garissa.go.ke', margin, yPos, { fontSize: 10 });
     yPos += 5;
-    addText('Garissa County Scholarship Fund', margin, yPos, { fontSize: 10 });
-    yPos += 5;
     addText('P.O. Box 1377-70100, Garissa', margin, yPos, { fontSize: 10 });
+    yPos += 5;
+    addText('Tel: +254-XXX-XXXXXX', margin, yPos, { fontSize: 10 });
 
     // Smart colorful stamp on the right side (auto-generated)
     const stampX = pageWidth - margin - 50;

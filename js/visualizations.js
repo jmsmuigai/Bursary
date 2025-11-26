@@ -18,20 +18,38 @@ function initializeVisualizations() {
 /**
  * Refresh all visualizations with latest data - ENHANCED: Uses UNIFIED DATABASE
  */
-function refreshVisualizations() {
+async function refreshVisualizations() {
   // Use UNIFIED DATABASE access layer (SAME DATABASE as all components)
+  // CRITICAL: Visualizations MUST read from the SAME database as admin dashboard
   let apps = [];
   
-  if (typeof getApplications !== 'undefined') {
-    // Use unified database access
-    apps = getApplications();
-    console.log('📊 Visualizations: Loaded', apps.length, 'applications from UNIFIED DATABASE');
-  } else if (typeof window.loadApplications !== 'undefined') {
-    // Fallback to admin.js function
-    apps = window.loadApplications();
-    console.log('📊 Visualizations: Loaded', apps.length, 'applications from admin.js');
-  } else {
-    // Last resort: direct localStorage access
+  // Method 1: Try async Firebase first (if available)
+  if (typeof window.getApplications === 'function') {
+    try {
+      // Try async version first
+      const asyncApps = await window.getApplications();
+      if (asyncApps && Array.isArray(asyncApps)) {
+        apps = asyncApps;
+        console.log('📊 Visualizations: Loaded', apps.length, 'applications from UNIFIED DATABASE (Firebase)');
+      }
+    } catch (e) {
+      console.warn('Async getApplications failed, trying sync:', e);
+    }
+  }
+  
+  // Method 2: Try sync version
+  if (apps.length === 0) {
+    if (typeof window.loadApplications === 'function') {
+      apps = window.loadApplications();
+      console.log('📊 Visualizations: Loaded', apps.length, 'applications from UNIFIED DATABASE (sync)');
+    } else if (typeof loadApplications === 'function') {
+      apps = loadApplications();
+      console.log('📊 Visualizations: Loaded', apps.length, 'applications from loadApplications()');
+    }
+  }
+  
+  // Method 3: Direct localStorage (last resort)
+  if (apps.length === 0) {
     try {
       apps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
       console.log('📊 Visualizations: Loaded', apps.length, 'applications from localStorage');
@@ -41,15 +59,48 @@ function refreshVisualizations() {
     }
   }
   
-  console.log('📊 Refreshing visualizations with', apps.length, 'applications from SAME DATABASE');
+  // Filter out test/dummy data (same as admin dashboard)
+  const realApps = apps.filter(app => {
+    if (!app.applicantEmail) return false;
+    return !(
+      app.applicantEmail.includes('example.com') ||
+      app.applicantEmail.includes('TEST_') ||
+      app.appID && (app.appID.includes('TEST_') || app.appID.includes('Firebase Test'))
+    );
+  });
+  
+  apps = realApps; // Use only real applications
+  
+  console.log('📊 Refreshing visualizations with', apps.length, 'REAL applications from SAME DATABASE');
   
   // Force reload from unified database to get latest data
   try {
-    const latestApps = typeof getApplications !== 'undefined' ? getApplications() : 
-                      JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-    if (latestApps.length !== apps.length) {
+    let latestApps = [];
+    if (typeof window.getApplications === 'function') {
+      try {
+        latestApps = await window.getApplications();
+      } catch (e) {
+        latestApps = typeof window.loadApplications === 'function' ? window.loadApplications() : 
+                    JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      }
+    } else {
+      latestApps = typeof window.loadApplications === 'function' ? window.loadApplications() : 
+                  JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    }
+    
+    // Filter test data
+    const latestRealApps = latestApps.filter(app => {
+      if (!app.applicantEmail) return false;
+      return !(
+        app.applicantEmail.includes('example.com') ||
+        app.applicantEmail.includes('TEST_') ||
+        app.appID && (app.appID.includes('TEST_') || app.appID.includes('Firebase Test'))
+      );
+    });
+    
+    if (latestRealApps.length !== apps.length) {
       console.log('🔄 Data mismatch detected - using latest data from UNIFIED DATABASE');
-      apps = latestApps;
+      apps = latestRealApps;
     }
   } catch (e) {
     console.error('Error refreshing data:', e);
