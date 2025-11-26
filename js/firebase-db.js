@@ -207,6 +207,26 @@
         // Sync to localStorage as backup
         await syncToLocalStorage();
         
+        // CRITICAL: Trigger events for real-time dashboard updates
+        window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+          detail: { 
+            key: 'mbms_applications', 
+            action: 'submitted', 
+            appID: application.appID,
+            application: application
+          }
+        }));
+        
+        // Also trigger storage event for cross-tab sync
+        try {
+          const currentApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+          localStorage.setItem('mbms_applications', JSON.stringify(currentApps));
+        } catch (e) {
+          console.log('Storage event trigger:', e);
+        }
+        
+        console.log('✅ Events triggered for application:', application.appID);
+        
         return application;
       } catch (error) {
         console.error('❌ Firebase save error:', error);
@@ -235,6 +255,22 @@
       
       localStorage.setItem('mbms_applications', JSON.stringify(apps));
       console.log('✅ Application saved to localStorage');
+      
+      // CRITICAL: Trigger events for real-time dashboard updates
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { 
+          key: 'mbms_applications', 
+          action: 'submitted', 
+          appID: application.appID,
+          application: application
+        }
+      }));
+      
+      // Force localStorage update to trigger storage events
+      localStorage.setItem('mbms_applications', JSON.stringify(apps));
+      
+      console.log('✅ Events triggered for application (localStorage):', application.appID);
+      
       return application;
     } catch (error) {
       console.error('localStorage save error:', error);
