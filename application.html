@@ -99,11 +99,12 @@
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Sex/Gender <span class="text-danger">*</span></label>
-                    <select class="form-select" id="genderApp" required>
-                      <option value="">-- Select --</option>
+                    <select class="form-select" id="genderApp" required style="pointer-events: auto; opacity: 1;">
+                      <option value="">-- Select Gender --</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                     </select>
+                    <div class="invalid-feedback">Please select your gender.</div>
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Student Phone Number <span class="text-danger">*</span></label>
@@ -171,29 +172,52 @@
                     <textarea class="form-control mt-2" id="disabilityDescription" placeholder="If YES, describe nature of disability" rows="2" style="display:none;"></textarea>
                   </div>
 
-                  <div class="col-md-6">
-                    <label class="form-label">(3) Full name of father</label>
-                    <input type="text" class="form-control" id="fatherName" />
+                  <div class="col-12">
+                    <label class="form-label">(3) Select Parent or Guardian Information <span class="text-danger">*</span></label>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="radio" name="parentOrGuardian" id="selectParent" value="parent" />
+                      <label class="form-check-label" for="selectParent">
+                        <strong>Parent Information</strong>
+                      </label>
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="radio" name="parentOrGuardian" id="selectGuardian" value="guardian" />
+                      <label class="form-check-label" for="selectGuardian">
+                        <strong>Guardian Information</strong>
+                      </label>
+                    </div>
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Father's occupation</label>
-                    <input type="text" class="form-control" id="fatherOccupation" />
+
+                  <!-- Parent Information Section -->
+                  <div class="row g-3" id="parentInfoSection">
+                    <div class="col-md-6">
+                      <label class="form-label">Full name of father</label>
+                      <input type="text" class="form-control" id="fatherName" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Father's occupation</label>
+                      <input type="text" class="form-control" id="fatherOccupation" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Full name of mother</label>
+                      <input type="text" class="form-control" id="motherName" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Mother's occupation</label>
+                      <input type="text" class="form-control" id="motherOccupation" />
+                    </div>
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Full name of mother</label>
-                    <input type="text" class="form-control" id="motherName" />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Mother's occupation</label>
-                    <input type="text" class="form-control" id="motherOccupation" />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Full name of guardian</label>
-                    <input type="text" class="form-control" id="guardianName" />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Guardian's occupation</label>
-                    <input type="text" class="form-control" id="guardianOccupation" />
+
+                  <!-- Guardian Information Section -->
+                  <div class="row g-3" id="guardianInfoSection" style="display: none;">
+                    <div class="col-md-6">
+                      <label class="form-label">Full name of guardian</label>
+                      <input type="text" class="form-control" id="guardianName" />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Guardian's occupation</label>
+                      <input type="text" class="form-control" id="guardianOccupation" />
+                    </div>
                   </div>
 
                   <div class="col-md-6">
@@ -414,6 +438,101 @@
   <script src="js/button-verification-complete.js"></script>
   <!-- FINAL BUTTON TEST (comprehensive testing of Next, Submit, Save, Autosave, Autoupdate, Autofix) -->
   <script src="js/final-button-test.js"></script>
+  
+  <!-- Parent/Guardian Toggle Logic -->
+  <script>
+    (function() {
+      // Wait for DOM to be ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initParentGuardianToggle);
+      } else {
+        initParentGuardianToggle();
+      }
+      
+      function initParentGuardianToggle() {
+        const selectParent = document.getElementById('selectParent');
+        const selectGuardian = document.getElementById('selectGuardian');
+        const parentInfoSection = document.getElementById('parentInfoSection');
+        const guardianInfoSection = document.getElementById('guardianInfoSection');
+        
+        if (!selectParent || !selectGuardian || !parentInfoSection || !guardianInfoSection) {
+          console.log('Parent/Guardian toggle elements not found');
+          return;
+        }
+        
+        // Function to toggle sections
+        function toggleSections() {
+          if (selectParent.checked) {
+            // Show parent section, hide guardian section
+            parentInfoSection.style.display = 'block';
+            guardianInfoSection.style.display = 'none';
+            // Disable guardian inputs
+            document.getElementById('guardianName').disabled = true;
+            document.getElementById('guardianOccupation').disabled = true;
+            // Enable parent inputs
+            document.getElementById('fatherName').disabled = false;
+            document.getElementById('fatherOccupation').disabled = false;
+            document.getElementById('motherName').disabled = false;
+            document.getElementById('motherOccupation').disabled = false;
+          } else if (selectGuardian.checked) {
+            // Show guardian section, hide parent section
+            parentInfoSection.style.display = 'none';
+            guardianInfoSection.style.display = 'block';
+            // Disable parent inputs
+            document.getElementById('fatherName').disabled = true;
+            document.getElementById('fatherOccupation').disabled = true;
+            document.getElementById('motherName').disabled = true;
+            document.getElementById('motherOccupation').disabled = true;
+            // Enable guardian inputs
+            document.getElementById('guardianName').disabled = false;
+            document.getElementById('guardianOccupation').disabled = false;
+          } else {
+            // Neither selected - show both but disabled
+            parentInfoSection.style.display = 'block';
+            guardianInfoSection.style.display = 'block';
+            // Disable all
+            document.getElementById('fatherName').disabled = true;
+            document.getElementById('fatherOccupation').disabled = true;
+            document.getElementById('motherName').disabled = true;
+            document.getElementById('motherOccupation').disabled = true;
+            document.getElementById('guardianName').disabled = true;
+            document.getElementById('guardianOccupation').disabled = true;
+          }
+        }
+        
+        // Add event listeners
+        selectParent.addEventListener('change', toggleSections);
+        selectGuardian.addEventListener('change', toggleSections);
+        
+        // Initialize
+        toggleSections();
+        
+        console.log('✅ Parent/Guardian toggle initialized');
+      }
+      
+      // Ensure gender dropdown is enabled
+      function enableGenderDropdown() {
+        const genderSelect = document.getElementById('genderApp');
+        if (genderSelect) {
+          genderSelect.disabled = false;
+          genderSelect.style.pointerEvents = 'auto';
+          genderSelect.style.opacity = '1';
+          genderSelect.style.cursor = 'pointer';
+          console.log('✅ Gender dropdown enabled');
+        }
+      }
+      
+      // Run on load
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', enableGenderDropdown);
+      } else {
+        enableGenderDropdown();
+      }
+      
+      // Also run after a short delay to ensure it's enabled
+      setTimeout(enableGenderDropdown, 500);
+    })();
+  </script>
   
   <!-- Footer -->
   <footer class="mt-5 py-4" style="background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-600) 100%); color: white;">
