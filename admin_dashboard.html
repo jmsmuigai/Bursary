@@ -185,9 +185,7 @@
                 <button class="btn btn-sm btn-outline-danger me-2" onclick="window.clearAllData && window.clearAllData();" title="Clear all dummy/test data">
                   <i class="bi bi-trash me-1"></i>Clear All Data
                 </button>
-                <button class="btn btn-sm btn-outline-primary" onclick="window.createNewDummyRecords && window.createNewDummyRecords();" title="Create 20 new test records">
-                  <i class="bi bi-plus-circle me-1"></i>Create 20 New Records
-                </button>
+                <!-- Create dummy records button removed - system ready for real applications -->
               </div>
             </div>
             <div class="card-body p-0">
@@ -383,6 +381,8 @@
   <script src="js/button-fix-complete.js"></script>
   <!-- FINAL POLISH FIX (load very last to ensure everything works) -->
   <script src="js/final-polish-fix.js"></script>
+  <!-- CLEAR AND PREPARE SYSTEM (load after admin.js to filter test data) -->
+  <script src="js/clear-and-prepare-system.js"></script>
   
   <!-- Mobile Menu Toggle Script -->
   <script>

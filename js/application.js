@@ -624,8 +624,53 @@
     console.log('💾 Database: UNIFIED DATABASE (mbms_applications)');
     console.log('✅ Same database admin portal, reports, and visualizations read from');
     
-    // Show success message
-    alert('✅ Application submitted successfully!\n\n📋 Your application has been submitted and is now in the "Pending Ward Review" status.\n\n🔄 Your application will appear on the admin dashboard and is awaiting review.\n\n📧 You will be notified once a decision is made (Awarded or Rejected).\n\n⚠️ IMPORTANT: This is a FINAL SUBMISSION. You CANNOT edit this application.\n\nIf you need to make changes, please contact the Fund Administrator at fundadmin@garissa.go.ke\n\nYour application ID: ' + appID);
+    // Show modern success message
+    const successModal = document.createElement('div');
+    successModal.className = 'modal fade';
+    successModal.id = 'submissionSuccessModal';
+    successModal.setAttribute('tabindex', '-1');
+    successModal.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-body text-center p-5">
+            <div class="mb-4">
+              <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+            </div>
+            <h3 class="text-success mb-3">✅ Submission Successful!</h3>
+            <div class="alert alert-info text-start mb-4">
+              <p class="mb-2"><strong>Application ID:</strong> ${appID}</p>
+              <p class="mb-2"><strong>Status:</strong> <span class="badge bg-info">Pending Ward Review</span></p>
+              <p class="mb-0">Your application has been submitted and will appear on the admin dashboard immediately.</p>
+            </div>
+            <div class="alert alert-warning text-start mb-4">
+              <small><strong>⚠️ Important:</strong> This is a FINAL SUBMISSION. You cannot edit this application.</small>
+            </div>
+            <p class="text-muted mb-4">You will be notified once a decision is made (Awarded or Rejected).</p>
+            <button type="button" class="btn btn-primary-700 btn-lg" onclick="window.location.href='applicant_dashboard.html'">
+              <i class="bi bi-arrow-right me-2"></i>Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(successModal);
+    
+    // Show modal
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+      const bsModal = new bootstrap.Modal(successModal);
+      bsModal.show();
+      
+      // Auto-redirect after 5 seconds
+      setTimeout(() => {
+        window.location.href = 'applicant_dashboard.html';
+      }, 5000);
+    } else {
+      // Fallback alert
+      alert('✅ Application submitted successfully!\n\n📋 Application ID: ' + appID + '\n📋 Status: Pending Ward Review\n\n🔄 Your application will appear on the admin dashboard immediately.\n\n📧 You will be notified once a decision is made.\n\n⚠️ IMPORTANT: This is a FINAL SUBMISSION. You CANNOT edit this application.');
+      setTimeout(() => {
+        window.location.href = 'applicant_dashboard.html';
+      }, 2000);
+    }
 
     // Remove draft
     const applicationKey = `mbms_application_${user.email}`;

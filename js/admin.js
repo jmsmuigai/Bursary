@@ -2509,19 +2509,106 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
     }
   }, 800);
   
-  // CRITICAL: FORCE LOAD AND DISPLAY DUMMY DATA IMMEDIATELY
-  console.log('🔄 FORCING DUMMY DATA LOAD AND DISPLAY ON PAGE LOAD...');
-  
-  // Clear any existing dummy data flag to force reload
-  localStorage.removeItem('mbms_dummy_data_loaded');
+  // SYSTEM PREPARATION: Filter out test data and show blank list if no real applications
+  console.log('🔄 PREPARING SYSTEM FOR PRODUCTION...');
   
   // Load existing applications
   let allApps = loadApplications();
-  console.log('📊 Initial applications loaded:', allApps.length);
   
-  // ALWAYS ensure we have exactly 10 dummy records - Force load if less than 10
-  if (allApps.length < 10) {
-    console.log('🔄 LESS THAN 10 APPLICATIONS - FORCING DUMMY DATA GENERATION AND DISPLAY...');
+  // Filter out test/dummy data
+  const realApps = allApps.filter(app => {
+    if (!app.applicantEmail) return false;
+    return !(
+      app.applicantEmail.includes('example.com') ||
+      app.applicantEmail.includes('TEST_') ||
+      app.appID && (app.appID.includes('TEST_') || app.appID.includes('Firebase Test'))
+    );
+  });
+  
+  console.log('📊 Applications loaded:', allApps.length, 'Total |', realApps.length, 'Real');
+  
+  // If no real applications, show blank list with placeholder rows
+  if (realApps.length === 0) {
+    console.log('📋 No real applications - showing blank list ready for first applicant');
+    
+    // Update metrics to show 0
+    updateMetrics();
+    updateBudgetDisplay();
+    
+    // Show blank list with placeholder rows
+    const tbody = document.getElementById('applicationsTableBody');
+    if (tbody) {
+      tbody.innerHTML = '';
+      
+      // Show 10 blank placeholder rows
+      for (let i = 1; i <= 10; i++) {
+        const tr = document.createElement('tr');
+        tr.className = 'table-row-placeholder';
+        tr.style.opacity = '0.4';
+        tr.innerHTML = `
+          <td><strong class="text-muted">${i}</strong></td>
+          <td><span class="text-muted">-</span></td>
+          <td><span class="text-muted">Waiting for first applicant...</span></td>
+          <td><span class="text-muted">-</span></td>
+          <td><span class="text-muted">-</span></td>
+          <td><span class="badge bg-secondary">-</span></td>
+          <td><span class="text-muted">-</span></td>
+          <td><span class="text-muted">-</span></td>
+        `;
+        tbody.appendChild(tr);
+      }
+      
+      // Add message row
+      const messageRow = document.createElement('tr');
+      messageRow.innerHTML = `
+        <td colspan="8" class="text-center py-5">
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-inbox fs-1 d-block mb-3 text-primary"></i>
+            <h5>System Ready for First Application</h5>
+            <p class="mb-2">The system is ready to receive the first application submission.</p>
+            <p class="mb-0"><small class="text-muted">Once an applicant submits their application, it will appear here automatically.</small></p>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(messageRow);
+    }
+    
+    // Show notification
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '500px';
+    notification.innerHTML = `
+      <strong>📋 System Ready!</strong><br>
+      <div class="mt-2">
+        The system is ready for the first application submission.<br>
+        <small class="text-muted">Blank list view displayed with placeholder rows. Once an applicant submits, their application will appear automatically.</small>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 5000);
+    
+    console.log('✅ Blank list displayed - ready for first applicant');
+    sessionStorage.setItem('mbms_last_app_count', '0');
+    return; // Exit early - don't load dummy data
+  }
+  
+  // If real applications exist, show them
+  console.log('✅ Real applications found:', realApps.length);
+  updateMetrics();
+  updateBudgetDisplay();
+  renderTable(realApps);
+  applyFilters();
+  sessionStorage.setItem('mbms_last_app_count', realApps.length.toString());
+  
+  // OLD CODE REMOVED - No more dummy data auto-loading
+  // The system now shows blank list if no real applications
+  // Dummy data loading is completely disabled
       
       try {
         // Method 1: Try initializeDummyData
@@ -2689,183 +2776,49 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
       }
     }
     
-    // FORCE MULTIPLE REFRESHES TO ENSURE DATA IS VISIBLE
-    // Refresh 1: Immediate
+    // Periodic refresh to catch new applications
     setTimeout(() => {
       const verifyApps = loadApplications();
-      console.log('🔄 Refresh 1 (500ms):', verifyApps.length, 'applications');
-      if (verifyApps.length > 0) {
+      const realVerifyApps = verifyApps.filter(app => {
+        if (!app.applicantEmail) return false;
+        return !(
+          app.applicantEmail.includes('example.com') ||
+          app.applicantEmail.includes('TEST_') ||
+          app.appID && (app.appID.includes('TEST_') || app.appID.includes('Firebase Test'))
+        );
+      });
+      
+      if (realVerifyApps.length > 0) {
         updateMetrics();
         updateBudgetDisplay();
-        renderTable(verifyApps);
+        renderTable(realVerifyApps);
         applyFilters();
-        console.log('✅ Refresh 1 completed - Table should show', verifyApps.length, 'rows');
+        console.log('✅ Refresh completed - Showing', realVerifyApps.length, 'real applications');
       } else {
-        console.warn('⚠️ Refresh 1: No applications found!');
+        // Show blank list
+        const tbody = document.getElementById('applicationsTableBody');
+        if (tbody) {
+          tbody.innerHTML = '';
+          for (let i = 1; i <= 10; i++) {
+            const tr = document.createElement('tr');
+            tr.className = 'table-row-placeholder';
+            tr.style.opacity = '0.4';
+            tr.innerHTML = `
+              <td><strong class="text-muted">${i}</strong></td>
+              <td><span class="text-muted">-</span></td>
+              <td><span class="text-muted">Waiting for first applicant...</span></td>
+              <td><span class="text-muted">-</span></td>
+              <td><span class="text-muted">-</span></td>
+              <td><span class="badge bg-secondary">-</span></td>
+              <td><span class="text-muted">-</span></td>
+              <td><span class="text-muted">-</span></td>
+            `;
+            tbody.appendChild(tr);
+          }
+        }
+        console.log('✅ Blank list displayed - ready for first applicant');
       }
     }, 500);
-    
-    // Refresh 2: After 1 second
-    setTimeout(() => {
-      const verifyApps = loadApplications();
-      console.log('🔄 Refresh 2 (1000ms):', verifyApps.length, 'applications');
-      if (verifyApps.length > 0) {
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(verifyApps);
-        applyFilters();
-        console.log('✅ Refresh 2 completed - Table should show', verifyApps.length, 'rows');
-      }
-    }, 1000);
-    
-    // Refresh 3: After 1.5 seconds
-    setTimeout(() => {
-      const verifyApps = loadApplications();
-      console.log('🔄 Refresh 3 (1500ms):', verifyApps.length, 'applications');
-      if (verifyApps.length > 0) {
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(verifyApps);
-        applyFilters();
-        console.log('✅ Refresh 3 completed - Table should show', verifyApps.length, 'rows');
-      }
-    }, 1500);
-    
-    // ALWAYS update and render - CRITICAL: This must happen IMMEDIATELY
-    console.log('🔄 FORCING IMMEDIATE RENDER with', allApps.length, 'applications');
-    updateMetrics();
-    updateBudgetDisplay();
-    renderTable(allApps); // FORCE render table immediately
-    console.log('✅ Immediate render completed');
-    
-    // Store initial count for comparison
-    sessionStorage.setItem('mbms_last_app_count', allApps.length.toString());
-    
-    console.log('✅ Admin dashboard initialized with', allApps.length, 'applications');
-    
-    // FINAL CHECK: If still no apps after 1 second, force load dummy data
-    setTimeout(() => {
-      const finalCheck = loadApplications();
-      console.log('🔍 Final check (1s):', finalCheck.length, 'applications');
-      const tbody = document.getElementById('applicationsTableBody');
-      console.log('Table body exists:', !!tbody, 'Rows:', tbody?.children.length || 0);
-      
-      if (finalCheck.length === 0) {
-        console.log('⚠️ Still no applications - forcing dummy data load...');
-        // Force clear and reload
-        if (typeof generateDummyApplications === 'function') {
-          console.log('🔄 Direct generation as last resort...');
-          const dummyApps = generateDummyApplications();
-          console.log('Generated', dummyApps.length, 'dummy applications');
-          localStorage.setItem('mbms_applications', JSON.stringify(dummyApps));
-          localStorage.setItem('mbms_application_counter', '10');
-          localStorage.setItem('mbms_last_serial', '10');
-          
-          // Initialize budget
-          if (typeof initializeBudget !== 'undefined') {
-            initializeBudget();
-          }
-          if (typeof syncBudgetWithAwards !== 'undefined') {
-            syncBudgetWithAwards();
-          }
-          
-          const newApps = loadApplications();
-          console.log('Loaded', newApps.length, 'applications after force generation');
-          if (newApps.length > 0) {
-            updateMetrics();
-            updateBudgetDisplay();
-            renderTable(newApps);
-            applyFilters();
-            
-            // Refresh visualizations if available
-            setTimeout(() => {
-              if (typeof refreshVisualizations === 'function') {
-                refreshVisualizations();
-                console.log('✅ Visualizations refreshed with new data');
-              }
-            }, 1000);
-            
-            console.log('✅ Dummy data force-loaded:', newApps.length, 'applications');
-            // Show notification
-            const notification = document.createElement('div');
-            notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
-            notification.style.zIndex = '9999';
-            notification.style.minWidth = '500px';
-            notification.innerHTML = `
-              <strong>✅ Demo Data Loaded!</strong><br>
-              <div class="mt-2">
-                📊 <strong>${newApps.length} sample applications</strong> created and visible in table:<br>
-                &nbsp;&nbsp;• <strong>ALL PENDING REVIEW</strong> (ready for award)<br>
-                &nbsp;&nbsp;• Distributed across all Garissa sub-counties<br>
-                &nbsp;&nbsp;• From different schools and institutions<br>
-                &nbsp;&nbsp;• <strong>NONE AWARDED</strong> - ready for first review<br>
-                <small class="text-muted d-block mt-2">💰 Budget: KSH 50,000,000 (Baseline - ready for first award)</small>
-                <small class="text-success d-block mt-1">✅ All records visible in scrollable Application Management table</small>
-                <small class="text-info d-block mt-1">📊 Check Visualizations section for colorful charts</small>
-              </div>
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(notification);
-            setTimeout(() => {
-              if (notification.parentNode) {
-                notification.remove();
-              }
-            }, 8000);
-          } else {
-            console.error('❌ CRITICAL: Generated apps but loadApplications returned empty!');
-            alert('⚠️ Error: Data generated but not loading. Please refresh the page.');
-          }
-        }
-      } else {
-        // Data exists but might not be visible - force render
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(finalCheck);
-        applyFilters();
-        console.log('✅ Forced render with', finalCheck.length, 'applications');
-        
-        // Verify table has rows
-        const tbodyCheck = document.getElementById('applicationsTableBody');
-        if (tbodyCheck && tbodyCheck.children.length === 0 && finalCheck.length > 0) {
-          console.log('⚠️ Table body empty but apps exist - forcing render again');
-          renderTable(finalCheck);
-        }
-      }
-    }, 1000);
-    
-    // EXTRA CHECK: Verify table has data after 3 seconds
-    setTimeout(() => {
-      const tbody = document.getElementById('applicationsTableBody');
-      const apps = loadApplications();
-      console.log('🔍 Table verification (3s):', apps.length, 'apps,', tbody?.children.length || 0, 'rows');
-      if (tbody && apps.length > 0 && tbody.children.length === 0) {
-        console.log('⚠️ Table body empty but apps exist - forcing render');
-        renderTable(apps);
-        applyFilters();
-      } else if (tbody && apps.length > 0 && tbody.children.length > 0) {
-        console.log('✅ Table verified: Data is visible');
-      }
-    }, 3000);
-    
-    // FINAL VERIFICATION: After 5 seconds, ensure everything is displayed
-    setTimeout(() => {
-      const apps = loadApplications();
-      const tbody = document.getElementById('applicationsTableBody');
-      const metricTotal = document.getElementById('metricTotal');
-      
-      console.log('🔍 Final verification (5s):');
-      console.log('  - Applications in storage:', apps.length);
-      console.log('  - Table rows:', tbody?.children.length || 0);
-      console.log('  - Metric total:', metricTotal?.textContent || 'N/A');
-      
-      if (apps.length > 0 && (!tbody || tbody.children.length === 0)) {
-        console.log('⚠️ FINAL FIX: Forcing complete refresh...');
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(apps);
-        applyFilters();
-      }
-    }, 5000);
     
     // Listen for new application submissions
     window.addEventListener('mbms-data-updated', function(e) {
