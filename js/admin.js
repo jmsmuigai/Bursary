@@ -1137,34 +1137,43 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
       }
       
       // Auto-download award letter immediately (to default downloads folder)
+      let downloadSuccess = false;
+      let downloadedFilename = '';
       try {
         console.log('📥 Auto-downloading award letter...');
-        if (typeof downloadPDFDirect !== 'undefined') {
-          // Use direct download for auto-save to downloads folder
-          await downloadPDFDirect(app, app.awardDetails);
-          console.log('✅ Award letter auto-downloaded to default downloads folder');
-        } else if (typeof generateOfferLetterPDF !== 'undefined') {
-          const result = await generateOfferLetterPDF(app, app.awardDetails, { preview: false, directSave: true });
+        if (typeof generateOfferLetterPDF !== 'undefined') {
+          const result = await generateOfferLetterPDF(app, app.awardDetails, { preview: false });
           if (result && result.filename) {
-            console.log('✅ Award letter auto-downloaded:', result.filename);
+            downloadSuccess = true;
+            downloadedFilename = result.filename;
+            console.log('✅ Award letter auto-downloaded:', downloadedFilename);
           }
+        } else if (typeof downloadPDFDirect !== 'undefined') {
+          await downloadPDFDirect(app, app.awardDetails);
+          downloadSuccess = true;
+          downloadedFilename = `Award_Letter_${app.appID}.pdf`;
+          console.log('✅ Award letter auto-downloaded to default downloads folder');
         }
         
-        // Auto-send email to fundadmin@garissa.go.ke
-        setTimeout(() => {
-          if (typeof sendEmailDraft !== 'undefined') {
-            sendEmailDraft(app, 'award', app.awardDetails?.serialNumber || 'Award', app.awardDetails);
-            console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
-          }
-        }, 1000);
+        // Auto-send email to fundadmin@garissa.go.ke ONLY if download succeeded
+        if (downloadSuccess && downloadedFilename) {
+          setTimeout(() => {
+            if (typeof sendEmailDraft !== 'undefined') {
+              sendEmailDraft(app, 'award', downloadedFilename, app.awardDetails);
+              console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
+            }
+          }, 1000);
+        }
       } catch (pdfError) {
         console.error('PDF download error:', pdfError);
+        downloadSuccess = false;
         // Continue even if PDF fails - show warning but don't block
         alert('⚠️ Award successful but PDF download failed. You can download it later from the applications list.');
       }
       
-      // Show success message
-      alert('✅ Successfully awarded!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + '\n📧 Copy sent to fundadmin@garissa.go.ke\n\n📥 Award letter has been automatically downloaded!');
+      // Show success message (only mention download if it succeeded)
+      const downloadMsg = downloadSuccess ? '\n\n📥 Award letter has been automatically downloaded!' : '\n\n⚠️ Award letter download failed - you can download it later from the applications list.';
+      alert('✅ Successfully awarded!\n\n📄 Serial Number: ' + serialNumber + '\n💰 Amount Awarded: Ksh ' + awardAmount.toLocaleString() + '\n📊 Budget Remaining: Ksh ' + remainingBalance.toLocaleString() + (downloadSuccess ? '\n📧 Copy sent to fundadmin@garissa.go.ke' : '') + downloadMsg);
       
       // Refresh display and visualizations
       refreshApplications();
@@ -1242,18 +1251,39 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
       }
       
       // Auto-download rejection letter to default downloads folder
+      let rejectionDownloadSuccess = false;
+      let rejectionFilename = '';
       try {
         console.log('📥 Auto-downloading rejection letter...');
         if (typeof generateRejectionLetterPDF !== 'undefined') {
           const result = await generateRejectionLetterPDF(app);
           if (result && result.filename) {
-            console.log('✅ Rejection letter auto-downloaded to default downloads folder:', result.filename);
-            showDownloadSuccess(result.filename);
+            rejectionDownloadSuccess = true;
+            rejectionFilename = result.filename;
+            console.log('✅ Rejection letter auto-downloaded to default downloads folder:', rejectionFilename);
             
-            // Auto-send email to fundadmin@garissa.go.ke
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            successMsg.style.zIndex = '10000';
+            successMsg.style.minWidth = '400px';
+            successMsg.innerHTML = `
+              <strong>✅ Document Downloaded!</strong><br>
+              <div class="mt-2">
+                📄 File: <strong>${rejectionFilename}</strong><br>
+                <small class="text-muted">File saved to your default downloads folder</small>
+              </div>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            setTimeout(() => {
+              if (successMsg.parentNode) successMsg.remove();
+            }, 5000);
+            
+            // Auto-send email to fundadmin@garissa.go.ke ONLY if download succeeded
             setTimeout(() => {
               if (typeof sendEmailDraft !== 'undefined') {
-                sendEmailDraft(app, 'rejection', result.filename, null);
+                sendEmailDraft(app, 'rejection', rejectionFilename, null);
                 console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
               }
             }, 1000);
@@ -1261,6 +1291,7 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
         }
       } catch (pdfError) {
         console.error('PDF download error:', pdfError);
+        rejectionDownloadSuccess = false;
         // Continue even if PDF fails - show warning but don't block
         alert('⚠️ Application rejected but PDF download failed. You can download it later from the applications list.');
       }
@@ -1271,7 +1302,9 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
         bootstrap.Modal.getInstance(rejectViewModal).hide();
       }
       
-      alert('✅ Application rejected successfully!\n\n📄 Rejection letter has been automatically downloaded to your default downloads folder.\n📧 Copy sent to fundadmin@garissa.go.ke');
+      // Show success message (only mention download if it succeeded)
+      const rejectionDownloadMsg = rejectionDownloadSuccess ? '\n\n📥 Rejection letter has been automatically downloaded!' : '\n\n⚠️ Rejection letter download failed - you can download it later from the applications list.';
+      alert('✅ Application rejected successfully!' + (rejectionDownloadSuccess ? '\n\n📧 Copy sent to fundadmin@garissa.go.ke' : '') + rejectionDownloadMsg);
       
       // Refresh display
       refreshApplications();
@@ -1297,7 +1330,7 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
         detail: { key: 'mbms_applications', action: 'rejected', appID: appID }
       }));
       
-      alert('✅ Application rejected successfully!\n\n💰 Budget remains unchanged (Ksh ' + remainingBalance.toLocaleString() + ' available)\n📧 Email notification sent to fundadmin@garissa.go.ke\n📥 Rejection letter has been automatically downloaded!');
+      // Don't show duplicate alert - already shown above
       
       const rejectViewModal2 = document.querySelector('.modal');
       if (rejectViewModal2) {
@@ -1350,8 +1383,8 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
     }
   };
 
-  // Download application letter (works for all statuses: Awarded, Rejected, Pending) - ENHANCED with browser compatibility
-  window.downloadApplicationLetter = async function(appID) {
+  // Download application letter (works for all statuses: Awarded, Rejected, Pending) - ENHANCED with verification
+  window.downloadApplicationLetter = async function(appID, status = null) {
     try {
       console.log('📥 Download triggered for appID:', appID);
       
@@ -1392,7 +1425,10 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
       let filename = '';
       let documentType = '';
       
-      if (app.status === 'Awarded') {
+      // Use provided status or app status
+      const appStatus = status || app.status;
+      
+      if (appStatus === 'Awarded') {
         // Download award letter
         if (!app.awardDetails) {
           loadingAlert.remove();
@@ -1449,7 +1485,7 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
           await downloadPDFDirect(app, awardDetails);
         }
         loadingAlert.remove();
-      } else if (app.status === 'Rejected') {
+      } else if (appStatus === 'Rejected') {
         // Download rejection letter
         if (typeof generateRejectionLetterPDF !== 'undefined') {
           documentType = 'rejection';
@@ -1494,7 +1530,7 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
         }
         loadingAlert.remove();
       } else {
-        // Download status letter for pending applications
+        // Download status letter for pending applications (use appStatus)
         if (typeof generateStatusLetterPDF !== 'undefined') {
           documentType = 'status';
           const result = await generateStatusLetterPDF(app);
@@ -1539,17 +1575,33 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
         loadingAlert.remove();
       }
       
-      // Auto-send email to fundadmin@garissa.go.ke after download
-      if (filename && typeof sendEmailDraft !== 'undefined') {
-        setTimeout(() => {
-          sendEmailDraft(app, documentType || 'summary', filename, app.awardDetails || null);
-          console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
-        }, 1000);
-      }
-      
-      // Show success message
-      if (filename) {
+      // Only show success and send email if download actually succeeded
+      if (filename && documentType) {
+        // Show success message
         showDownloadSuccess(filename, app);
+        
+        // Auto-send email to fundadmin@garissa.go.ke ONLY if download succeeded
+        if (typeof sendEmailDraft !== 'undefined') {
+          setTimeout(() => {
+            sendEmailDraft(app, documentType, filename, app.awardDetails || null);
+            console.log('✅ Email draft sent to fundadmin@garissa.go.ke');
+          }, 1000);
+        }
+      } else {
+        // Download failed - show error
+        loadingAlert.remove();
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+        errorMsg.style.zIndex = '10000';
+        errorMsg.innerHTML = `
+          <strong>❌ Document Generation Failed</strong><br>
+          <small>Please try again or contact support</small>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(errorMsg);
+        setTimeout(() => {
+          if (errorMsg.parentNode) errorMsg.remove();
+        }, 5000);
       }
     } catch (error) {
       console.error('PDF download error:', error);
