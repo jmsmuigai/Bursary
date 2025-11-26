@@ -85,16 +85,38 @@
         const apps = [];
         snapshot.forEach(doc => {
           const data = doc.data();
-          apps.push({ 
-            id: doc.id, 
-            ...data,
-            // Ensure appID exists
-            appID: data.appID || doc.id
-          });
+          
+          // Filter out test data before adding
+          const isTest = 
+            data.applicantEmail && (
+              data.applicantEmail.includes('example.com') ||
+              data.applicantEmail.includes('TEST_') ||
+              data.applicantEmail.includes('test@')
+            ) ||
+            data.appID && (
+              data.appID.includes('TEST_') || 
+              data.appID.includes('DUMMY') ||
+              data.appID.includes('Firebase Test')
+            ) ||
+            data.applicantName && (
+              data.applicantName.includes('DUMMY') ||
+              data.applicantName.includes('Test User')
+            ) ||
+            data.status === 'Deleted' ||
+            data.status === 'Test';
+          
+          if (!isTest) {
+            apps.push({ 
+              id: doc.id, 
+              ...data,
+              // Ensure appID exists
+              appID: data.appID || doc.id
+            });
+          }
         });
-        console.log('✅ Loaded', apps.length, 'applications from Firebase');
+        console.log('✅ Loaded', apps.length, 'REAL applications from Firebase (test data filtered)');
         
-        // Sync to localStorage as backup
+        // Sync to localStorage as backup (only real apps)
         if (apps.length > 0) {
           localStorage.setItem('mbms_applications', JSON.stringify(apps));
         }
