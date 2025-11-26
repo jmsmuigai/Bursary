@@ -635,6 +635,10 @@
     localStorage.setItem('mbms_application_counter', counter.toString());
     
     console.log('✅ Application submitted:', appID);
+    
+    // Get final count
+    const finalApps = typeof window.getApplications !== 'undefined' ? await window.getApplications() : 
+                     JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     console.log('📊 Total applications now:', finalApps.length);
     
     // CRITICAL: Trigger multiple events to ensure admin dashboard updates
