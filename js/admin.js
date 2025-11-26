@@ -583,9 +583,26 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
 
     if (!applications || applications.length === 0) {
       console.log('⚠️ No applications to render - showing empty message');
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>No applications found. Click "Load Demo Data" button to load sample data.</td></tr>';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="text-center py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-3 text-muted"></i>
+            <h5 class="text-muted">No Applications Found</h5>
+            <p class="text-muted mb-0">The system is ready for the first application submission.</p>
+          </td>
+        </tr>
+      `;
       return;
     }
+    
+    // Filter out test data if needed (optional - can be enabled)
+    // const filteredApps = applications.filter(app => {
+    //   return !(app.applicantEmail && (app.applicantEmail.includes('example.com') || app.applicantEmail.includes('TEST_')));
+    // });
+    // if (filteredApps.length === 0 && applications.length > 0) {
+    //   tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><i class="bi bi-info-circle me-2"></i>Only test data found. Click "Clear All Data" to remove test records.</td></tr>';
+    //   return;
+    // }
     
     console.log('✅ About to render', applications.length, 'applications to table');
 
@@ -620,22 +637,43 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
       const isDummy = app.applicantEmail && app.applicantEmail.includes('example.com');
       const dummyBadge = isDummy ? '<span class="badge bg-secondary ms-1" title="Demo Data">DUMMY</span>' : '';
       
+      // Filter out test/dummy data if user wants clean system
+      const isTestData = app.applicantEmail && (app.applicantEmail.includes('example.com') || app.applicantEmail.includes('TEST_'));
+      
       tr.innerHTML = `
-        <td><strong>${rowNumber}</strong></td>
-        <td><strong>${appID}</strong>${serialNumber ? `<br><small class="text-muted">Serial: ${serialNumber}</small>` : ''}${dummyBadge}</td>
-        <td>${name}${dummyBadge}</td>
-        <td>${location} / ${ward}</td>
-        <td>${institution}</td>
-        <td><span class="badge ${statusClass}">${status}</span></td>
-        <td>Ksh ${amount.toLocaleString()}</td>
+        <td><strong class="text-primary">${rowNumber}</strong></td>
         <td>
-          <button class="btn btn-sm btn-info me-1 action-btn" data-action="view" data-appid="${safeAppID}" title="View Application Details" style="min-width: 70px; min-height: 38px; cursor: pointer; pointer-events: auto;">
-            <i class="bi bi-eye"></i> View
-          </button>
-          <!-- Edit button removed - admin cannot edit applications -->
-          <button class="btn btn-sm btn-success action-btn" data-action="download" data-appid="${safeAppID}" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter" style="min-width: 90px; min-height: 38px; cursor: pointer; pointer-events: auto;">
-            <i class="bi bi-download"></i> Download
-          </button>
+          <strong>${appID}</strong>
+          ${serialNumber ? `<br><small class="text-muted"><i class="bi bi-tag me-1"></i>Serial: ${serialNumber}</small>` : ''}
+        </td>
+        <td>
+          <div class="d-flex align-items-center">
+            <i class="bi bi-person-circle me-2 text-primary"></i>
+            <div>
+              <div class="fw-semibold">${name}</div>
+              ${app.personalDetails?.gender ? `<small class="text-muted">${app.personalDetails.gender}</small>` : ''}
+            </div>
+          </div>
+        </td>
+        <td>
+          <div><i class="bi bi-geo-alt me-1 text-muted"></i><strong>${location}</strong></div>
+          <small class="text-muted">${ward}</small>
+        </td>
+        <td>
+          <div><i class="bi bi-building me-1 text-muted"></i>${institution}</div>
+          ${app.personalDetails?.regNumber ? `<small class="text-muted">Reg: ${app.personalDetails.regNumber}</small>` : ''}
+        </td>
+        <td><span class="badge ${statusClass} px-3 py-2">${status}</span></td>
+        <td><strong class="text-success">Ksh ${amount.toLocaleString()}</strong></td>
+        <td style="text-align: center;">
+          <div class="btn-group-vertical btn-group-sm" role="group">
+            <button class="btn btn-info action-btn" data-action="view" data-appid="${safeAppID}" title="View Application Details" style="min-width: 100px; cursor: pointer;">
+              <i class="bi bi-eye me-1"></i>View
+            </button>
+            <button class="btn btn-success action-btn" data-action="download" data-appid="${safeAppID}" data-status="${status}" title="Download ${status === 'Awarded' ? 'Award' : status === 'Rejected' ? 'Rejection' : 'Status'} Letter" style="min-width: 100px; cursor: pointer;">
+              <i class="bi bi-download me-1"></i>Download
+            </button>
+          </div>
         </td>
       `;
       tbody.appendChild(tr);

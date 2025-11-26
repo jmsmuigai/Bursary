@@ -177,24 +177,44 @@
               </div>
             </div>
           </div>
-          <!-- MODERN CARD-BASED LIST (replaces old table) -->
+          <!-- MODERN TABLE - Well-organized with correct column headers -->
           <div class="card shadow-sm border-0 mb-3">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-              <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Applications</h6>
-              <button class="btn btn-sm btn-outline-primary" onclick="window.createNewDummyRecords && window.createNewDummyRecords();" title="Create 20 new test records">
-                <i class="bi bi-plus-circle me-1"></i>Create 20 New Records
-              </button>
+              <h6 class="mb-0"><i class="bi bi-table me-2"></i>Application Management</h6>
+              <div>
+                <button class="btn btn-sm btn-outline-danger me-2" onclick="window.clearAllData && window.clearAllData();" title="Clear all dummy/test data">
+                  <i class="bi bi-trash me-1"></i>Clear All Data
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="window.createNewDummyRecords && window.createNewDummyRecords();" title="Create 20 new test records">
+                  <i class="bi bi-plus-circle me-1"></i>Create 20 New Records
+                </button>
+              </div>
             </div>
-            <div class="card-body" style="max-height: 700px; overflow-y: auto;">
-              <div class="row g-3" id="applicationsTableBody">
-                <!-- Modern card-based list will be rendered here -->
-                <div class="col-12">
-                  <div class="alert alert-info text-center py-5">
-                    <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
-                    <h5>Loading Applications...</h5>
-                    <p class="mb-0">Please wait while we load the applications list.</p>
-                  </div>
-                </div>
+            <div class="card-body p-0">
+              <div class="table-responsive" style="max-height: 700px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
+                  <thead class="table-light sticky-top" style="position: sticky; top: 0; z-index: 10; background: #f8f9fa !important;">
+                    <tr>
+                      <th style="min-width: 60px; font-weight: 600;">#</th>
+                      <th style="min-width: 150px; font-weight: 600;">Application ID</th>
+                      <th style="min-width: 200px; font-weight: 600;">Applicant Name</th>
+                      <th style="min-width: 180px; font-weight: 600;">Sub-County / Ward</th>
+                      <th style="min-width: 200px; font-weight: 600;">Institution</th>
+                      <th style="min-width: 120px; font-weight: 600;">Status</th>
+                      <th style="min-width: 130px; font-weight: 600;">Amount Requested</th>
+                      <th style="min-width: 150px; font-weight: 600; text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="applicationsTableBody">
+                    <tr>
+                      <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
+                        <h5>Loading Applications...</h5>
+                        <p class="mb-0">Please wait while we load the applications list.</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -320,6 +340,7 @@
   <script src="js/firebase-db.js"></script>
   <script src="js/firebase-test-data.js"></script>
   <script src="js/firebase-connection-test.js"></script>
+  <script src="js/clear-all-data.js"></script>
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
