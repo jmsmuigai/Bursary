@@ -663,12 +663,30 @@
       const safeAppID = appID.replace(/'/g, "\\'");
       const safeName = name.replace(/'/g, "\\'");
       
-      // Check if this is dummy data (by checking if email contains 'example.com')
-      const isDummy = app.applicantEmail && app.applicantEmail.includes('example.com');
-      const dummyBadge = isDummy ? '<span class="badge bg-secondary ms-1" title="Demo Data">DUMMY</span>' : '';
+      // CRITICAL: Filter out ALL dummy/test data - DO NOT RENDER
+      const isTestData = 
+        (app.applicantEmail && (
+          app.applicantEmail.includes('example.com') || 
+          app.applicantEmail.includes('TEST_') ||
+          app.applicantEmail.includes('test@')
+        )) ||
+        (app.appID && (
+          app.appID.includes('TEST_') || 
+          app.appID.includes('DUMMY') ||
+          app.appID.includes('Firebase Test')
+        )) ||
+        (name && (
+          name.includes('DUMMY') ||
+          name.includes('Test User')
+        )) ||
+        app.status === 'Deleted' ||
+        app.status === 'Test';
       
-      // Filter out test/dummy data if user wants clean system
-      const isTestData = app.applicantEmail && (app.applicantEmail.includes('example.com') || app.applicantEmail.includes('TEST_'));
+      // Skip rendering dummy/test data
+      if (isTestData) {
+        console.log('⏭️ Skipping dummy/test data:', app.appID, name);
+        return; // Skip this row
+      }
       
       tr.innerHTML = `
         <td><strong class="text-primary">${rowNumber}</strong></td>
@@ -2865,37 +2883,9 @@
     }
   });
   
-  // Real-time update interval (every 2 seconds) for multi-tab sync and new submissions
-  setInterval(function() {
-    try {
-      const apps = loadApplications();
-      const currentCount = apps.length;
-      const lastCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
-      
-      if (currentCount !== lastCount) {
-        console.log('🔄 New application detected! Count changed from', lastCount, 'to', currentCount);
-        sessionStorage.setItem('mbms_last_app_count', currentCount.toString());
-        
-        // Force full refresh
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(apps); // Render all applications
-        applyFilters(); // Apply current filters
-        
-        // Show notification if new applications added
-        if (currentCount > lastCount) {
-          const newCount = currentCount - lastCount;
-          console.log(`✅ ${newCount} new application(s) detected and displayed!`);
-        }
-      } else {
-        // Still update metrics and budget periodically (for budget changes)
-        updateMetrics();
-        updateBudgetDisplay();
-      }
-    } catch (error) {
-      console.error('Error in real-time update interval:', error);
-    }
-  }, 2000);
+  // DISABLED: Real-time update interval - causes flickering
+  // Using event-based updates instead (mbms-data-updated events)
+  // Periodic refresh moved to 10-second interval in real-time-dashboard-sync.js
   
   // Check budget status on load
   if (typeof getBudgetStatus !== 'undefined') {
@@ -3026,118 +3016,103 @@
     }
   }
   
+  // Debounce refresh to prevent flickering
+  let refreshDebounceTimeout;
+  let isRefreshing = false;
+  
   // Listen for new application submissions - auto-refresh when new applicants join
   window.addEventListener('mbms-data-updated', function(event) {
     console.log('📢 Data update event received:', event.detail);
     if (event.detail && event.detail.key === 'mbms_applications') {
-      console.log('🔄 New application detected - refreshing dashboard...');
+      // Clear any pending refresh
+      if (refreshDebounceTimeout) {
+        clearTimeout(refreshDebounceTimeout);
+      }
       
-      // Immediate refresh
-      refreshApplications();
-      updateMetrics();
-      updateBudgetDisplay();
+      // Prevent multiple simultaneous refreshes
+      if (isRefreshing) {
+        console.log('⏸️ Refresh already in progress, skipping...');
+        return;
+      }
       
-      // Refresh after short delay
-      setTimeout(() => {
-        refreshApplications();
-        updateMetrics();
-        updateBudgetDisplay();
-        applyFilters();
+      // Debounce: wait 1 second before refreshing
+      refreshDebounceTimeout = setTimeout(() => {
+        isRefreshing = true;
+        console.log('🔄 New application detected - refreshing dashboard...');
         
-        // Refresh visualizations
-        if (typeof refreshVisualizations === 'function') {
-          refreshVisualizations();
-          console.log('✅ Visualizations refreshed with new data');
-        }
-        
-        console.log('✅ Dashboard refreshed with new application');
-        
-        // Show notification
-        const notification = document.createElement('div');
-        notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
-        notification.style.zIndex = '9999';
-        notification.style.minWidth = '400px';
-        notification.innerHTML = `
-          <strong>🆕 New Application Received!</strong><br>
-          <div class="mt-2">
-            A new application has been submitted and is now in the "Pending Ward Review" list.<br>
-            <small class="text-muted">Application ID: ${event.detail.appID || 'N/A'}</small>
-          </div>
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.body.appendChild(notification);
-        setTimeout(() => {
-          if (notification.parentNode) {
-            notification.remove();
+        // Single refresh (no double refresh)
+        refreshApplications().finally(() => {
+          updateMetrics();
+          updateBudgetDisplay();
+          applyFilters();
+          
+          // Refresh visualizations
+          if (typeof refreshVisualizations === 'function') {
+            refreshVisualizations();
+            console.log('✅ Visualizations refreshed with new data');
           }
-        }, 5000);
-      }, 500);
-    }
-  });
-  
-  // Also listen for storage events (cross-tab sync)
-  window.addEventListener('storage', function(event) {
-    if (event.key === 'mbms_applications') {
-      console.log('📢 Storage event detected - new application added');
-      setTimeout(() => {
-        refreshApplications();
-        updateMetrics();
-        updateBudgetDisplay();
-        applyFilters();
-        if (typeof refreshVisualizations === 'function') {
-          refreshVisualizations();
-        }
-      }, 500);
-    }
-  });
-  
-  // Periodic check for new applications (every 1.5 seconds) - very frequent for real-time updates
-  setInterval(() => {
-    try {
-      const currentCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
-      const apps = loadApplications();
-      if (apps.length > currentCount) {
-        const newCount = apps.length - currentCount;
-        console.log('🔄 New applications detected via periodic check:', newCount, 'new application(s)');
-        
-        // Force refresh everything
-        refreshApplications();
-        updateMetrics();
-        updateBudgetDisplay();
-        applyFilters();
-        populateFilters(); // Ensure dropdowns are updated
-        
-        sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
-        
-        // Refresh visualizations
-        if (typeof refreshVisualizations === 'function') {
-          refreshVisualizations();
-          console.log('✅ Visualizations updated via periodic check');
-        }
-        
-        // Show notification for new applications
-        if (newCount > 0) {
+          
+          isRefreshing = false;
+          console.log('✅ Dashboard refreshed with new application');
+          
+          // Show notification
           const notification = document.createElement('div');
-          notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow';
-          notification.style.zIndex = '9998';
-          notification.style.minWidth = '350px';
+          notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+          notification.style.zIndex = '9999';
+          notification.style.minWidth = '400px';
           notification.innerHTML = `
-            <strong>📊 Dashboard Updated!</strong><br>
-            <small>${newCount} new application(s) detected and added to the list.</small>
-            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+            <strong>🆕 New Application Received!</strong><br>
+            <div class="mt-2">
+              A new application has been submitted and is now in the "Pending Ward Review" list.<br>
+              <small class="text-muted">Application ID: ${event.detail.appID || 'N/A'}</small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           `;
           document.body.appendChild(notification);
           setTimeout(() => {
             if (notification.parentNode) {
               notification.remove();
             }
-          }, 4000);
-        }
-      }
-    } catch (error) {
-      console.error('Error in periodic check:', error);
+          }, 5000);
+        });
+      }, 1000);
     }
-  }, 1500);
+  });
+  
+  // Also listen for storage events (cross-tab sync) - with debouncing
+  window.addEventListener('storage', function(event) {
+    if (event.key === 'mbms_applications') {
+      // Clear any pending refresh
+      if (refreshDebounceTimeout) {
+        clearTimeout(refreshDebounceTimeout);
+      }
+      
+      // Prevent multiple simultaneous refreshes
+      if (isRefreshing) {
+        console.log('⏸️ Refresh already in progress, skipping storage event...');
+        return;
+      }
+      
+      // Debounce: wait 1 second before refreshing
+      refreshDebounceTimeout = setTimeout(() => {
+        isRefreshing = true;
+        console.log('📢 Storage event detected - new application added');
+        refreshApplications().finally(() => {
+          updateMetrics();
+          updateBudgetDisplay();
+          applyFilters();
+          if (typeof refreshVisualizations === 'function') {
+            refreshVisualizations();
+          }
+          isRefreshing = false;
+        });
+      }, 1000);
+    }
+  });
+  
+  // DISABLED: Periodic check - causes flickering
+  // Using event-based updates instead (mbms-data-updated events)
+  // Real-time sync handled by real-time-dashboard-sync.js with 10-second interval
   
   // Setup immediately if DOM is ready, otherwise wait
   if (document.readyState === 'loading') {

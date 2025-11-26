@@ -63,10 +63,10 @@
       handleDataUpdate();
     });
     
-    // Method 4: Periodic refresh (every 3 seconds)
+    // Method 4: Periodic refresh (every 10 seconds - reduced frequency to prevent flickering)
     refreshInterval = setInterval(() => {
       checkForNewApplications();
-    }, 3000);
+    }, 10000);
     
     // Method 5: Visibility change (refresh when tab becomes visible)
     document.addEventListener('visibilitychange', function() {
@@ -123,27 +123,47 @@
     }
   }
   
-  // Handle data update
+  // Debounce refresh to prevent flickering
+  let refreshTimeout;
+  let isRefreshing = false;
+  
+  // Handle data update with debouncing
   function handleDataUpdate() {
-    console.log('🔄 Data update detected - refreshing dashboard...');
-    
-    // Call refreshApplications if available
-    if (typeof refreshApplications === 'function') {
-      refreshApplications();
-    } else if (typeof loadApplications === 'function') {
-      // Fallback: manually trigger table render
-      const apps = loadApplications();
-      if (typeof renderTable === 'function') {
-        renderTable(apps);
-      }
-      if (typeof updateMetrics === 'function') {
-        updateMetrics();
-      }
-    } else {
-      // Last resort: reload page
-      console.log('⚠️ Refresh functions not available, reloading page...');
-      window.location.reload();
+    // Clear any pending refresh
+    if (refreshTimeout) {
+      clearTimeout(refreshTimeout);
     }
+    
+    // Prevent multiple simultaneous refreshes
+    if (isRefreshing) {
+      console.log('⏸️ Refresh already in progress, skipping...');
+      return;
+    }
+    
+    // Debounce: wait 500ms before refreshing
+    refreshTimeout = setTimeout(() => {
+      isRefreshing = true;
+      console.log('🔄 Data update detected - refreshing dashboard...');
+      
+      // Call refreshApplications if available
+      if (typeof refreshApplications === 'function') {
+        refreshApplications().finally(() => {
+          isRefreshing = false;
+        });
+      } else if (typeof loadApplications === 'function') {
+        // Fallback: manually trigger table render
+        const apps = loadApplications();
+        if (typeof renderTable === 'function') {
+          renderTable(apps);
+        }
+        if (typeof updateMetrics === 'function') {
+          updateMetrics();
+        }
+        isRefreshing = false;
+      } else {
+        isRefreshing = false;
+      }
+    }, 500);
   }
   
   // Initialize when DOM is ready
