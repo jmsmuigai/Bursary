@@ -1,4 +1,4 @@
-ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS ON SUBMIT // Enhanced Admin Dashboard with Full Functionality
+ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS ON SUBMIT NSURE THIS WORKS UPDATE THE // Enhanced Admin Dashboard with Full Functionality
 (function() {
   // Prevent multiple initializations
   if (window.adminDashboardInitialized) {
