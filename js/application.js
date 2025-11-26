@@ -570,19 +570,40 @@
       if (typeof window.saveApplication !== 'undefined') {
         // Use unified database access layer (async)
         await window.saveApplication(applicationData);
-        console.log('✅ Application submitted and saved to UNIFIED DATABASE:', appID);
+        console.log('✅ Application submitted and saved to UNIFIED DATABASE (Firebase):', appID);
+        
+        // Also save to localStorage for immediate sync
+        const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+        const existingIndex = applications.findIndex(a => a.appID === appID);
+        if (existingIndex >= 0) {
+          applications[existingIndex] = applicationData;
+        } else {
+          applications.push(applicationData);
+        }
+        localStorage.setItem('mbms_applications', JSON.stringify(applications));
+        console.log('✅ Application also saved to localStorage for sync:', appID);
       } else {
         // Fallback to direct localStorage access
         const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-        applications.push(applicationData);
+        const existingIndex = applications.findIndex(a => a.appID === appID);
+        if (existingIndex >= 0) {
+          applications[existingIndex] = applicationData;
+        } else {
+          applications.push(applicationData);
+        }
         localStorage.setItem('mbms_applications', JSON.stringify(applications));
-        console.log('✅ Application submitted and saved (fallback):', appID);
+        console.log('✅ Application submitted and saved (localStorage fallback):', appID);
       }
     } catch (error) {
       console.error('❌ Error saving application:', error);
       // Fallback to localStorage
       const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-      applications.push(applicationData);
+      const existingIndex = applications.findIndex(a => a.appID === appID);
+      if (existingIndex >= 0) {
+        applications[existingIndex] = applicationData;
+      } else {
+        applications.push(applicationData);
+      }
       localStorage.setItem('mbms_applications', JSON.stringify(applications));
       console.log('✅ Application saved via fallback:', appID);
     }

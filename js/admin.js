@@ -706,10 +706,15 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
           alert('View function not available. Please refresh the page.');
         }
       } else if (action === 'download') {
-        if (typeof window.safeDownloadApplication === 'function') {
+        // Get status from the button's data attribute
+        const status = btn.getAttribute('data-status') || '';
+        console.log('📥 Download action - AppID:', appID, 'Status:', status);
+        
+        // Use the download function with status
+        if (typeof window.downloadApplicationLetter === 'function') {
+          window.downloadApplicationLetter(appID, status);
+        } else if (typeof window.safeDownloadApplication === 'function') {
           window.safeDownloadApplication(appID);
-        } else if (typeof window.downloadApplicationLetter === 'function') {
-          window.downloadApplicationLetter(appID);
         } else {
           alert('Download function not available. Please refresh the page.');
         }
