@@ -406,6 +406,24 @@
       // Auto-login after successful registration
       sessionStorage.setItem('mbms_current_user', JSON.stringify(payload));
       
+      // CRITICAL: Trigger event to notify admin dashboard of new registration
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { 
+          key: 'mbms_users', 
+          action: 'registered', 
+          email: payload.email,
+          user: payload
+        }
+      }));
+      
+      // Also trigger storage event for cross-tab sync
+      try {
+        const currentUsers = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+        localStorage.setItem('mbms_users', JSON.stringify(currentUsers));
+      } catch (e) {
+        console.log('Storage event trigger:', e);
+      }
+      
       // Show modern success message
       if (submitBtn) {
         submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Registration Successful!';
@@ -413,26 +431,37 @@
         submitBtn.classList.add('btn-success');
       }
       
-      // Show success modal
+      // Show success modal with enhanced confirmation
       const successModal = document.createElement('div');
       successModal.className = 'modal fade';
       successModal.id = 'registrationSuccessModal';
       successModal.setAttribute('tabindex', '-1');
       successModal.innerHTML = `
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
           <div class="modal-content border-0 shadow-lg">
             <div class="modal-body text-center p-5">
               <div class="mb-4">
                 <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
               </div>
               <h3 class="text-success mb-3">✅ Registration Successful!</h3>
-              <div class="alert alert-info text-start mb-4">
+              <div class="alert alert-success text-start mb-4">
+                <h6 class="mb-3"><i class="bi bi-info-circle me-2"></i>Your Registration Details:</h6>
                 <p class="mb-2"><strong>Email:</strong> ${payload.email}</p>
                 <p class="mb-2"><strong>Name:</strong> ${payload.firstName} ${payload.lastName}</p>
-                <p class="mb-0">You have been automatically logged in. Redirecting to your dashboard...</p>
+                <p class="mb-2"><strong>Location:</strong> ${payload.subCounty} / ${payload.ward}</p>
+                <p class="mb-0"><strong>Status:</strong> <span class="badge bg-info">Registered</span></p>
+              </div>
+              <div class="alert alert-primary text-start mb-4">
+                <h6 class="mb-2"><i class="bi bi-check2-circle me-2"></i>What's Next?</h6>
+                <p class="mb-1">✅ Your registration has been saved successfully</p>
+                <p class="mb-1">✅ You are now logged in automatically</p>
+                <p class="mb-0">✅ You can now proceed to submit your bursary application</p>
+              </div>
+              <div class="alert alert-warning text-start mb-4">
+                <small><i class="bi bi-exclamation-triangle me-1"></i><strong>Important:</strong> Your registration details will appear in the Application Management system. You can now start your application.</small>
               </div>
               <button type="button" class="btn btn-primary-700 btn-lg" onclick="window.location.href='applicant_dashboard.html'">
-                <i class="bi bi-arrow-right me-2"></i>Go to Dashboard
+                <i class="bi bi-arrow-right me-2"></i>Go to Dashboard & Start Application
               </button>
             </div>
           </div>
@@ -445,16 +474,16 @@
         const bsModal = new bootstrap.Modal(successModal);
         bsModal.show();
         
-        // Auto-redirect after 3 seconds
+        // Auto-redirect after 5 seconds
         setTimeout(() => {
           window.location.href = 'applicant_dashboard.html';
-        }, 3000);
+        }, 5000);
       } else {
         // Fallback alert
-        alert('✅ Registration successful!\n\nYou have been automatically logged in. Redirecting to your dashboard...');
+        alert('✅ Registration successful!\n\n📧 Email: ' + payload.email + '\n👤 Name: ' + payload.firstName + ' ' + payload.lastName + '\n📍 Location: ' + payload.subCounty + ' / ' + payload.ward + '\n\n✅ Your registration has been saved and will appear in the Application Management system.\n\nYou have been automatically logged in. Redirecting to your dashboard...');
         setTimeout(() => {
           window.location.href = 'applicant_dashboard.html';
-        }, 1000);
+        }, 2000);
       }
     });
   </script>
