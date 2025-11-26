@@ -214,14 +214,22 @@
 
     // Update step indicators
     document.querySelectorAll('.step-indicator').forEach((ind, i) => {
-      ind.classList.toggle('text-warning', i <= step);
-      ind.classList.toggle('text-white', i <= step);
+      ind.style.cursor = 'pointer';
+      if (i <= step) {
+        ind.style.color = '#8B4513';
+        ind.style.fontWeight = 'bold';
+      } else {
+        ind.style.color = '#999';
+        ind.style.fontWeight = 'normal';
+      }
     });
 
     // Generate review summary on last step
     if (step === totalSteps - 1) {
       generateReviewSummary();
     }
+    
+    console.log('✅ Step', step + 1, 'displayed - all buttons enabled');
   }
 
   // Generate review summary
