@@ -799,7 +799,7 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
         console.log(`   📊 Status filter: ${beforeCount} → ${filtered.length} applications`);
       }
 
-      // Render filtered results
+      // Render filtered results (uses modern list if available)
       renderTable(filtered);
       
       console.log('✅ Filters applied successfully:', {
