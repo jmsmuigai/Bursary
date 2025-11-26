@@ -106,10 +106,10 @@
               
               <div class="col-md-6">
                 <label class="form-label">Home Ward <span class="text-danger">*</span></label>
-                <select id="ward" class="form-select" required disabled>
-                  <option value="">-- Select Ward --</option>
+                <select id="ward" class="form-select" required>
+                  <option value="">-- Select Sub-County First --</option>
                 </select>
-                <div class="invalid-feedback">Ward is required.</div>
+                <div class="invalid-feedback">Ward is required. Please select a sub-county first.</div>
               </div>
               <div class="col-md-6" id="otherWardDiv" style="display:none;">
                 <label class="form-label">Specify Ward <span class="text-danger">*</span></label>
@@ -144,9 +144,11 @@
               </div>
               
               <div class="col-12 mt-3">
-                <button class="btn btn-primary-700 w-100 py-2" type="submit">
-                  <i class="bi bi-person-plus me-2"></i>Register Account
-                </button>
+                <div class="d-grid gap-2">
+                  <button class="btn btn-primary-700 w-100 py-2" type="submit" id="registerSubmitBtn" style="font-weight: 600; font-size: 1.1rem;">
+                    <i class="bi bi-person-plus me-2"></i>Register Account
+                  </button>
+                </div>
               </div>
               
               <div class="col-12 text-center">
@@ -164,6 +166,8 @@
   <script src="js/mobile-compat.js"></script>
   <script src="js/data.js"></script>
   <script src="js/auth.js"></script>
+  <!-- Registration Form Enhancer (activates all buttons, inputs, dropdowns, adds Save functionality) -->
+  <script src="js/registration-enhancer.js"></script>
   
   <!-- Footer -->
   <footer class="mt-5 py-4" style="background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-600) 100%); color: white;">
@@ -242,10 +246,16 @@
         otherSubCountyInput.setAttribute('required', 'required');
         return;
       }
-      const wards = GARISSA_WARDS[sc] || [];
-      wards.forEach(w => wardSelect.add(new Option(w, w)));
-      wardSelect.add(new Option('Other (Specify below)', 'other_ward'));
-      wardSelect.disabled = false;
+      
+      if (sc && sc !== '') {
+        const wards = GARISSA_WARDS[sc] || [];
+        wards.forEach(w => wardSelect.add(new Option(w, w)));
+        wardSelect.add(new Option('Other (Specify below)', 'other_ward'));
+        wardSelect.disabled = false;
+        wardSelect.style.pointerEvents = 'auto';
+        wardSelect.style.opacity = '1';
+        console.log('✅ Wards populated for', sc, '-', wards.length, 'wards');
+      }
     }
     
     subCountySelect.addEventListener('change', populateWards);
@@ -287,13 +297,36 @@
       return appDuplicate;
     }
 
-    document.getElementById('applicantRegistrationForm').addEventListener('submit', (e) => {
+    // Enhanced form submission with better error handling
+    document.getElementById('applicantRegistrationForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const form = e.target;
+      e.stopPropagation();
       
+      const form = e.target;
+      const submitBtn = document.getElementById('registerSubmitBtn');
+      
+      // Disable submit button during processing
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+      }
+      
+      // Validate form
       if (!form.checkValidity()) {
-        e.stopPropagation();
         form.classList.add('was-validated');
+        
+        // Scroll to first invalid field
+        const firstInvalid = form.querySelector(':invalid');
+        if (firstInvalid) {
+          firstInvalid.focus();
+          firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Re-enable submit button
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Register Account';
+        }
         return;
       }
 
@@ -302,6 +335,12 @@
       if (pwd !== cpwd) {
         document.getElementById('passwordMatchFeedback').style.display = 'block';
         document.getElementById('confirmPassword').classList.add('is-invalid');
+        
+        // Re-enable submit button
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Register Account';
+        }
         return;
       }
 
@@ -361,16 +400,62 @@
       
       console.log('✅ User registered successfully:', payload.email);
 
+      // Clear saved progress
+      localStorage.removeItem('mbms_registration_progress');
+      
       // Auto-login after successful registration
       sessionStorage.setItem('mbms_current_user', JSON.stringify(payload));
       
-      // Show success message and redirect
-      alert('✅ Registration successful!\n\nYou have been automatically logged in. Redirecting to your dashboard...');
+      // Show modern success message
+      if (submitBtn) {
+        submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Registration Successful!';
+        submitBtn.classList.remove('btn-primary-700');
+        submitBtn.classList.add('btn-success');
+      }
       
-      // Redirect to applicant dashboard (seamless experience)
-      setTimeout(() => {
-        window.location.href = 'applicant_dashboard.html';
-      }, 500);
+      // Show success modal
+      const successModal = document.createElement('div');
+      successModal.className = 'modal fade';
+      successModal.id = 'registrationSuccessModal';
+      successModal.setAttribute('tabindex', '-1');
+      successModal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+              <div class="mb-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+              </div>
+              <h3 class="text-success mb-3">✅ Registration Successful!</h3>
+              <div class="alert alert-info text-start mb-4">
+                <p class="mb-2"><strong>Email:</strong> ${payload.email}</p>
+                <p class="mb-2"><strong>Name:</strong> ${payload.firstName} ${payload.lastName}</p>
+                <p class="mb-0">You have been automatically logged in. Redirecting to your dashboard...</p>
+              </div>
+              <button type="button" class="btn btn-primary-700 btn-lg" onclick="window.location.href='applicant_dashboard.html'">
+                <i class="bi bi-arrow-right me-2"></i>Go to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(successModal);
+      
+      // Show modal
+      if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const bsModal = new bootstrap.Modal(successModal);
+        bsModal.show();
+        
+        // Auto-redirect after 3 seconds
+        setTimeout(() => {
+          window.location.href = 'applicant_dashboard.html';
+        }, 3000);
+      } else {
+        // Fallback alert
+        alert('✅ Registration successful!\n\nYou have been automatically logged in. Redirecting to your dashboard...');
+        setTimeout(() => {
+          window.location.href = 'applicant_dashboard.html';
+        }, 1000);
+      }
     });
   </script>
 </body>
