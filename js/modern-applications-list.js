@@ -172,7 +172,7 @@
           <div class="alert alert-info text-center py-5">
             <i class="bi bi-inbox fs-1 d-block mb-3"></i>
             <h5>No Applications Found</h5>
-            <p class="mb-0">Click "Create 20 New Records" to load sample data.</p>
+            <p class="mb-0">The system is ready for the first application submission.</p>
           </div>
         </div>
       `;
