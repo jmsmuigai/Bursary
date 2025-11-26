@@ -377,9 +377,13 @@
 
       // Save to UNIFIED DATABASE (SAME DATABASE as admin portal and applications)
       try {
-        if (typeof saveUser !== 'undefined') {
+        // Use unified database access layer - check both saveUser and window.saveUser
+        const saveFn = typeof saveUser !== 'undefined' ? saveUser : 
+                       (typeof window.saveUser !== 'undefined' ? window.saveUser : null);
+        
+        if (saveFn) {
           // Use unified database access layer
-          const saved = saveUser(payload);
+          const saved = saveFn(payload);
           if (saved) {
             console.log('✅ User registered and saved to UNIFIED DATABASE:', payload.email);
           } else {
@@ -395,6 +399,12 @@
       } catch (error) {
         console.error('Registration error:', error);
         alert('Error saving registration. Please try again.\n\nError: ' + error.message);
+        
+        // Re-enable submit button on error
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Register Account';
+        }
         return;
       }
       

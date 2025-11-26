@@ -12,7 +12,7 @@
       console.warn('Admin dashboard already initialized');
       return;
     }
-  window.adminDashboardInitialized = true;
+    window.adminDashboardInitialized = true;
 
   // Check admin access
   try {
@@ -2764,30 +2764,41 @@
       }
     }, 500);
     
-    // Listen for new application submissions
+    // Listen for new application submissions AND user registrations
     window.addEventListener('mbms-data-updated', function(e) {
-      console.log('📬 New application submitted! Refreshing dashboard...', e.detail);
-      setTimeout(() => {
-        const newApps = loadApplications();
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(newApps);
-        applyFilters();
-        
-        // CRITICAL: Refresh visualizations immediately when first submission is received
-        if (typeof refreshVisualizations === 'function') {
-          refreshVisualizations();
-          console.log('✅ Visualizations refreshed with new application data');
-        }
-        
-        console.log('✅ Dashboard refreshed with', newApps.length, 'applications');
-      }, 500);
+      const detail = e.detail || {};
+      const key = detail.key;
+      
+      if (key === 'mbms_applications') {
+        console.log('📬 New application submitted! Refreshing dashboard...', detail);
+        setTimeout(() => {
+          const newApps = loadApplications();
+          updateMetrics();
+          updateBudgetDisplay();
+          renderTable(newApps);
+          applyFilters();
+          
+          // CRITICAL: Refresh visualizations immediately when first submission is received
+          if (typeof refreshVisualizations === 'function') {
+            refreshVisualizations();
+            console.log('✅ Visualizations refreshed with new application data');
+          }
+          
+          console.log('✅ Dashboard refreshed with', newApps.length, 'applications');
+        }, 500);
+      } else if (key === 'mbms_users') {
+        console.log('📬 New user registered! Refreshing metrics...', detail);
+        setTimeout(() => {
+          updateMetrics();
+          console.log('✅ Metrics refreshed with new user registration');
+        }, 500);
+      }
     });
     
     // Listen for storage changes (cross-tab sync)
     window.addEventListener('storage', function(e) {
       if (e.key === 'mbms_applications') {
-        console.log('📬 Storage change detected! Refreshing dashboard...');
+        console.log('📬 Storage change detected (applications)! Refreshing dashboard...');
         setTimeout(() => {
           const newApps = loadApplications();
           updateMetrics();
@@ -2800,6 +2811,12 @@
             refreshVisualizations();
             console.log('✅ Visualizations refreshed via storage event');
           }
+        }, 500);
+      } else if (e.key === 'mbms_users') {
+        console.log('📬 Storage change detected (users)! Refreshing metrics...');
+        setTimeout(() => {
+          updateMetrics();
+          console.log('✅ Metrics refreshed via storage event (user registration)');
         }, 500);
       }
     });
@@ -3290,7 +3307,7 @@
           } else if (typeof applyFilters === 'function') {
             applyFilters();
           }
-        }, 100);
+         }, 100);
       });
       console.log('✅ Status filter listener attached');
     } else {

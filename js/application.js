@@ -575,12 +575,23 @@
 
     // Save application to UNIFIED DATABASE (Firebase or localStorage)
     try {
-      if (typeof window.saveApplication !== 'undefined') {
-        // Use unified database access layer (async)
-        await window.saveApplication(applicationData);
-        console.log('✅ Application submitted and saved to UNIFIED DATABASE (Firebase):', appID);
+      // Use unified database access layer - check both saveApplication and window.saveApplication
+      const saveFn = typeof saveApplication !== 'undefined' ? saveApplication : 
+                     (typeof window.saveApplication !== 'undefined' ? window.saveApplication : null);
+      
+      if (saveFn) {
+        // Use unified database access layer (async or sync)
+        const result = saveFn(applicationData);
         
-        // Also save to localStorage for immediate sync
+        // Handle async result
+        if (result && typeof result.then === 'function') {
+          await result;
+          console.log('✅ Application submitted and saved to UNIFIED DATABASE (async):', appID);
+        } else {
+          console.log('✅ Application submitted and saved to UNIFIED DATABASE (sync):', appID);
+        }
+        
+        // Also ensure localStorage is updated for immediate sync
         const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
         const existingIndex = applications.findIndex(a => a.appID === appID);
         if (existingIndex >= 0) {
@@ -601,6 +612,11 @@
         }
         localStorage.setItem('mbms_applications', JSON.stringify(applications));
         console.log('✅ Application submitted and saved (localStorage fallback):', appID);
+        
+        // Trigger event manually for fallback
+        window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+          detail: { key: 'mbms_applications', action: 'added', appID: appID }
+        }));
       }
     } catch (error) {
       console.error('❌ Error saving application:', error);
@@ -614,6 +630,11 @@
       }
       localStorage.setItem('mbms_applications', JSON.stringify(applications));
       console.log('✅ Application saved via fallback:', appID);
+      
+      // Trigger event manually for fallback
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { key: 'mbms_applications', action: 'added', appID: appID }
+      }));
     }
     
     // Update counter using unified database
