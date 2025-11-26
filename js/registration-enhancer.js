@@ -102,25 +102,49 @@
     // Check if save button already exists
     let saveBtn = document.getElementById('saveProgressBtn');
     if (!saveBtn) {
-      // Create save button
-      saveBtn = document.createElement('button');
-      saveBtn.type = 'button';
-      saveBtn.id = 'saveProgressBtn';
-      saveBtn.className = 'btn btn-outline-warning w-100 py-2 mb-2';
-      saveBtn.innerHTML = '<i class="bi bi-save me-2"></i>Save Progress';
-      
-      // Insert before submit button
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn && submitBtn.parentElement) {
-        submitBtn.parentElement.insertBefore(saveBtn, submitBtn);
+      // Find the submit button container
+      const submitContainer = form.querySelector('button[type="submit"]')?.parentElement;
+      if (submitContainer) {
+        // Create save button
+        saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.id = 'saveProgressBtn';
+        saveBtn.className = 'btn btn-outline-warning w-100 py-2 mb-2';
+        saveBtn.style.fontWeight = '600';
+        saveBtn.innerHTML = '<i class="bi bi-save me-2"></i>Save Progress';
+        
+        // Insert before submit button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn && submitBtn.parentElement) {
+          submitBtn.parentElement.insertBefore(saveBtn, submitBtn);
+        } else {
+          submitContainer.insertBefore(saveBtn, submitContainer.firstChild);
+        }
+        
+        console.log('✅ Save Progress button created');
       }
     }
     
-    // Save progress functionality
-    saveBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      saveRegistrationProgress();
-    });
+    if (saveBtn) {
+      // Ensure button is enabled
+      saveBtn.disabled = false;
+      saveBtn.style.pointerEvents = 'auto';
+      saveBtn.style.opacity = '1';
+      saveBtn.style.cursor = 'pointer';
+      
+      // Remove any existing listeners
+      const newSaveBtn = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+      
+      // Save progress functionality
+      newSaveBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        saveRegistrationProgress();
+      });
+      
+      console.log('✅ Save Progress button activated');
+    }
     
     // Auto-save on input change (debounced)
     let saveTimeout;
