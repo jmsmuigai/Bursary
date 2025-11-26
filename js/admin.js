@@ -2031,11 +2031,16 @@
     }, 100);
   };
 
-  // Export to Excel/CSV with error handling
+  // Export to Excel/CSV with error handling - DISABLED (handled by button-fix-complete.js)
+  // The button-fix-complete.js file handles this more reliably
   try {
     const downloadReportBtn = document.getElementById('downloadReportBtn');
     if (downloadReportBtn) {
-      downloadReportBtn.addEventListener('click', function(e) {
+      // Remove old listener if exists
+      const newBtn = downloadReportBtn.cloneNode(true);
+      downloadReportBtn.parentNode.replaceChild(newBtn, downloadReportBtn);
+      
+      newBtn.addEventListener('click', function(e) {
         e.preventDefault();
         try {
           const reportType = document.getElementById('reportType')?.value || 'beneficiary';
@@ -2058,8 +2063,9 @@
           
           if (reportType === 'beneficiaries') {
             rows = [['Serial No', 'App ID', 'Applicant Name', 'Sub-County', 'Ward', 'Institution', 'Status', 'Amount Requested', 'Awarded Amount', 'Date Submitted', 'Date Awarded']];
-          // Include ALL applications, not just filtered
-          const allAppsForExport = reportStatus === 'all' ? apps : filtered;
+          // Include ALL applications based on status filter
+          const allAppsForExport = reportStatus === 'All' ? apps : filtered;
+          console.log('📊 Exporting', allAppsForExport.length, 'applications');
           allAppsForExport.forEach(app => {
             rows.push([
                 app.awardDetails?.serialNumber || 'N/A',
@@ -2146,7 +2152,28 @@
               notifyAdminReportGenerated(reportType, reportSummary);
             }
             
-            alert(`✅ Report downloaded successfully!\n\nFile: ${filename}\n📧 Email notification sent to fundadmin@garissa.go.ke`);
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            successMsg.style.zIndex = '9999';
+            successMsg.style.minWidth = '400px';
+            successMsg.innerHTML = `
+              <strong>✅ Document Downloaded!</strong><br>
+              <div class="mt-2">
+                📄 File: <strong>${filename}</strong><br>
+                📊 Records: <strong>${filtered.length}</strong> applications<br>
+                <small class="text-muted">File saved to your default downloads folder</small>
+              </div>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(successMsg);
+            setTimeout(() => {
+              if (successMsg.parentNode) {
+                successMsg.remove();
+              }
+            }, 5000);
+            
+            console.log('✅ Excel download successful:', filename, '-', filtered.length, 'records');
           } else {
             alert('CSV download function not available. Please refresh the page.');
           }

@@ -58,8 +58,8 @@ function generateDummyApplications() {
     // 5 NEW RECORDS
     'Pending Ward Review',
     'Pending Committee Review',
-    'Pending Submission',
-    'Pending Ward Review',
+    'Pending Submission', 
+    'Pending Ward Review', 
     'Pending Committee Review'
   ];
   
