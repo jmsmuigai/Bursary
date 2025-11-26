@@ -134,20 +134,11 @@
         </section>
 
         <section id="apps" class="mb-5">
-          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center justify-content-between mb-2">
             <h4 class="fw-semibold mb-0">Application Management</h4>
             <div>
               <button id="refreshBtn" class="btn btn-outline-primary btn-sm me-2" onclick="refreshApplications();">
                 <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-              </button>
-              <button class="btn btn-outline-info btn-sm" onclick="debugApplications();" title="Debug: Check localStorage">
-                <i class="bi bi-bug me-1"></i>Debug
-              </button>
-              <button class="btn btn-outline-success btn-sm" onclick="forceRefreshAll();" title="Force refresh all displays">
-                <i class="bi bi-arrow-repeat me-1"></i>Force Refresh
-              </button>
-              <button class="btn btn-outline-warning btn-sm" onclick="showFirebaseStatus();" title="Test Firebase Connection">
-                <i class="bi bi-database me-1"></i>Firebase Status
               </button>
             </div>
           </div>
@@ -233,14 +224,6 @@
           </div>
           
           <div class="card p-3 shadow-sm">
-            <div class="row g-2 align-items-end mb-3">
-              <div class="col-md-12">
-                <button class="btn btn-primary btn-sm" onclick="forceLoadDummyData();" title="Load 10 sample applications for testing">
-                  <i class="bi bi-database-add me-1"></i>Load Demo Data (10 Records)
-                </button>
-                <small class="text-muted ms-2">Click to load sample applications with various statuses for testing</small>
-              </div>
-            </div>
             <div class="row g-2 align-items-end">
               <div class="col-md-4">
                 <label class="form-label">Report Type</label>

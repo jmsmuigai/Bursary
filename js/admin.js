@@ -2788,28 +2788,7 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
     }, 5000);
   } // End of initAdminDashboard function
   
-  // Force reload dummy data (for testing)
-  window.forceReloadDummyData = function() {
-    console.log('🔄 Force reloading dummy data...');
-    
-    // Clear existing data
-    localStorage.removeItem('mbms_applications');
-    localStorage.removeItem('mbms_application_counter');
-    localStorage.removeItem('mbms_last_serial');
-    
-    // Reload dummy data
-    if (typeof initializeDummyData === 'function') {
-      if (initializeDummyData()) {
-        const apps = loadApplications();
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(apps);
-        applyFilters();
-        sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
-        alert('✅ Dummy data reloaded! ' + apps.length + ' applications now visible.');
-      }
-    }
-  };
+  // Removed: forceReloadDummyData function - system is production-ready
   
   // Expose a global function to manually refresh everything
   window.forceRefreshAll = function() {
