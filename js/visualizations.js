@@ -107,17 +107,36 @@ async function refreshVisualizations() {
   }
   
   if (apps.length === 0) {
-    console.warn('⚠️ No applications found for visualizations');
-    // Show message in chart containers
+    console.log('📊 No applications yet - waiting for first applicant');
+    // Show modern waiting message in chart containers
     ['statusPieChart', 'subCountyBarChart', 'budgetTrendChart', 'genderChart'].forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#999';
-        ctx.font = '14px Arial';
+        
+        // Modern gradient background
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#f0f0f0');
+        gradient.addColorStop(1, '#e0e0e0');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Modern text styling
+        ctx.fillStyle = '#6c757d';
+        ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('No data available. Load demo data first.', canvas.width / 2, canvas.height / 2);
+        ctx.textBaseline = 'middle';
+        
+        // Multi-line message
+        const message1 = 'Waiting for the first applicant';
+        const message2 = 'Visualization will begin once';
+        const message3 = 'the first applicant details are received';
+        
+        ctx.fillText(message1, canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = '14px Arial';
+        ctx.fillText(message2, canvas.width / 2, canvas.height / 2);
+        ctx.fillText(message3, canvas.width / 2, canvas.height / 2 + 20);
       }
     });
     return;

@@ -2,7 +2,7 @@
 
 A comprehensive, modern, and secure bursary management system for Garissa County, Kenya. This system streamlines the entire bursary lifecycle from online application to fund allocation and reporting.
 
-**Version:** 3.3  
+**Version:** 3.6  
 **Release Date:** January 2025  
 **Status:** ✅ **PRODUCTION READY - FULLY TESTED, VERIFIED & MOBILE-OPTIMIZED**  
 **Latest Update:** Comprehensive dummy data removal, auto-clear test data on load, system ready for first real applicant, budget deduction confirmed, Firebase integration complete  

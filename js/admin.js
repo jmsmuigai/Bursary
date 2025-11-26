@@ -1420,7 +1420,7 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
       
       const apps = loadApplications();
       if (!apps || apps.length === 0) {
-        alert('⚠️ No applications found. Please load demo data or wait for applications to be submitted.');
+        alert('⚠️ No applications found. The system is ready for the first applicant submission.');
         return;
       }
       
@@ -2755,6 +2755,13 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
         updateBudgetDisplay();
         renderTable(newApps);
         applyFilters();
+        
+        // CRITICAL: Refresh visualizations immediately when first submission is received
+        if (typeof refreshVisualizations === 'function') {
+          refreshVisualizations();
+          console.log('✅ Visualizations refreshed with new application data');
+        }
+        
         console.log('✅ Dashboard refreshed with', newApps.length, 'applications');
       }, 500);
     });
@@ -2769,6 +2776,12 @@ ords..remember THE MOST IMPORTANT ASPEBT..AFTER AN APPLICANT REGISTER AND CLICKS
           updateBudgetDisplay();
           renderTable(newApps);
           applyFilters();
+          
+          // CRITICAL: Refresh visualizations on storage change
+          if (typeof refreshVisualizations === 'function') {
+            refreshVisualizations();
+            console.log('✅ Visualizations refreshed via storage event');
+          }
         }, 500);
       }
     });
