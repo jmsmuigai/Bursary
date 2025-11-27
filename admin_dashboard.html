@@ -46,7 +46,12 @@
     <main class="flex-grow-1 bg-app">
       <div class="container py-4">
         <section id="overview" class="mb-4">
-          <h3 class="text-primary-700 fw-bold mb-3">Dashboard Overview</h3>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="text-primary-700 fw-bold mb-0">Dashboard Overview</h3>
+            <button id="sendEmailToFundAdminBtn" class="btn btn-primary-700 btn-sm" onclick="sendSystemStatusEmail()" title="Send email to fundadmin@garissa.go.ke">
+              <i class="bi bi-envelope me-2"></i>Send Email to Fund Admin
+            </button>
+          </div>
           <div class="row g-3">
             <div class="col-md-3">
               <div class="card card-dash shadow-sm p-3">
@@ -368,6 +373,8 @@
   <script src="js/sync.js"></script>
   <script src="js/test-data.js"></script>
   <script src="js/email-notifications.js"></script>
+  <!-- SEND EMAIL TO FUNDADMIN (direct email functionality) -->
+  <script src="js/send-email-to-fundadmin.js"></script>
   <script src="js/pdf-generator.js"></script>
   <script src="js/visualizations.js"></script>
   <script src="js/admin.js"></script>
@@ -431,6 +438,8 @@
   <script src="js/final-database-clear.js"></script>
   <!-- AUTO EMAIL TEST (automatically sends test email on first load) -->
   <script src="js/auto-email-test.js"></script>
+  <!-- SEND EMAIL TO FUNDADMIN (direct email functionality) -->
+  <script src="js/send-email-to-fundadmin.js"></script>
   
   <!-- FINAL ACTIVATION SCRIPT -->
   <script>
