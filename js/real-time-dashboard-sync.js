@@ -63,10 +63,14 @@
       handleDataUpdate();
     });
     
-    // Method 4: Periodic refresh (every 10 seconds - reduced frequency to prevent flickering)
+    // Method 4: Periodic refresh - DISABLED to prevent flickering
+    // Using event-driven updates only (mbms-data-updated, storage events)
+    // No periodic polling - all updates are event-driven
+    /*
     refreshInterval = setInterval(() => {
       checkForNewApplications();
     }, 10000);
+    */
     
     // Method 5: Visibility change (refresh when tab becomes visible)
     document.addEventListener('visibilitychange', function() {
@@ -140,7 +144,7 @@
       return;
     }
     
-    // Debounce: wait 500ms before refreshing
+    // Debounce: wait 1 second before refreshing (increased to prevent flickering)
     refreshTimeout = setTimeout(() => {
       isRefreshing = true;
       console.log('🔄 Data update detected - refreshing dashboard...');
@@ -163,7 +167,7 @@
       } else {
         isRefreshing = false;
       }
-    }, 500);
+    }, 1000); // Increased to 1 second to prevent flickering
   }
   
   // Initialize when DOM is ready
