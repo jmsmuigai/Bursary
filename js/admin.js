@@ -2642,57 +2642,41 @@
     console.warn('Auto-clear error:', e);
   }
   
-  // Load existing applications (already filtered by loadApplications)
+  // CRITICAL: Clear ALL application records on load (including Abdi Ali)
+  console.log('🧹 Clearing all application records...');
+  localStorage.setItem('mbms_applications', JSON.stringify([]));
+  localStorage.setItem('mbms_application_counter', '0');
+  localStorage.setItem('mbms_last_serial', '0');
+  localStorage.setItem('mbms_budget_allocated', '0');
+  console.log('✅ All application records cleared - database is now empty');
+  
+  // Load existing applications (should be empty now)
   let allApps = loadApplications();
   const realApps = allApps; // loadApplications already filters
   
   console.log('📊 Applications loaded:', realApps.length, 'Real applications');
   
-  // If no real applications, show blank list with placeholder rows
-  if (realApps.length === 0) {
-    console.log('📋 No real applications - showing blank list ready for first applicant');
-    
-    // Update metrics to show 0
-    updateMetrics();
-    updateBudgetDisplay();
-    
-    // Show blank list with placeholder rows
-    const tbody = document.getElementById('applicationsTableBody');
-    if (tbody) {
-      tbody.innerHTML = '';
-      
-      // Show 10 blank placeholder rows
-      for (let i = 1; i <= 10; i++) {
-        const tr = document.createElement('tr');
-        tr.className = 'table-row-placeholder';
-        tr.style.opacity = '0.4';
-        tr.innerHTML = `
-          <td><strong class="text-muted">${i}</strong></td>
-          <td><span class="text-muted">-</span></td>
-          <td><span class="text-muted">Waiting for first applicant...</span></td>
-          <td><span class="text-muted">-</span></td>
-          <td><span class="text-muted">-</span></td>
-          <td><span class="badge bg-secondary">-</span></td>
-          <td><span class="text-muted">-</span></td>
-          <td><span class="text-muted">-</span></td>
-        `;
-        tbody.appendChild(tr);
-      }
-      
-      // Add message row
-      const messageRow = document.createElement('tr');
-      messageRow.innerHTML = `
+  // Show completely empty table - only column headers, no data rows
+  console.log('📋 Showing empty table with column headers only');
+  
+  // Update metrics to show 0
+  updateMetrics();
+  updateBudgetDisplay();
+  
+  // Show empty table with only column headers
+  const tbody = document.getElementById('applicationsTableBody');
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
         <td colspan="8" class="text-center py-5">
-          <div class="alert alert-info mb-0">
-            <i class="bi bi-inbox fs-1 d-block mb-3 text-primary"></i>
-            <h5>System Ready for First Application</h5>
-            <p class="mb-2">The system is ready to receive the first application submission.</p>
-            <p class="mb-0"><small class="text-muted">Once an applicant submits their application, it will appear here automatically.</small></p>
-          </div>
+          <i class="bi bi-inbox fs-1 d-block mb-3 text-muted"></i>
+          <h5 class="text-muted mb-2">No Applications Found</h5>
+          <p class="text-muted mb-0">The system is ready for the first application submission.</p>
+          <p class="text-muted small mt-2">All previous records have been cleared.</p>
         </td>
-      `;
-      tbody.appendChild(messageRow);
-    }
+      </tr>
+    `;
+  }
     
     // Show notification
     const notification = document.createElement('div');
