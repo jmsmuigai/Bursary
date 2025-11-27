@@ -726,14 +726,20 @@
       }
     }));
     
+    // Event 1b: Additional custom event with different name for compatibility
+    window.dispatchEvent(new CustomEvent('mbms-application-submitted', {
+      detail: applicationData
+    }));
+    
     // Event 2: Storage event for cross-tab sync
     try {
-      const storageEvent = new StorageEvent('storage', {
-        key: 'mbms_applications',
-        newValue: localStorage.getItem('mbms_applications'),
-        oldValue: null,
-        storageArea: localStorage
-      });
+      const currentApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      localStorage.setItem('mbms_applications', JSON.stringify(currentApps));
+      
+      // Trigger storage event manually
+      const storageEvent = new Event('storage');
+      Object.defineProperty(storageEvent, 'key', { value: 'mbms_applications' });
+      Object.defineProperty(storageEvent, 'newValue', { value: JSON.stringify(currentApps) });
       window.dispatchEvent(storageEvent);
     } catch (e) {
       console.log('Storage event dispatch:', e);
@@ -743,9 +749,28 @@
     const currentApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     localStorage.setItem('mbms_applications', JSON.stringify(currentApps));
     
-    // Event 4: Additional trigger after a short delay
+    // Event 4: Update timestamp for change detection
+    localStorage.setItem('mbms-last-update', Date.now().toString());
+    
+    // Event 5: Additional trigger after a short delay
     setTimeout(() => {
-      localStorage.setItem('mbms_applications', JSON.stringify(currentApps));
+      const verifyApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      localStorage.setItem('mbms_applications', JSON.stringify(verifyApps));
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { 
+          key: 'mbms_applications', 
+          action: 'submitted', 
+          appID: appID,
+          application: applicationData
+        }
+      }));
+      window.dispatchEvent(new CustomEvent('mbms-application-submitted', {
+        detail: applicationData
+      }));
+    }, 500);
+    
+    // Event 6: Final trigger after 1 second
+    setTimeout(() => {
       window.dispatchEvent(new CustomEvent('mbms-data-updated', {
         detail: { 
           key: 'mbms_applications', 
@@ -753,9 +778,11 @@
           appID: appID 
         }
       }));
-    }, 500);
+    }, 1000);
     
     console.log('✅ All events triggered - Admin dashboard should update automatically');
+    console.log('📊 Application saved with ID:', appID);
+    console.log('📋 Application will appear in admin portal immediately');
     
       // Redirect to applicant dashboard - ENHANCED with browser compatibility
       setTimeout(() => {

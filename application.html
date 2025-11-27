@@ -99,7 +99,7 @@
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Sex/Gender <span class="text-danger">*</span></label>
-                    <select class="form-select" id="genderApp" required style="pointer-events: auto; opacity: 1;">
+                    <select class="form-select" id="genderApp" name="genderApp" required style="pointer-events: auto; opacity: 1; cursor: pointer;">
                       <option value="">-- Select Gender --</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
@@ -174,15 +174,15 @@
 
                   <div class="col-12">
                     <label class="form-label">(3) Select Parent or Guardian Information <span class="text-danger">*</span></label>
-                    <div class="form-check mb-2">
-                      <input class="form-check-input" type="radio" name="parentOrGuardian" id="selectParent" value="parent" />
-                      <label class="form-check-label" for="selectParent">
+                    <div class="radio-group mb-3">
+                      <label class="radio-label" for="selectParent">
+                        <input class="form-check-input" type="radio" name="parentOrGuardian" id="selectParent" value="parent" checked />
+                        <span class="radio-custom"></span>
                         <strong>Parent Information</strong>
                       </label>
-                    </div>
-                    <div class="form-check mb-3">
-                      <input class="form-check-input" type="radio" name="parentOrGuardian" id="selectGuardian" value="guardian" />
-                      <label class="form-check-label" for="selectGuardian">
+                      <label class="radio-label" for="selectGuardian">
+                        <input class="form-check-input" type="radio" name="parentOrGuardian" id="selectGuardian" value="guardian" />
+                        <span class="radio-custom"></span>
                         <strong>Guardian Information</strong>
                       </label>
                     </div>
@@ -456,7 +456,8 @@
         const guardianInfoSection = document.getElementById('guardianInfoSection');
         
         if (!selectParent || !selectGuardian || !parentInfoSection || !guardianInfoSection) {
-          console.log('Parent/Guardian toggle elements not found');
+          console.log('Parent/Guardian toggle elements not found - retrying...');
+          setTimeout(initParentGuardianToggle, 500);
           return;
         }
         
@@ -467,36 +468,45 @@
             parentInfoSection.style.display = 'block';
             guardianInfoSection.style.display = 'none';
             // Disable guardian inputs
-            document.getElementById('guardianName').disabled = true;
-            document.getElementById('guardianOccupation').disabled = true;
+            const guardianInputs = guardianInfoSection.querySelectorAll('input, select, textarea');
+            guardianInputs.forEach(field => {
+              field.disabled = true;
+              field.required = false;
+              field.value = '';
+            });
             // Enable parent inputs
-            document.getElementById('fatherName').disabled = false;
-            document.getElementById('fatherOccupation').disabled = false;
-            document.getElementById('motherName').disabled = false;
-            document.getElementById('motherOccupation').disabled = false;
+            const parentInputs = parentInfoSection.querySelectorAll('input, select, textarea');
+            parentInputs.forEach(field => {
+              field.disabled = false;
+            });
+            console.log('✅ Parent section enabled, Guardian section disabled');
           } else if (selectGuardian.checked) {
             // Show guardian section, hide parent section
             parentInfoSection.style.display = 'none';
             guardianInfoSection.style.display = 'block';
             // Disable parent inputs
-            document.getElementById('fatherName').disabled = true;
-            document.getElementById('fatherOccupation').disabled = true;
-            document.getElementById('motherName').disabled = true;
-            document.getElementById('motherOccupation').disabled = true;
+            const parentInputs = parentInfoSection.querySelectorAll('input, select, textarea');
+            parentInputs.forEach(field => {
+              field.disabled = true;
+              field.required = false;
+              field.value = '';
+            });
             // Enable guardian inputs
-            document.getElementById('guardianName').disabled = false;
-            document.getElementById('guardianOccupation').disabled = false;
+            const guardianInputs = guardianInfoSection.querySelectorAll('input, select, textarea');
+            guardianInputs.forEach(field => {
+              field.disabled = false;
+            });
+            console.log('✅ Guardian section enabled, Parent section disabled');
           } else {
             // Neither selected - show both but disabled
             parentInfoSection.style.display = 'block';
             guardianInfoSection.style.display = 'block';
             // Disable all
-            document.getElementById('fatherName').disabled = true;
-            document.getElementById('fatherOccupation').disabled = true;
-            document.getElementById('motherName').disabled = true;
-            document.getElementById('motherOccupation').disabled = true;
-            document.getElementById('guardianName').disabled = true;
-            document.getElementById('guardianOccupation').disabled = true;
+            const allInputs = document.querySelectorAll('#parentInfoSection input, #parentInfoSection select, #guardianInfoSection input, #guardianInfoSection select');
+            allInputs.forEach(field => {
+              field.disabled = true;
+              field.required = false;
+            });
           }
         }
         
@@ -504,7 +514,10 @@
         selectParent.addEventListener('change', toggleSections);
         selectGuardian.addEventListener('change', toggleSections);
         
-        // Initialize
+        // Initialize - default to parent
+        if (!selectParent.checked && !selectGuardian.checked) {
+          selectParent.checked = true;
+        }
         toggleSections();
         
         console.log('✅ Parent/Guardian toggle initialized');
