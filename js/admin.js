@@ -2856,20 +2856,9 @@
       }
     });
     
-    // Periodic check for new applications (every 5 seconds)
-    // DISABLED: setInterval removed to prevent flickering - using event-based updates instead
-    // setInterval(() => {
-      const currentCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
-      const apps = loadApplications();
-      if (apps.length !== currentCount) {
-        console.log('📊 Application count changed:', currentCount, '->', apps.length);
-        updateMetrics();
-        updateBudgetDisplay();
-        renderTable(apps);
-        applyFilters();
-        sessionStorage.setItem('mbms_last_app_count', apps.length.toString());
-      }
-    }, 5000);
+    // DISABLED: setInterval completely removed to prevent flickering
+    // Using event-based updates only (mbms-data-updated events)
+    // No periodic polling - all updates are event-driven
   } // End of initAdminDashboard function
   
   // Removed: forceReloadDummyData function - system is production-ready
