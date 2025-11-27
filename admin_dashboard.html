@@ -400,6 +400,53 @@
   <script src="js/system-autotest.js"></script>
   <!-- COMPREHENSIVE TEST DATA CLEANER - Auto-runs on admin dashboard load -->
   <script src="js/clear-all-test-data-final.js"></script>
+  <!-- ENHANCED UNIFIED DATABASE LAYER -->
+  <script src="js/enhanced-database.js"></script>
+  <!-- SYSTEM RESET & VERIFICATION -->
+  <script src="js/system-reset-verification.js"></script>
+  
+  <!-- FINAL ACTIVATION SCRIPT -->
+  <script>
+    // FINAL ACTIVATION SCRIPT
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🎯 FINAL SYSTEM ACTIVATION');
+      
+      // Ensure all buttons are active
+      setTimeout(() => {
+        const allButtons = document.querySelectorAll('button');
+        allButtons.forEach(btn => {
+          btn.disabled = false;
+          btn.style.pointerEvents = 'auto';
+          btn.style.cursor = 'pointer';
+          btn.style.opacity = '1';
+          btn.classList.remove('disabled');
+        });
+        
+        // Ensure all form elements are active
+        const allInputs = document.querySelectorAll('input, select, textarea');
+        allInputs.forEach(input => {
+          if (input.type !== 'hidden') {
+            input.disabled = false;
+            input.style.pointerEvents = 'auto';
+            input.style.opacity = '1';
+          }
+        });
+        
+        console.log(`✅ Activated ${allButtons.length} buttons and ${allInputs.length} form elements`);
+        
+        // Auto-run system verification on admin dashboard
+        if (window.location.pathname.includes('admin_dashboard')) {
+          setTimeout(() => {
+            if (typeof runSystemVerification === 'function') {
+              console.log('🔄 Auto-running system verification...');
+              runSystemVerification();
+            }
+          }, 5000);
+        }
+        
+      }, 1000);
+    });
+  </script>
   
   <!-- Mobile Menu Toggle Script -->
   <script>
