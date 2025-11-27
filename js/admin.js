@@ -2649,13 +2649,46 @@
     console.warn('Auto-clear error:', e);
   }
   
-  // CRITICAL: Clear ALL application records on load (including Abdi Ali)
-  console.log('🧹 Clearing all application records...');
+  // CRITICAL: Clear ALL application records on load (including Abdi Ali and all dummy data)
+  console.log('🧹 Clearing ALL application records from database...');
+  
+  // Clear applications
   localStorage.setItem('mbms_applications', JSON.stringify([]));
+  
+  // Clear all draft applications
+  const keys = Object.keys(localStorage);
+  keys.forEach(key => {
+    if (key.startsWith('mbms_application_')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Reset all counters
   localStorage.setItem('mbms_application_counter', '0');
   localStorage.setItem('mbms_last_serial', '0');
   localStorage.setItem('mbms_budget_allocated', '0');
-  console.log('✅ All application records cleared - database is now empty');
+  
+  // Clear Firebase if configured
+  if (typeof firebase !== 'undefined' && firebase.firestore) {
+    try {
+      const db = firebase.firestore();
+      db.collection('applicants').get().then(snapshot => {
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        if (snapshot.size > 0) {
+          batch.commit().then(() => {
+            console.log('✅ Cleared', snapshot.size, 'records from Firebase');
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('Firebase clear error:', e);
+    }
+  }
+  
+  console.log('✅ Database completely emptied - ready for first application');
   
   // Load existing applications (should be empty now)
   let allApps = loadApplications();
@@ -2824,7 +2857,8 @@
     });
     
     // Periodic check for new applications (every 5 seconds)
-    setInterval(() => {
+    // DISABLED: setInterval removed to prevent flickering - using event-based updates instead
+    // setInterval(() => {
       const currentCount = parseInt(sessionStorage.getItem('mbms_last_app_count') || '0');
       const apps = loadApplications();
       if (apps.length !== currentCount) {
@@ -2882,24 +2916,34 @@
     alert(`✅ Display Force Refreshed!\n\n📊 Found ${apps.length} applications in the system.\n\nAll data updated and displayed.`);
   };
   
-  // Real-time budget updates - listen for storage changes
+  // Real-time budget updates - listen for storage changes (debounced to prevent flickering)
+  let storageUpdateTimeout = null;
   window.addEventListener('storage', function(e) {
     if (e.key === 'mbms_applications' || e.key === 'mbms_budget') {
-      console.log('Storage changed, updating budget...');
-      updateMetrics();
-      updateBudgetDisplay();
-      refreshApplications();
+      // Debounce to prevent rapid updates causing flickering
+      if (storageUpdateTimeout) clearTimeout(storageUpdateTimeout);
+      storageUpdateTimeout = setTimeout(() => {
+        console.log('Storage changed, updating budget...');
+        updateMetrics();
+        updateBudgetDisplay();
+        refreshApplications();
+      }, 500); // 500ms debounce
     }
   });
   
-  // Listen for custom data update events (including new submissions)
+  // Listen for custom data update events (including new submissions) - debounced to prevent flickering
+  let dataUpdateTimeout = null;
   window.addEventListener('mbms-data-updated', function(e) {
-    console.log('Data updated event:', e.detail);
-    updateMetrics();
-    updateBudgetDisplay();
-    if (e.detail && (e.detail.action === 'awarded' || e.detail.action === 'rejected' || e.detail.action === 'submitted')) {
-      refreshApplications();
-    }
+    // Debounce to prevent rapid updates causing flickering
+    if (dataUpdateTimeout) clearTimeout(dataUpdateTimeout);
+    dataUpdateTimeout = setTimeout(() => {
+      console.log('Data updated event:', e.detail);
+      updateMetrics();
+      updateBudgetDisplay();
+      if (e.detail && (e.detail.action === 'awarded' || e.detail.action === 'rejected' || e.detail.action === 'submitted')) {
+        refreshApplications();
+      }
+    }, 300); // 300ms debounce
   });
   
   // DISABLED: Real-time update interval - causes flickering
