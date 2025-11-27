@@ -83,36 +83,50 @@
           snapshot = await db.collection('applications').get();
         }
         const apps = [];
-        snapshot.forEach(doc => {
+        snapshot.forEach(async (doc) => {
           const data = doc.data();
           
-          // Filter out test data before adding
-          const isTest = 
-            data.applicantEmail && (
-              data.applicantEmail.includes('example.com') ||
-              data.applicantEmail.includes('TEST_') ||
-              data.applicantEmail.includes('test@')
-            ) ||
-            data.appID && (
-              data.appID.includes('TEST_') || 
-              data.appID.includes('DUMMY') ||
-              data.appID.includes('Firebase Test')
-            ) ||
-            data.applicantName && (
-              data.applicantName.includes('DUMMY') ||
-              data.applicantName.includes('Test User')
-            ) ||
-            data.status === 'Deleted' ||
-            data.status === 'Test';
+          // Comprehensive test data detection
+          const email = data.applicantEmail || data.email || '';
+          const name = data.applicantName || data.name || '';
+          const appID = data.appID || '';
           
-          if (!isTest) {
-            apps.push({ 
-              id: doc.id, 
-              ...data,
-              // Ensure appID exists
-              appID: data.appID || doc.id
-            });
+          const isTest = 
+            email.includes('example.com') ||
+            email.includes('TEST_') ||
+            email.includes('test@') ||
+            email.includes('dummy') ||
+            email.includes('demo') ||
+            appID.includes('TEST_') || 
+            appID.includes('DUMMY') ||
+            appID.includes('Firebase Test') ||
+            appID.includes('Demo') ||
+            name.includes('DUMMY') ||
+            name.includes('Test User') ||
+            name.includes('Demo User') ||
+            name.includes('Example') ||
+            data.status === 'Deleted' ||
+            data.status === 'Test' ||
+            data.status === 'Demo';
+          
+          if (isTest) {
+            // Delete test data from Firebase
+            try {
+              await doc.ref.delete();
+              console.log('🗑️ Deleted test data from Firebase:', doc.id);
+            } catch (e) {
+              console.warn('Could not delete test data from Firebase:', e);
+            }
+            return; // Skip adding to array
           }
+          
+          // Add real application
+          apps.push({ 
+            id: doc.id, 
+            ...data,
+            // Ensure appID exists
+            appID: data.appID || doc.id
+          });
         });
         console.log('✅ Loaded', apps.length, 'REAL applications from Firebase (test data filtered)');
         

@@ -88,21 +88,27 @@
         if (!app || !app.applicantEmail) return false;
         
         // Comprehensive test data detection
+        const email = app.applicantEmail || app.email || '';
+        const name = app.applicantName || app.name || '';
+        const appID = app.appID || '';
+        
         const isTest = 
-          app.applicantEmail.includes('example.com') ||
-          app.applicantEmail.includes('TEST_') ||
-          app.applicantEmail.includes('test@') ||
-          app.appID && (
-            app.appID.includes('TEST_') || 
-            app.appID.includes('Firebase Test') ||
-            app.appID.includes('DUMMY')
-          ) ||
-          app.applicantName && (
-            app.applicantName.includes('DUMMY') ||
-            app.applicantName.includes('Test User')
-          ) ||
+          email.includes('example.com') ||
+          email.includes('TEST_') ||
+          email.includes('test@') ||
+          email.includes('dummy') ||
+          email.includes('demo') ||
+          appID.includes('TEST_') ||
+          appID.includes('DUMMY') ||
+          appID.includes('Firebase Test') ||
+          appID.includes('Demo') ||
+          name.includes('DUMMY') ||
+          name.includes('Test User') ||
+          name.includes('Demo User') ||
+          name.includes('Example') ||
           app.status === 'Deleted' ||
-          app.status === 'Test';
+          app.status === 'Test' ||
+          app.status === 'Demo';
         
         return !isTest;
       });
@@ -111,6 +117,11 @@
       if (realApps.length !== apps.length) {
         console.log('🧹 Auto-clearing', apps.length - realApps.length, 'test/dummy records');
         localStorage.setItem('mbms_applications', JSON.stringify(realApps));
+        
+        // Also clear from Firebase if configured
+        if (typeof window.clearFirebaseTestData === 'function') {
+          window.clearFirebaseTestData('applications');
+        }
       }
       
       console.log('✅ Loaded', realApps.length, 'REAL applications from database (filtered from', apps.length, 'total)');
