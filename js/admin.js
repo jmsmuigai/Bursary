@@ -1510,10 +1510,12 @@
         // Generate and auto-download award letter
         if (typeof generateOfferLetterPDF !== 'undefined') {
           documentType = 'award';
-          const result = await generateOfferLetterPDF(app, awardDetails, { preview: false });
-          if (result && result.filename) {
-            filename = result.filename;
-            console.log('✅ Award letter auto-downloaded:', filename);
+          try {
+            // Use directSave option for auto-download
+            const result = await generateOfferLetterPDF(app, awardDetails, { directSave: true });
+            if (result && result.filename) {
+              filename = result.filename;
+              console.log('✅ Award letter auto-downloaded:', filename);
             
             // Show success message
             loadingAlert.remove();
@@ -1540,6 +1542,11 @@
               `${app.personalDetails?.firstNames || ''} ${app.personalDetails?.lastName || ''}`.trim() || 'Applicant';
             const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
             filename = `Garissa_Bursary_Award_${sanitizedName}_${awardDetails.serialNumber}_${app.appID}.pdf`;
+          }
+          } catch (pdfError) {
+            console.error('PDF generation error:', pdfError);
+            loadingAlert.remove();
+            throw pdfError; // Re-throw to be caught by outer catch
           }
         } else {
           // Fallback

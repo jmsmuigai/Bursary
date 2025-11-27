@@ -461,17 +461,98 @@
         currentSubmitBtn.disabled = false;
       }
       
-      if (!newForm.checkValidity()) {
-        console.warn('⚠️ Form validation failed');
+      // COMPREHENSIVE VALIDATION - Check ALL required fields across ALL sections
+      const allRequiredFields = newForm.querySelectorAll('input[required], select[required], textarea[required]');
+      const missingFields = [];
+      const invalidFields = [];
+      
+      // Check each required field
+      allRequiredFields.forEach(field => {
+        let isValid = true;
+        let value = '';
+        
+        if (field.type === 'radio') {
+          // For radio buttons, check if any in the group is checked
+          const radioGroup = newForm.querySelectorAll(`input[name="${field.name}"][type="radio"]`);
+          const isChecked = Array.from(radioGroup).some(radio => radio.checked);
+          isValid = isChecked;
+          value = isChecked ? newForm.querySelector(`input[name="${field.name}"]:checked`)?.value : '';
+        } else if (field.type === 'checkbox') {
+          isValid = field.checked;
+          value = field.checked ? 'checked' : '';
+        } else {
+          value = field.value.trim();
+          isValid = value !== '' && field.checkValidity();
+        }
+        
+        if (!isValid || value === '') {
+          field.classList.add('is-invalid');
+          const label = field.previousElementSibling?.textContent?.trim() || 
+                       field.closest('.form-check')?.querySelector('label')?.textContent?.trim() ||
+                       field.getAttribute('placeholder') ||
+                       field.id ||
+                       'Field';
+          missingFields.push(label.replace(/\s*\*\s*$/, '').trim());
+          invalidFields.push(field);
+        } else {
+          field.classList.remove('is-invalid');
+        }
+      });
+      
+      // Check confirmation checkbox on review step
+      const confirmCheckbox = document.getElementById('confirmSubmit');
+      if (confirmCheckbox && !confirmCheckbox.checked) {
+        confirmCheckbox.classList.add('is-invalid');
+        missingFields.push('Confirmation checkbox');
+        invalidFields.push(confirmCheckbox);
+      }
+      
+      // If there are missing fields, show warning and prevent submission
+      if (missingFields.length > 0) {
+        console.warn('⚠️ Form validation failed - Missing required fields:', missingFields);
         newForm.classList.add('was-validated');
         
-        // Show validation errors
+        // Show comprehensive error message
+        const errorMessage = `⚠️ FORM VALIDATION FAILED!\n\n` +
+          `Please fill in the following required fields before submitting:\n\n` +
+          missingFields.slice(0, 10).map((field, idx) => `${idx + 1}. ${field}`).join('\n') +
+          (missingFields.length > 10 ? `\n... and ${missingFields.length - 10} more fields` : '') +
+          `\n\nYour application cannot be submitted until all required fields are completed.`;
+        
+        alert(errorMessage);
+        
+        // Focus on first invalid field
+        if (invalidFields.length > 0) {
+          const firstInvalid = invalidFields[0];
+          firstInvalid.focus();
+          firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Highlight all invalid fields
+          invalidFields.forEach(field => {
+            field.style.borderColor = '#dc3545';
+            field.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+            setTimeout(() => {
+              field.style.borderColor = '';
+              field.style.boxShadow = '';
+            }, 3000);
+          });
+        }
+        
+        return; // STOP SUBMISSION - Do not proceed
+      }
+      
+      // Additional validation check
+      if (!newForm.checkValidity()) {
+        console.warn('⚠️ HTML5 form validation failed');
+        newForm.classList.add('was-validated');
+        
         const firstInvalid = newForm.querySelector(':invalid');
         if (firstInvalid) {
           firstInvalid.focus();
           firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        return;
+        alert('⚠️ Please complete all required fields before submitting.');
+        return; // STOP SUBMISSION
       }
       
       console.log('✅ Form validation passed - proceeding with submission');
@@ -669,7 +750,8 @@
             <div class="alert alert-info text-start mb-4">
               <p class="mb-2"><strong>Application ID:</strong> ${appID}</p>
               <p class="mb-2"><strong>Status:</strong> <span class="badge bg-info">Pending Ward Review</span></p>
-              <p class="mb-0">Your application has been submitted and will appear on the admin dashboard immediately.</p>
+              <p class="mb-2"><strong>✅ Confirmation:</strong> Your application has been successfully submitted!</p>
+              <p class="mb-0"><strong>🔄 Real-Time Update:</strong> Your application will appear in the Application Management section immediately. The admin dashboard has been automatically updated.</p>
             </div>
             <div class="alert alert-warning text-start mb-4">
               <small><strong>⚠️ Important:</strong> This is a FINAL SUBMISSION. You cannot edit this application.</small>
@@ -715,7 +797,11 @@
                      JSON.parse(localStorage.getItem('mbms_applications') || '[]');
     console.log('📊 Total applications now:', finalApps.length);
     
-    // CRITICAL: Trigger multiple events to ensure admin dashboard updates
+    // CRITICAL: Trigger multiple events to ensure admin dashboard updates IMMEDIATELY
+    // Force localStorage update first to trigger storage event
+    const currentApps = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+    localStorage.setItem('mbms_applications', JSON.stringify(currentApps));
+    
     // Event 1: Custom event for admin dashboard
     window.dispatchEvent(new CustomEvent('mbms-data-updated', {
       detail: { 
@@ -724,6 +810,11 @@
         appID: appID,
         application: applicationData
       }
+    }));
+    
+    // Event 2: Application submitted event
+    window.dispatchEvent(new CustomEvent('mbms-application-submitted', {
+      detail: applicationData
     }));
     
     // Event 1b: Additional custom event with different name for compatibility
