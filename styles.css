@@ -912,6 +912,112 @@ body {
   }
 }
 
+/* =========================================
+   COMPREHENSIVE FORM INPUT RESPONSIVENESS
+   ========================================= */
+
+/* Fluid Inputs - 100% width on all devices */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="date"],
+input[type="tel"],
+input[type="password"],
+select,
+textarea {
+  width: 100% !important;
+  min-height: 48px; /* Touch target size */
+  padding: 0.75rem 1rem;
+  font-size: 16px; /* Prevents iOS zoom on focus */
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background-color: #fff;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+/* Focus State - Accessibility & UX */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-700);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.2);
+}
+
+/* Form Groups - Full width on mobile */
+.form-group {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -10px;
+  margin-left: -10px;
+}
+
+.form-col {
+  flex: 0 0 100%;
+  max-width: 100%;
+  padding: 0 10px;
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 600px) {
+  .form-col {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+/* Desktop: 4 columns for filters */
+@media (min-width: 1024px) {
+  .filter-grid .form-col {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+}
+
+/* =========================================
+   ENHANCED BUTTON RESPONSIVENESS
+   ========================================= */
+
+/* Mobile-first: Buttons are 100% width and stacked */
+@media (max-width: 599px) {
+  .btn {
+    width: 100% !important;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-group .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem !important;
+  }
+}
+
+/* Tablet & Desktop: Buttons revert to natural width */
+@media (min-width: 600px) {
+  .btn {
+    width: auto;
+    margin-bottom: 0;
+    margin-right: 0.5rem;
+    display: inline-flex;
+  }
+  
+  .btn-group {
+    flex-direction: row;
+  }
+}
+
 /* Print styles */
 @media print {
   aside, .mobile-menu-toggle, .btn, footer {

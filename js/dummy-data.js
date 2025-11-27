@@ -348,7 +348,10 @@ window.forceLoadDummyData = function() {
     
     // Reload page to ensure everything displays
     setTimeout(() => {
-      window.location.reload();
+      // Refresh without reload (fix flickering)
+      if (typeof window.forceRefreshAll === 'function') {
+        window.forceRefreshAll();
+      }
     }, 500);
   } else {
     alert('❌ Error generating dummy data. Please refresh the page and try again.');

@@ -109,10 +109,12 @@
           }, 500);
         }
         
-        // Reload page to show empty state
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        // Refresh dashboard without reload (fix flickering)
+        if (typeof window.forceRefreshAll === 'function') {
+          setTimeout(() => {
+            window.forceRefreshAll();
+          }, 500);
+        }
       }
     }, 1000);
   }

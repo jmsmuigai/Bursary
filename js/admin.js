@@ -266,15 +266,22 @@
     const budgetBalanceEl = document.getElementById('budgetBalance');
     const budgetPercentageEl = document.getElementById('budgetPercentage');
     
-    if (budgetTotalEl) budgetTotalEl.textContent = `Ksh ${budget.total.toLocaleString()}`;
-    if (budgetAllocatedEl) budgetAllocatedEl.textContent = `Ksh ${budget.allocated.toLocaleString()}`;
-    if (budgetBalanceEl) budgetBalanceEl.textContent = `Ksh ${calculatedBalance.toLocaleString()}`;
-    if (budgetPercentageEl) budgetPercentageEl.textContent = status.percentage.toFixed(1) + '%';
+    // Fix NaN errors: Ensure all values are numbers
+    const safeTotal = Number(budget.total) || 0;
+    const safeAllocated = Number(budget.allocated) || 0;
+    const safeBalance = safeTotal - safeAllocated;
+    const safePercentage = safeTotal > 0 ? ((safeAllocated / safeTotal) * 100) : 0;
     
-    // Update progress bar with dynamic colors
+    if (budgetTotalEl) budgetTotalEl.textContent = `Ksh ${safeTotal.toLocaleString()}`;
+    if (budgetAllocatedEl) budgetAllocatedEl.textContent = `Ksh ${safeAllocated.toLocaleString()}`;
+    if (budgetBalanceEl) budgetBalanceEl.textContent = `Ksh ${safeBalance.toLocaleString()}`;
+    if (budgetPercentageEl) budgetPercentageEl.textContent = safePercentage.toFixed(1) + '%';
+    
+    // Update progress bar with dynamic colors (fix NaN)
     const progressBar = document.getElementById('budgetProgressBar');
     if (progressBar) {
-      const percentage = Math.min(status.percentage, 100);
+      const safePercentage = Number(status.percentage) || 0;
+      const percentage = Math.min(Math.max(safePercentage, 0), 100); // Clamp between 0-100
       progressBar.style.width = percentage + '%';
       progressBar.setAttribute('aria-valuenow', percentage);
       progressBar.setAttribute('aria-valuemin', 0);
@@ -2178,7 +2185,7 @@
           <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
             <div class="card-body text-center">
               <h6 class="mb-2">Budget Utilization</h6>
-              <h2 class="fw-bold">${((budget.allocated / budget.total) * 100).toFixed(1)}%</h2>
+              <h2 class="fw-bold">${budget.total > 0 ? ((budget.allocated / budget.total) * 100).toFixed(1) : '0.0'}%</h2>
               <small>Remaining: Ksh ${(budget.total - budget.allocated).toLocaleString()}</small>
             </div>
           </div>

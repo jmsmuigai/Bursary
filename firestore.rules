@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Applicants Collection - Production Security Rules
+    match /applicants/{applicationId} {
+      // 1. Allow anyone to CREATE an application (Submission)
+      allow create: if true;
+      
+      // 2. ONLY authenticated Admin can READ (View Dashboard)
+      // Replace 'ADMIN_USER_ID_HERE' with actual admin UID from Firebase Auth
+      allow read: if request.auth != null && 
+                     (request.auth.token.email == 'fundadmin@garissa.go.ke' ||
+                      request.auth.uid == 'ADMIN_USER_ID_HERE');
+      
+      // 3. ONLY authenticated Admin can UPDATE (Award/Reject)
+      allow update: if request.auth != null && 
+                       (request.auth.token.email == 'fundadmin@garissa.go.ke' ||
+                        request.auth.uid == 'ADMIN_USER_ID_HERE');
+      
+      // 4. NO ONE can delete in production (Data Retention Policy)
+      allow delete: if false;
+    }
+    
+    // Users Collection
+    match /users/{userId} {
+      // Allow users to read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to create their own profile
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to update their own profile
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Admin can read all users
+      allow read: if request.auth != null && 
+                     (request.auth.token.email == 'fundadmin@garissa.go.ke' ||
+                      request.auth.uid == 'ADMIN_USER_ID_HERE');
+    }
+    
+    // Metrics or Logs Collection
+    match /metrics/{docId} {
+      // Only admin can read/write metrics
+      allow read, write: if request.auth != null && 
+                            (request.auth.token.email == 'fundadmin@garissa.go.ke' ||
+                             request.auth.uid == 'ADMIN_USER_ID_HERE');
+    }
+    
+    // Budget Collection (if used)
+    match /budget/{docId} {
+      // Only admin can read/write budget
+      allow read, write: if request.auth != null && 
+                            (request.auth.token.email == 'fundadmin@garissa.go.ke' ||
+                             request.auth.uid == 'ADMIN_USER_ID_HERE');
+    }
+  }
+}
+

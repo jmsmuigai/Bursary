@@ -121,10 +121,12 @@
       const message = `✅ All dummy/test data cleared!\n\n📊 Real applications remaining: ${realApps.length}\n\n✅ System ready for first real applicant.\n\n🔄 Dashboard will refresh automatically.`;
       alert(message);
       
-      // Reload page to ensure clean state
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // Refresh dashboard without reload (fix flickering)
+      if (typeof window.forceRefreshAll === 'function') {
+        setTimeout(() => {
+          window.forceRefreshAll();
+        }, 500);
+      }
       
       console.log('✅ Data cleanup completed successfully');
       return { success: true, realAppsCount: realApps.length, removedCount: allApps.length - realApps.length };

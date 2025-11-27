@@ -78,7 +78,10 @@
       
       // Reload page
       setTimeout(() => {
-        window.location.reload();
+        // Refresh without reload (fix flickering)
+        if (typeof window.forceRefreshAll === 'function') {
+          window.forceRefreshAll();
+        }
       }, 1000);
       
     } catch (error) {
