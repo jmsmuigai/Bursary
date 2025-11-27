@@ -2830,11 +2830,14 @@
       }
     });
     
-    // Listen for storage changes (cross-tab sync)
+    // Listen for storage changes (cross-tab sync) - DEBOUNCED to prevent flickering
+    let storageUpdateDebounce = null;
     window.addEventListener('storage', function(e) {
       if (e.key === 'mbms_applications') {
-        console.log('📬 Storage change detected (applications)! Refreshing dashboard...');
-        setTimeout(() => {
+        // Debounce to prevent rapid updates causing flickering
+        if (storageUpdateDebounce) clearTimeout(storageUpdateDebounce);
+        storageUpdateDebounce = setTimeout(() => {
+          console.log('📬 Storage change detected (applications)! Refreshing dashboard...');
           const newApps = loadApplications();
           updateMetrics();
           updateBudgetDisplay();
@@ -2846,13 +2849,15 @@
             refreshVisualizations();
             console.log('✅ Visualizations refreshed via storage event');
           }
-        }, 500);
+        }, 1000); // 1 second debounce to prevent flickering
       } else if (e.key === 'mbms_users') {
-        console.log('📬 Storage change detected (users)! Refreshing metrics...');
-        setTimeout(() => {
+        // Debounce user updates too
+        if (storageUpdateDebounce) clearTimeout(storageUpdateDebounce);
+        storageUpdateDebounce = setTimeout(() => {
+          console.log('📬 Storage change detected (users)! Refreshing metrics...');
           updateMetrics();
           console.log('✅ Metrics refreshed via storage event (user registration)');
-        }, 500);
+        }, 1000);
       }
     });
     
