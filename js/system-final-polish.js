@@ -338,11 +338,32 @@
   function initializeAllFixes() {
     console.log('🚀 Initializing all fixes...');
     
-    // Clear test data on admin dashboard load
+    // Clear test data on admin dashboard load - ENSURE DATABASE IS EMPTY
     if (window.location.pathname.includes('admin_dashboard')) {
+      // Always clear test data to ensure clean database
       const cleared = clearAllTestData();
-      if (cleared.applicationsRemoved > 0 || cleared.usersRemoved > 0) {
-        console.log(`✅ Cleared ${cleared.applicationsRemoved} test applications and ${cleared.usersRemoved} test users`);
+      
+      // Also verify and clear if needed
+      const applications = JSON.parse(localStorage.getItem('mbms_applications') || '[]');
+      const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+      const adminUsers = users.filter(u => u.role === 'admin');
+      const nonAdminUsers = users.filter(u => u.role !== 'admin');
+      
+      // If there are any applications or non-admin users, clear them
+      if (applications.length > 0 || nonAdminUsers.length > 0) {
+        console.log('🧹 Ensuring database is completely empty...');
+        
+        // Clear applications
+        localStorage.setItem('mbms_applications', JSON.stringify([]));
+        
+        // Keep only admin users
+        localStorage.setItem('mbms_users', JSON.stringify(adminUsers));
+        
+        // Reset counters
+        localStorage.setItem('mbms_application_counter', '0');
+        localStorage.setItem('mbms_last_serial', '0');
+        
+        console.log(`✅ Database cleared - Applications: 0, Users: ${adminUsers.length} (admin only)`);
         
         // Refresh dashboard
         setTimeout(() => {
@@ -353,6 +374,8 @@
             updateMetrics();
           }
         }, 500);
+      } else {
+        console.log('✅ Database is already empty and ready');
       }
     }
     
