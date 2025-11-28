@@ -189,6 +189,18 @@ The system includes all Garissa County sub-counties and wards:
 
 Users can select "Other (Specify)" if their location is not listed.
 
+## 🧪 System Testing
+
+The system includes a **comprehensive, phased testing framework** that continuously monitors all functionality:
+
+- **8 Testing Phases**: Registration, Admin Dashboard, Budget, Database, PDF, Visualization, Error Handling, UI
+- **Automatic Testing**: Tests run automatically on admin dashboard load
+- **Manual Testing**: Run `runComprehensiveSystemTest()` in browser console
+- **Test Reports**: Results displayed in console, dashboard, and stored in localStorage
+- **Auto-Fix**: System automatically detects and fixes common issues
+
+For detailed testing information, see [SYSTEM_TESTING_GUIDE.md](SYSTEM_TESTING_GUIDE.md).
+
 ## 🔐 Security Features
 
 - **Role-Based Access Control**:
