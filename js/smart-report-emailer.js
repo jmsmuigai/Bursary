@@ -312,9 +312,13 @@ ${issues.length > 0 ? `ISSUES DETECTED:\n${issues.join('\n')}` : 'No issues dete
       const sampleSent = sessionStorage.getItem('mbms_sample_troubleshooting_sent');
       if (!sampleSent) {
         setTimeout(() => {
+          console.log('📧 Sending sample troubleshooting report email...');
           sendSampleTroubleshootingReport();
           sessionStorage.setItem('mbms_sample_troubleshooting_sent', 'true');
-        }, 3000);
+        }, 2000);
+      } else {
+        // Still send sample if explicitly requested
+        console.log('ℹ️ Sample troubleshooting report already sent. Use sendSampleTroubleshootingReport() to send again.');
       }
     }
     
