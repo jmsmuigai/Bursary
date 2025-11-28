@@ -50,9 +50,14 @@
         <section id="overview" class="mb-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="text-primary-700 fw-bold mb-0">Dashboard Overview</h3>
-            <button id="sendEmailToFundAdminBtn" class="btn btn-primary-700 btn-sm" onclick="sendSystemStatusEmail()" title="Send email to fundadmin@garissa.go.ke">
-              <i class="bi bi-envelope me-2"></i>Send Email to Fund Admin
-            </button>
+            <div class="btn-group">
+              <button id="sendEmailToFundAdminBtn" class="btn btn-primary-700 btn-sm" onclick="sendSystemStatusEmail()" title="Send email to fundadmin@garissa.go.ke">
+                <i class="bi bi-envelope me-2"></i>Send Email
+              </button>
+              <button id="sendTroubleshootingReportBtn" class="btn btn-info btn-sm" onclick="sendSampleTroubleshootingReport()" title="Send troubleshooting report to fundadmin@garissa.go.ke">
+                <i class="bi bi-bug me-2"></i>Troubleshooting Report
+              </button>
+            </div>
           </div>
           <div class="row g-3">
             <div class="col-md-3">
