@@ -223,12 +223,50 @@ function incrementSerial() {
   }
 }
 
+/**
+ * Delete application (SAME DATABASE)
+ */
+function deleteApplication(appID) {
+  try {
+    const apps = getApplications();
+    const index = apps.findIndex(a => a.appID === appID);
+    if (index !== -1) {
+      const deletedApp = apps.splice(index, 1)[0];
+      localStorage.setItem(DB_KEYS.APPLICATIONS, JSON.stringify(apps));
+      console.log('🗑️ Database: Deleted application', appID, 'from', DB_KEYS.APPLICATIONS);
+      
+      // If application was awarded, refund budget
+      if (deletedApp.status === 'Awarded' && deletedApp.awardDetails) {
+        const amount = deletedApp.awardDetails.committee_amount_kes || deletedApp.awardDetails.amount || 0;
+        if (amount > 0) {
+          const budget = getBudget();
+          const newAllocated = Math.max(0, budget.allocated - amount);
+          updateBudget(newAllocated);
+          console.log('💰 Budget refunded:', amount, 'New allocated:', newAllocated);
+        }
+      }
+      
+      // Trigger update event
+      window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+        detail: { key: DB_KEYS.APPLICATIONS, action: 'deleted', appID: appID }
+      }));
+      
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    return false;
+  }
+}
+
 // Export functions globally
 window.getUsers = getUsers;
 window.saveUser = saveUser;
 window.getApplications = getApplications;
 window.saveApplication = saveApplication;
 window.updateApplication = updateApplication;
+window.deleteApplication = deleteApplication;
 window.getDraftApplication = getDraftApplication;
 window.saveDraftApplication = saveDraftApplication;
 window.getBudget = getBudget;

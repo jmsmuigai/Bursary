@@ -1397,6 +1397,138 @@
       }));
       
       // Don't show duplicate alert - already shown above
+    }
+  };
+
+  // Delete application
+  window.deleteApplication = async function(appID) {
+    if (!confirm('⚠️ Are you sure you want to DELETE this application?\n\nThis action cannot be undone. If the application was awarded, the budget will be refunded.')) {
+      return;
+    }
+
+    const apps = loadApplications();
+    const app = apps.find(a => a.appID === appID);
+    
+    if (!app) {
+      alert('⚠️ Application not found.');
+      return;
+    }
+
+    // Store for undo (last 5 actions)
+    const undoActions = JSON.parse(localStorage.getItem('mbms_undo_actions') || '[]');
+    undoActions.unshift({
+      action: 'delete',
+      appID: appID,
+      app: JSON.parse(JSON.stringify(app)), // Deep copy
+      timestamp: new Date().toISOString()
+    });
+    // Keep only last 5 undo actions
+    if (undoActions.length > 5) undoActions.pop();
+    localStorage.setItem('mbms_undo_actions', JSON.stringify(undoActions));
+
+    // Delete from database
+    if (typeof window.deleteApplication !== 'undefined' && typeof deleteApplication === 'function' && window.deleteApplication !== deleteApplication) {
+      // Use database function
+      const deleted = deleteApplication(appID);
+      if (deleted) {
+        console.log('✅ Application deleted:', appID);
+      }
+    } else {
+      // Fallback: manual delete
+      const index = apps.findIndex(a => a.appID === appID);
+      if (index !== -1) {
+        apps.splice(index, 1);
+        localStorage.setItem('mbms_applications', JSON.stringify(apps));
+        
+        // Refund budget if awarded
+        if (app.status === 'Awarded' && app.awardDetails) {
+          const amount = app.awardDetails.committee_amount_kes || app.awardDetails.amount || 0;
+          if (amount > 0) {
+            const budget = getBudgetBalance();
+            const newAllocated = Math.max(0, budget.allocated - amount);
+            if (typeof updateBudget !== 'undefined') {
+              updateBudget(newAllocated);
+            } else {
+              localStorage.setItem('mbms_budget_allocated', newAllocated.toString());
+            }
+            console.log('💰 Budget refunded:', amount);
+          }
+        }
+        
+        console.log('✅ Application deleted (fallback):', appID);
+      }
+    }
+
+    // Trigger update event
+    window.dispatchEvent(new CustomEvent('mbms-data-updated', {
+      detail: { key: 'mbms_applications', action: 'deleted', appID: appID }
+    }));
+
+    // Refresh display
+    refreshApplications();
+    updateMetrics();
+    updateBudgetDisplay();
+    applyFilters();
+    
+    alert('✅ Application deleted successfully.');
+  };
+
+  // Undo last action
+  window.undoAction = function() {
+    const undoActions = JSON.parse(localStorage.getItem('mbms_undo_actions') || '[]');
+    if (undoActions.length === 0) {
+      alert('ℹ️ No actions to undo.');
+      return;
+    }
+
+    const lastAction = undoActions[0];
+    if (!lastAction) {
+      alert('ℹ️ No actions to undo.');
+      return;
+    }
+
+    if (lastAction.action === 'delete') {
+      // Restore deleted application
+      const apps = loadApplications();
+      const exists = apps.find(a => a.appID === lastAction.appID);
+      if (exists) {
+        alert('⚠️ Application already exists. Cannot undo.');
+        return;
+      }
+
+      apps.push(lastAction.app);
+      localStorage.setItem('mbms_applications', JSON.stringify(apps));
+
+      // Re-allocate budget if was awarded
+      if (lastAction.app.status === 'Awarded' && lastAction.app.awardDetails) {
+        const amount = lastAction.app.awardDetails.committee_amount_kes || lastAction.app.awardDetails.amount || 0;
+        if (amount > 0) {
+          const budget = getBudgetBalance();
+          const newAllocated = budget.allocated + amount;
+          if (typeof updateBudget !== 'undefined') {
+            updateBudget(newAllocated);
+          } else {
+            localStorage.setItem('mbms_budget_allocated', newAllocated.toString());
+          }
+          console.log('💰 Budget re-allocated:', amount);
+        }
+      }
+
+      // Remove from undo list
+      undoActions.shift();
+      localStorage.setItem('mbms_undo_actions', JSON.stringify(undoActions));
+
+      // Refresh display
+      refreshApplications();
+      updateMetrics();
+      updateBudgetDisplay();
+      applyFilters();
+
+      alert('✅ Last action undone. Application restored.');
+    } else {
+      alert('ℹ️ This action type cannot be undone.');
+    }
+  };
       
       const rejectViewModal2 = document.querySelector('.modal');
       if (rejectViewModal2) {
