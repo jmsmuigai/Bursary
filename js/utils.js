@@ -30,5 +30,27 @@ function downloadCSV(filename, rows){
   const a = document.createElement('a');
   a.href = url; a.download = filename; document.body.appendChild(a);
   a.click(); setTimeout(()=>{URL.revokeObjectURL(url); a.remove()}, 0);
+  
+  // Auto-email report to fundadmin@garissa.go.ke
+  if (typeof sendBursaryReport === 'function') {
+    setTimeout(() => {
+      // Detect report type from filename
+      let reportType = 'general';
+      if (filename.includes('beneficiaries')) {
+        reportType = 'beneficiaries';
+      } else if (filename.includes('allocation')) {
+        reportType = 'allocation';
+      } else if (filename.includes('demographics')) {
+        reportType = 'demographics';
+      } else if (filename.includes('budget')) {
+        reportType = 'budget';
+      }
+      
+      sendBursaryReport(reportType, {
+        recordCount: rows.length,
+        filename: filename
+      }, filename);
+    }, 1500);
+  }
 }
 
