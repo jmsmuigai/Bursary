@@ -349,6 +349,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase_config.js"></script>
   <script src="js/firebase-db.js"></script>
+  <!-- FIREBASE-FIRST DATABASE LAYER (loads after firebase-db.js, converts everything to Firebase) -->
+  <script src="js/database-firebase.js"></script>
+  <!-- FIREBASE AUTO-ACTIVATION (ensures Firebase is active and all operations work) -->
+  <script src="js/firebase-auto-activate.js"></script>
   <script src="js/firebase-test-data.js"></script>
   <script src="js/firebase-connection-test.js"></script>
   <script src="js/clear-all-data.js"></script>
@@ -361,7 +365,7 @@
   <!-- Mobile Compatibility Layer (load early) -->
   <script src="js/mobile-compat.js"></script>
   <script src="js/data.js"></script>
-  <!-- UNIFIED DATABASE ACCESS LAYER (load early) -->
+  <!-- UNIFIED DATABASE ACCESS LAYER (backward compatibility, will be overridden by database-firebase.js) -->
   <script src="js/database.js"></script>
   <!-- IMMEDIATE UPDATE SYSTEM (load early) -->
   <script src="js/immediate-update.js"></script>
