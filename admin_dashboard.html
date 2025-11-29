@@ -349,7 +349,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase_config.js"></script>
   <script src="js/firebase-db.js"></script>
-  <!-- FIX PAGE UNRESPONSIVE (loads FIRST to prevent freezing) -->
+  <!-- EMERGENCY FIX FREEZE (loads FIRST - highest priority to prevent freezing) -->
+  <script src="js/emergency-fix-freeze.js"></script>
+  <!-- FIX PAGE UNRESPONSIVE (loads SECOND to prevent freezing) -->
   <script src="js/fix-page-unresponsive.js"></script>
   <!-- PERFORMANCE BOOSTER (loads early to optimize all operations) -->
   <script src="js/performance-booster.js"></script>
