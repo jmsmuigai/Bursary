@@ -7,12 +7,41 @@
   }
   
   // Wait for DOM to be ready before initializing
+  // OPTIMIZED: Non-blocking initialization
   function initAdminDashboard() {
     if (window.adminDashboardInitialized) {
       console.warn('Admin dashboard already initialized');
       return;
     }
+    
+    // Prevent multiple initializations
     window.adminDashboardInitialized = true;
+    
+    // Run initialization in next tick (non-blocking)
+    setTimeout(() => {
+      try {
+        initializeDashboard();
+      } catch (e) {
+        console.error('Dashboard init error:', e);
+        // Don't block - show error state
+        const tbody = document.getElementById('applicationsTableBody');
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="text-center py-4">
+                <p class="text-muted">Loading applications...</p>
+              </td>
+            </tr>
+          `;
+        }
+      }
+    }, 0);
+    
+    return; // Exit early, initialization happens async
+  }
+  
+  // Actual initialization logic (non-blocking)
+  function initializeDashboard() {
 
   // Check admin access
   try {
