@@ -27,11 +27,27 @@
       </div>
     `;
     
-    // Update immediately (non-blocking)
-    setTimeout(() => updateBudgetCounter(), 100);
+    // Show cached budget immediately (non-blocking)
+    const total = parseFloat(localStorage.getItem('mbms_budget_total') || '50000000');
+    const allocated = parseFloat(localStorage.getItem('mbms_budget_allocated') || '0');
+    const balance = total - allocated;
     
-    // Update every 5 seconds (reduced from immediate)
-    setInterval(updateBudgetCounter, 5000);
+    counterContainer.innerHTML = `
+      <div class="text-center py-2">
+        <p class="text-muted small mb-0">Budget: Ksh ${balance.toLocaleString()} remaining</p>
+      </div>
+    `;
+    
+    // Update in background (non-blocking, delayed)
+    setTimeout(() => {
+      try {
+        updateBudgetCounter();
+      } catch (e) {
+        console.warn('Budget counter update error:', e);
+      }
+    }, 1000);
+    
+    // Don't use setInterval - causes blocking
     
     // Also listen for budget update events
     window.addEventListener('mbms-budget-updated', () => {
