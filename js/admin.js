@@ -2736,11 +2736,12 @@
       }
       
       return apps;
-    } catch (error) {
-      console.error('Refresh error:', error);
-      alert('Error refreshing applications. Please try again.\n\nError: ' + error.message);
-      return [];
-    }
+      } catch (error) {
+        console.error('Refresh error:', error);
+        // Don't show alert for background updates
+        return [];
+      }
+    }, 100); // Non-blocking delay - update in background
   };
 
   // DISABLED: Auto-refresh to prevent page freezing
