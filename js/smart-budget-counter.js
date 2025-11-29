@@ -7,21 +7,36 @@
   
   console.log('💰 SMART BUDGET COUNTER - Initializing...');
   
-  // Initialize budget counter
+  // Initialize budget counter - OPTIMIZED: Fast initial load
   function initBudgetCounter() {
     const counterContainer = document.getElementById('smartBudgetCounter');
     if (!counterContainer) {
       console.log('⚠️ Budget counter container not found');
+      // Retry after delay
+      setTimeout(initBudgetCounter, 500);
       return;
     }
     
-    updateBudgetCounter();
+    // Show loading state immediately
+    counterContainer.innerHTML = `
+      <div class="text-center py-2">
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted small">Loading budget...</p>
+      </div>
+    `;
     
-    // Update every 5 seconds
+    // Update immediately (non-blocking)
+    setTimeout(() => updateBudgetCounter(), 100);
+    
+    // Update every 5 seconds (reduced from immediate)
     setInterval(updateBudgetCounter, 5000);
     
     // Also listen for budget update events
-    window.addEventListener('mbms-budget-updated', updateBudgetCounter);
+    window.addEventListener('mbms-budget-updated', () => {
+      setTimeout(updateBudgetCounter, 100);
+    });
     window.addEventListener('mbms-data-updated', function(e) {
       if (e.detail && (e.detail.action === 'awarded' || e.detail.action === 'rejected')) {
         setTimeout(updateBudgetCounter, 500);
@@ -35,40 +50,76 @@
       const counterContainer = document.getElementById('smartBudgetCounter');
       if (!counterContainer) return;
       
-      // Get budget data
-      const budget = typeof getBudgetBalance !== 'undefined' ? getBudgetBalance() : {
+      // FAST PATH: Get budget data from cache immediately
+      let budget = {
         total: 50000000,
         allocated: 0,
         balance: 50000000
       };
       
-      // Calculate average award amount (for estimation)
-      let avgAward = 0;
-      let awardedCount = 0;
-      
+      // Try to get budget from cache first (fast)
       try {
-        const apps = typeof getApplications !== 'undefined' ? 
-          (async () => {
-            const result = await getApplications();
-            return Array.isArray(result) ? result : [];
-          })() : 
-          JSON.parse(localStorage.getItem('mbms_applications') || '[]');
-        
-        // Handle async result
-        if (apps && typeof apps.then === 'function') {
-          apps.then(result => {
-            calculateAndDisplay(result);
-          });
-          return;
-        } else {
-          calculateAndDisplay(Array.isArray(apps) ? apps : []);
-        }
-      } catch (error) {
-        console.error('Error getting applications:', error);
-        calculateAndDisplay([]);
+        const budgetTotal = parseFloat(localStorage.getItem('mbms_budget_total') || '50000000');
+        const budgetAllocated = parseFloat(localStorage.getItem('mbms_budget_allocated') || '0');
+        budget = {
+          total: budgetTotal,
+          allocated: budgetAllocated,
+          balance: budgetTotal - budgetAllocated
+        };
+      } catch (e) {
+        console.warn('Budget cache error:', e);
       }
       
-      function calculateAndDisplay(applications) {
+      // Try async budget function (non-blocking)
+      if (typeof getBudgetBalance !== 'undefined') {
+        const budgetPromise = getBudgetBalance();
+        if (budgetPromise && typeof budgetPromise.then === 'function') {
+          budgetPromise.then(updatedBudget => {
+            if (updatedBudget) budget = updatedBudget;
+            loadApplicationsAndDisplay(budget);
+          }).catch(() => {
+            loadApplicationsAndDisplay(budget);
+          });
+        } else {
+          if (budgetPromise) budget = budgetPromise;
+          loadApplicationsAndDisplay(budget);
+        }
+      } else {
+        loadApplicationsAndDisplay(budget);
+      }
+      
+      function loadApplicationsAndDisplay(budget) {
+        // FAST PATH: Get applications from cache immediately
+        let applications = [];
+        try {
+          const cached = localStorage.getItem('mbms_applications');
+          if (cached) {
+            applications = JSON.parse(cached);
+            if (!Array.isArray(applications)) applications = [];
+          }
+        } catch (e) {
+          console.warn('Applications cache error:', e);
+        }
+        
+        // Display immediately with cached data
+        calculateAndDisplay(applications, budget);
+        
+        // Update async in background if function available
+        if (typeof getApplications !== 'undefined') {
+          setTimeout(async () => {
+            try {
+              const freshApps = await getApplications();
+              if (freshApps && Array.isArray(freshApps)) {
+                calculateAndDisplay(freshApps, budget);
+              }
+            } catch (e) {
+              console.warn('Background apps update error:', e);
+            }
+          }, 500);
+        }
+      }
+      
+      function calculateAndDisplay(applications, budget) {
         // Filter real awarded applications
         const awarded = applications.filter(a => 
           a.status === 'Awarded' && 

@@ -36,16 +36,43 @@
   }
 
   // Load applications from UNIFIED DATABASE (SAME DATABASE as registration and application form)
+  // OPTIMIZED: Returns cached data immediately, updates async
   function loadApplications() {
     try {
+      // FAST PATH: Return cached data immediately (non-blocking)
+      const cached = localStorage.getItem('mbms_applications');
+      if (cached) {
+        try {
+          const apps = JSON.parse(cached);
+          if (Array.isArray(apps) && apps.length > 0) {
+            console.log('⚡ Fast load: Returning', apps.length, 'cached applications');
+            // Update async in background
+            setTimeout(async () => {
+              if (typeof getApplications !== 'undefined') {
+                try {
+                  const freshApps = await getApplications();
+                  if (freshApps && freshApps.length !== apps.length) {
+                    console.log('🔄 Background update:', freshApps.length, 'applications');
+                    renderTable(freshApps);
+                    updateMetrics();
+                  }
+                } catch (e) {
+                  console.warn('Background update error:', e);
+                }
+              }
+            }, 100);
+            return apps;
+          }
+        } catch (e) {
+          console.warn('Cache parse error:', e);
+        }
+      }
+      
       // Use unified database access layer (Firebase or localStorage)
-      // Note: getApplications is async, but we make this sync for backward compatibility
       if (typeof getApplications !== 'undefined') {
-        // For async Firebase, we'll use a promise but return sync for now
-        // In production, this should be properly async
         const appsPromise = getApplications();
         if (appsPromise && typeof appsPromise.then === 'function') {
-          // Async - return empty array for now, will be updated by listener
+          // Async - return empty array immediately, update via listener
           console.log('📦 Loading applications from Firebase (async)...');
           // Set up listener for real-time updates
           if (typeof listenForUpdates !== 'undefined') {
@@ -55,12 +82,7 @@
               updateMetrics();
             });
           }
-          // Return cached data immediately
-          const cached = localStorage.getItem('mbms_applications');
-          if (cached) {
-            const apps = JSON.parse(cached);
-            return Array.isArray(apps) ? apps : [];
-          }
+          // Return empty array immediately (non-blocking)
           return [];
         } else {
           // Sync - return directly
@@ -213,36 +235,49 @@
     return parseInt(localStorage.getItem('mbms_application_counter') || '0');
   }
 
-  // Update metrics
+  // Update metrics - OPTIMIZED: Non-blocking, uses cached data
   function updateMetrics() {
-    const apps = loadApplications();
-    const users = loadUsers();
-    const registeredUsers = users.filter(u => u.role === 'applicant');
-    const counter = getApplicationCounter();
-    
-    // Include registered users who haven't submitted applications yet
-    const totalRegistered = registeredUsers.length;
-    const totalWithApplications = apps.filter(a => a.appID && !a.appID.startsWith('USER-')).length;
-    
-    document.getElementById('metricTotal').textContent = counter || apps.length;
-    document.getElementById('counterValue').textContent = counter || apps.length;
-    document.getElementById('metricPending').textContent = apps.filter(a => 
-      a.status?.includes('Pending') || a.status === 'Pending Submission'
-    ).length;
-    document.getElementById('metricAwarded').textContent = apps.filter(a => 
-      a.status === 'Awarded'
-    ).length;
-    
-    // Calculate total funds allocated (use awarded amounts, not requested)
-    const awarded = apps.filter(a => a.status === 'Awarded' && a.awardDetails);
-    const totalFunds = awarded.reduce((sum, app) => {
-      const amount = app.awardDetails?.committee_amount_kes || app.awardDetails?.amount || 0;
-      return sum + amount;
-    }, 0);
-    document.getElementById('metricFunds').textContent = `Ksh ${totalFunds.toLocaleString()}`;
-    
-    // Update budget display immediately
-    updateBudgetDisplay();
+    // Use requestAnimationFrame for smooth updates
+    requestAnimationFrame(() => {
+      try {
+        const apps = loadApplications();
+        const users = loadUsers();
+        const registeredUsers = users.filter(u => u.role === 'applicant');
+        const counter = getApplicationCounter();
+        
+        // Include registered users who haven't submitted applications yet
+        const totalRegistered = registeredUsers.length;
+        const totalWithApplications = apps.filter(a => a.appID && !a.appID.startsWith('USER-')).length;
+        
+        const metricTotal = document.getElementById('metricTotal');
+        const counterValue = document.getElementById('counterValue');
+        const metricPending = document.getElementById('metricPending');
+        const metricAwarded = document.getElementById('metricAwarded');
+        const metricFunds = document.getElementById('metricFunds');
+        
+        if (metricTotal) metricTotal.textContent = counter || apps.length;
+        if (counterValue) counterValue.textContent = counter || apps.length;
+        if (metricPending) metricPending.textContent = apps.filter(a => 
+          a.status?.includes('Pending') || a.status === 'Pending Submission'
+        ).length;
+        if (metricAwarded) metricAwarded.textContent = apps.filter(a => 
+          a.status === 'Awarded'
+        ).length;
+        
+        // Calculate total funds allocated (use awarded amounts, not requested)
+        const awarded = apps.filter(a => a.status === 'Awarded' && a.awardDetails);
+        const totalFunds = awarded.reduce((sum, app) => {
+          const amount = app.awardDetails?.committee_amount_kes || app.awardDetails?.amount || 0;
+          return sum + amount;
+        }, 0);
+        if (metricFunds) metricFunds.textContent = `Ksh ${totalFunds.toLocaleString()}`;
+        
+        // Update budget display immediately (non-blocking)
+        setTimeout(() => updateBudgetDisplay(), 0);
+      } catch (error) {
+        console.error('Metrics update error:', error);
+      }
+    });
   }
   
   // Update budget display with accurate calculations
@@ -2591,7 +2626,25 @@
   };
 
   // Refresh applications display (force reload from Firebase or localStorage)
+  // OPTIMIZED: Non-blocking refresh with cached data first
   window.refreshApplications = async function() {
+    // FAST PATH: Show cached data immediately
+    const cached = localStorage.getItem('mbms_applications');
+    if (cached) {
+      try {
+        const apps = JSON.parse(cached);
+        if (Array.isArray(apps) && apps.length > 0) {
+          console.log('⚡ Fast refresh: Showing', apps.length, 'cached applications');
+          renderTable(apps);
+          updateMetrics();
+        }
+      } catch (e) {
+        console.warn('Cache parse error:', e);
+      }
+    }
+    
+    // Update in background (non-blocking)
+    setTimeout(async () => {
     try {
       console.log('Refreshing applications...');
       
@@ -2659,9 +2712,9 @@
         console.error('Table render error:', e);
       }
       
-      // Apply filters to show all
+      // Apply filters to show all (non-blocking)
       try {
-        applyFilters();
+        setTimeout(() => applyFilters(), 0);
       } catch (e) {
         console.error('Filter apply error:', e);
       }
@@ -3314,31 +3367,67 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       setupSidebarNavigation();
-      // Delay initAdminDashboard slightly to ensure all scripts are loaded
+      // FAST INITIAL LOAD: Show cached data immediately, then load fresh
+      // Show cached data first (instant)
+      const cachedApps = localStorage.getItem('mbms_applications');
+      if (cachedApps) {
+        try {
+          const apps = JSON.parse(cachedApps);
+          if (Array.isArray(apps) && apps.length > 0) {
+            console.log('⚡ Fast initial load: Showing', apps.length, 'cached applications');
+            setTimeout(() => {
+              if (typeof renderTable === 'function') renderTable(apps);
+              if (typeof updateMetrics === 'function') updateMetrics();
+            }, 50);
+          }
+        } catch (e) {
+          console.warn('Cache parse error:', e);
+        }
+      }
+      
+      // Then initialize dashboard (non-blocking)
       setTimeout(() => {
         initAdminDashboard();
-        // Initialize visualizations after dashboard is ready
+        // Initialize visualizations after dashboard is ready (deferred)
         setTimeout(() => {
           if (typeof initializeVisualizations === 'function') {
             initializeVisualizations();
             console.log('✅ Visualizations initialized');
           }
         }, 2000);
-      }, 100);
+      }, 200);
     });
   } else {
     setupSidebarNavigation();
-    // Delay initAdminDashboard slightly to ensure all scripts are loaded
-    setTimeout(() => {
-      initAdminDashboard();
-      // Initialize visualizations after dashboard is ready
-      setTimeout(() => {
-        if (typeof initializeVisualizations === 'function') {
-          initializeVisualizations();
-          console.log('✅ Visualizations initialized');
+    // FAST INITIAL LOAD: Show cached data immediately, then load fresh
+      // Show cached data first (instant)
+      const cachedApps = localStorage.getItem('mbms_applications');
+      if (cachedApps) {
+        try {
+          const apps = JSON.parse(cachedApps);
+          if (Array.isArray(apps) && apps.length > 0) {
+            console.log('⚡ Fast initial load: Showing', apps.length, 'cached applications');
+            setTimeout(() => {
+              if (typeof renderTable === 'function') renderTable(apps);
+              if (typeof updateMetrics === 'function') updateMetrics();
+            }, 50);
+          }
+        } catch (e) {
+          console.warn('Cache parse error:', e);
         }
-      }, 2000);
-    }, 100);
+      }
+      
+      // Then initialize dashboard (non-blocking)
+      setTimeout(() => {
+        initAdminDashboard();
+        // Initialize visualizations after dashboard is ready (deferred)
+        setTimeout(() => {
+          if (typeof initializeVisualizations === 'function') {
+            initializeVisualizations();
+            console.log('✅ Visualizations initialized');
+          }
+        }, 2000);
+      }, 200);
   }
 
   // ENHANCED: Filter event listeners with proper initialization and auto-apply
