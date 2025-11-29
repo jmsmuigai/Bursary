@@ -1,7 +1,8 @@
 /**
  * UNIFIED DATABASE ACCESS LAYER
- * All components use this to access the same database (localStorage)
- * Ready for future migration to Firebase/Google Cloud
+ * All components use this to access the same database
+ * AUTO-CONVERTED TO FIREBASE - Uses Firebase if available, falls back to localStorage
+ * This file now delegates to Firebase-first functions from database-firebase.js
  */
 
 // Database Keys (Centralized)
@@ -260,7 +261,16 @@ function deleteApplication(appID) {
   }
 }
 
-// Export functions globally
+// Note: Functions are now exported by database-firebase.js which handles Firebase conversion
+// This file maintains backward compatibility but delegates to Firebase-first layer
+
+// Export DB_KEYS for backward compatibility
+window.DB_KEYS = DB_KEYS;
+
+// Functions will be overridden by database-firebase.js if Firebase is available
+// Otherwise, use local implementations below as fallback
+
+// Export functions globally (will be overridden by database-firebase.js if Firebase is available)
 window.getUsers = getUsers;
 window.saveUser = saveUser;
 window.getApplications = getApplications;
@@ -275,7 +285,6 @@ window.getApplicationCounter = getApplicationCounter;
 window.incrementApplicationCounter = incrementApplicationCounter;
 window.getLastSerial = getLastSerial;
 window.incrementSerial = incrementSerial;
-window.DB_KEYS = DB_KEYS;
 
-console.log('✅ Unified Database Access Layer loaded - All components use SAME database');
+console.log('✅ Unified Database Access Layer loaded - Firebase conversion will override if available');
 

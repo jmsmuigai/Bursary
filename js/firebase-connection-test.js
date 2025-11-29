@@ -69,31 +69,80 @@
       if (typeof window.saveApplication === 'function') {
         try {
           const testApp = {
-            appID: 'TEST_' + Date.now(),
-            applicantName: 'Firebase Test',
+            appID: 'FIREBASE_TEST_' + Date.now(),
+            applicantName: 'Firebase Connection Test',
+            applicantEmail: 'test@firebase.test',
             status: 'Test',
             dateSubmitted: new Date().toISOString(),
-            isTest: true
+            isTest: true,
+            testMarker: true
           };
           
           await window.saveApplication(testApp);
           results.writeTest = true;
           console.log('✅ Firebase write test successful');
           
-          // Clean up test data
+          // Clean up test data immediately
           setTimeout(async () => {
             try {
-              if (typeof window.updateApplicationStatus === 'function') {
-                await window.updateApplicationStatus(testApp.appID, { isTest: false, status: 'Deleted' });
+              if (typeof window.deleteApplication === 'function') {
+                // Try to delete by appID
+                const apps = await window.getApplications();
+                const testAppFound = apps.find(a => a.appID === testApp.appID);
+                if (testAppFound && testAppFound.id) {
+                  // Delete from Firebase
+                  if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    const db = firebase.firestore();
+                    await db.collection('applicants').doc(testAppFound.id).delete();
+                    console.log('✅ Test data cleaned up from Firebase');
+                  }
+                }
+                // Also try deleteApplication function
+                await window.deleteApplication(testApp.appID);
                 console.log('✅ Test data cleaned up');
               }
             } catch (e) {
               console.warn('Could not clean up test data:', e);
             }
-          }, 1000);
+          }, 2000);
         } catch (error) {
           results.error = 'Firebase write test failed: ' + error.message;
           console.error('❌ Firebase write test failed:', error);
+        }
+      }
+      
+      // Test 7: Test budget operations
+      if (typeof window.getBudget === 'function' && typeof window.updateBudget === 'function') {
+        try {
+          const budget = await window.getBudget();
+          console.log('✅ Budget read test successful:', budget);
+          
+          // Test budget update
+          const testAllocated = budget.allocated;
+          await window.updateBudget(testAllocated);
+          console.log('✅ Budget update test successful');
+        } catch (error) {
+          console.warn('⚠️ Budget test:', error.message);
+        }
+      }
+      
+      // Test 8: Test user operations
+      if (typeof window.getUsers === 'function' && typeof window.saveUser === 'function') {
+        try {
+          const users = await window.getUsers();
+          console.log('✅ Users read test successful:', users.length, 'users');
+        } catch (error) {
+          console.warn('⚠️ Users test:', error.message);
+        }
+      }
+      
+      // Test 9: Test counters
+      if (typeof window.getApplicationCounter === 'function' && typeof window.incrementApplicationCounter === 'function') {
+        try {
+          const counter = await window.getApplicationCounter();
+          console.log('✅ Counter read test successful:', counter);
+        } catch (error) {
+          console.warn('⚠️ Counter test:', error.message);
         }
       }
       

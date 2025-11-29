@@ -414,7 +414,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase_config.js"></script>
   <script src="js/firebase-db.js"></script>
-  <!-- UNIFIED DATABASE ACCESS LAYER (load early) -->
+  <!-- FIREBASE-FIRST DATABASE LAYER (loads after firebase-db.js, converts everything to Firebase) -->
+  <script src="js/database-firebase.js"></script>
+  <!-- FIREBASE AUTO-ACTIVATION (ensures Firebase is active and all operations work) -->
+  <script src="js/firebase-auto-activate.js"></script>
+  <!-- UNIFIED DATABASE ACCESS LAYER (backward compatibility, will be overridden by database-firebase.js) -->
   <script src="js/database.js"></script>
   <!-- BUTTON FIX & COMPATIBILITY LAYER (load before application.js) -->
   <script src="js/button-fix.js"></script>
