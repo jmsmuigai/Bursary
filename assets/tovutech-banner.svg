@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-label="Garissa Bursary System - Online bursary applications, awards and reports for Garissa County">
+  <title>Garissa Bursary System</title>
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="0.5" stop-color="#EC4899"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="0.85" cy="0.2" r="0.6">
+      <stop offset="0" stop-color="#EC4899" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#0A0F2C" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.1" cy="1" r="0.55">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#0A0F2C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="320" fill="#0A0F2C"/>
+  <rect width="1280" height="320" fill="url(#glow1)"/>
+  <rect width="1280" height="320" fill="url(#glow2)"/>
+  <g stroke="url(#accent)" stroke-width="1.4" opacity="0.45">
+    <line x1="796" y1="189" x2="854" y2="269"/>
+    <line x1="796" y1="189" x2="775" y2="87"/>
+    <line x1="982" y1="156" x2="910" y2="161"/>
+    <line x1="982" y1="156" x2="1027" y2="95"/>
+    <line x1="1162" y1="258" x2="1141" y2="283"/>
+    <line x1="1162" y1="258" x2="1125" y2="216"/>
+    <line x1="796" y1="189" x2="910" y2="161"/>
+    <line x1="1201" y1="78" x2="1229" y2="65"/>
+    <line x1="1201" y1="78" x2="1132" y2="115"/>
+    <line x1="1141" y1="283" x2="1087" y2="288"/>
+    <line x1="854" y1="269" x2="968" y2="264"/>
+    <line x1="1027" y1="95" x2="1132" y2="115"/>
+    <line x1="1229" y1="65" x2="1132" y2="115"/>
+    <line x1="1141" y1="283" x2="1125" y2="216"/>
+    <line x1="1125" y1="216" x2="1132" y2="115"/>
+    <line x1="982" y1="156" x2="968" y2="264"/>
+    <line x1="1162" y1="258" x2="1087" y2="288"/>
+    <line x1="910" y1="161" x2="775" y2="87"/>
+  </g>
+  <g>
+    <circle cx="796" cy="189" r="11" fill="#8B5CF6" opacity="0.15"/>
+    <circle cx="796" cy="189" r="6" fill="#8B5CF6" opacity="0.9"/>
+    <circle cx="982" cy="156" r="9" fill="#EC4899" opacity="0.15"/>
+    <circle cx="982" cy="156" r="4" fill="#EC4899" opacity="0.9"/>
+    <circle cx="1162" cy="258" r="10" fill="#F97316" opacity="0.15"/>
+    <circle cx="1162" cy="258" r="5" fill="#F97316" opacity="0.9"/>
+    <circle cx="910" cy="161" r="8" fill="#8B5CF6" opacity="0.15"/>
+    <circle cx="910" cy="161" r="3" fill="#8B5CF6" opacity="0.9"/>
+    <circle cx="1201" cy="78" r="8" fill="#EC4899" opacity="0.15"/>
+    <circle cx="1201" cy="78" r="3" fill="#EC4899" opacity="0.9"/>
+    <circle cx="1141" cy="283" r="9" fill="#F97316" opacity="0.15"/>
+    <circle cx="1141" cy="283" r="4" fill="#F97316" opacity="0.9"/>
+    <circle cx="854" cy="269" r="11" fill="#8B5CF6" opacity="0.15"/>
+    <circle cx="854" cy="269" r="6" fill="#8B5CF6" opacity="0.9"/>
+    <circle cx="1027" cy="95" r="9" fill="#EC4899" opacity="0.15"/>
+    <circle cx="1027" cy="95" r="4" fill="#EC4899" opacity="0.9"/>
+    <circle cx="1229" cy="65" r="10" fill="#F97316" opacity="0.15"/>
+    <circle cx="1229" cy="65" r="5" fill="#F97316" opacity="0.9"/>
+    <circle cx="1125" cy="216" r="11" fill="#8B5CF6" opacity="0.15"/>
+    <circle cx="1125" cy="216" r="6" fill="#8B5CF6" opacity="0.9"/>
+    <circle cx="1132" cy="115" r="10" fill="#EC4899" opacity="0.15"/>
+    <circle cx="1132" cy="115" r="5" fill="#EC4899" opacity="0.9"/>
+    <circle cx="968" cy="264" r="9" fill="#F97316" opacity="0.15"/>
+    <circle cx="968" cy="264" r="4" fill="#F97316" opacity="0.9"/>
+    <circle cx="1087" cy="288" r="10" fill="#8B5CF6" opacity="0.15"/>
+    <circle cx="1087" cy="288" r="5" fill="#8B5CF6" opacity="0.9"/>
+    <circle cx="775" cy="87" r="8" fill="#EC4899" opacity="0.15"/>
+    <circle cx="775" cy="87" r="3" fill="#EC4899" opacity="0.9"/>
+  </g>
+  <rect x="64" y="70" width="8" height="150" rx="4" fill="url(#accent)"/>
+  <text x="96" y="132" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="64" font-weight="700" fill="#FFFFFF">Garissa Bursary System</text>
+  <text x="98" y="182" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="26" fill="#CBD5E1">Online bursary applications, awards and reports for Garissa County</text>
+  <rect x="98" y="206" width="300" height="4" rx="2" fill="url(#accent)"/>
+  <text x="98" y="272" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="#8B5CF6">TovuTech · tovutech.com</text>
+  <rect x="0" y="314" width="1280" height="6" fill="url(#accent)"/>
+</svg>

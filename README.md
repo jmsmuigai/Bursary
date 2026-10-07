@@ -1,387 +1,156 @@
-# 🌟 Garissa County Modern Bursary Management System (MBMS) v3.0
+![Garissa Bursary System](assets/tovutech-banner.svg)
 
-A comprehensive, modern, and secure bursary management system for Garissa County, Kenya. This system streamlines the entire bursary lifecycle from online application to fund allocation and reporting.
+<p align="center">
+  <a href="https://jmsmuigai.github.io/Bursary/"><img alt="Status: Live demo" src="https://img.shields.io/badge/status-live%20demo-22C55E?style=for-the-badge"></a>
+  <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-Bootstrap%205-8B5CF6?style=for-the-badge&logo=javascript&logoColor=white">
+  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Auth%20·%20Firestore-F97316?style=for-the-badge&logo=firebase&logoColor=white">
+  <img alt="jsPDF" src="https://img.shields.io/badge/PDF-jsPDF-EC4899?style=for-the-badge">
+  <a href="https://www.tovutech.com/projects/bursary/"><img alt="Case study" src="https://img.shields.io/badge/case%20study-tovutech.com-22D3EE?style=for-the-badge"></a>
+  <a href="https://jmsmuigai.github.io/Bursary/"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-GitHub%20Pages-0A0F2C?style=for-the-badge&logo=github"></a>
+</p>
 
-**Version:** 3.9  
-**Release Date:** January 2025  
-**Status:** ✅ **PRODUCTION READY - FULLY TESTED, VERIFIED & MOBILE-OPTIMIZED**  
-**Latest Update:** Firebase conversion complete, all buttons verified, auto-download enabled, system polished and ready for production  
-**Developed by:** jmsmuigai@gmail.com  
-**Support Email:** fundadmin@garissa.go.ke
+## What it is
 
-## 🌐 Public Access
+The **Garissa County Modern Bursary Management System (MBMS)** moves the county's paper bursary form online. Students (or their parents) register, fill in the four-part application from the official Garissa bursary form, and track their status; the Fund Administrator reviews applications, awards or rejects them against a budget, and produces letters and reports.
 
-**The system is publicly accessible via GitHub Pages:**
-👉 **https://jmsmuigai.github.io/Bursary/**
+It is a static web app (HTML, CSS, JavaScript) hosted on GitHub Pages, using Firebase Authentication and Cloud Firestore when configured and browser `localStorage` as a fallback / demo mode.
 
-**🔗 Final Production Link:**
-👉 **https://jmsmuigai.github.io/Bursary/**
+## Highlights
 
-Anyone with this link can:
-- ✅ View application instructions
-- ✅ Register as an applicant
-- ✅ Submit bursary applications
-- ✅ Track their application status
+**For applicants**
+- 📝 Instructions page, then account registration with duplicate email / ID detection.
+- 🧾 Multi-step application (Parts A–D) with a progress indicator, auto-save every 2 seconds, manual save and drafts.
+- 📊 Personal dashboard showing only the applicant's own application, awarded amount and serial number.
+- 📄 Award letter preview, print and PDF download (works on phones and laptops).
 
-## ✨ Features
+**For the Fund Administrator**
+- 🔐 Single admin account signing in through Firebase Authentication (no password in the code).
+- 💰 Budget tracking against a KSh 50,000,000 baseline: deduction on award, utilisation %, warnings at 80% and when exhausted, and blocking awards that exceed the balance.
+- 🔎 Filters by sub-county (all Garissa sub-counties + "Other"), ward (populated from the sub-county) and status.
+- ✅ Award with amount and justification or reject with a reason; automatic serial numbers (`GRS/Bursary/001`, `002`, …).
+- 🖨️ Client-side PDFs with jsPDF: award, rejection and status letters and application summaries, with the county logo, signature and stamp images.
+- 📈 Summary report and charts (Chart.js): allocations by sub-county, gender distribution, average awards; CSV exports (beneficiary list, financial allocation, demographics, budget utilisation).
+- ✉️ Email drafts to the fund office via `mailto:` links (no server-side email yet).
 
-### Public Portal (Applicants)
-- ✅ **Instructions Page** - Clear guidance before registration
-- ✅ **Account Registration** - With duplicate detection (email/ID check)
-- ✅ **Comprehensive Application Form** - All fields from manual form (Part A, B, C, D)
-  - Multi-step form with progress indicator
-  - Auto-save functionality (saves every 2 seconds)
-  - Manual save button
-  - Draft applications tracking
-- ✅ **Applicant Dashboard** - View own application status only
-  - View awarded amount when application is approved
-  - Print Award Letter (PDF preview and print)
-  - Download Award Letter PDF (auto-downloads to default downloads folder)
-  - View serial number for awarded applications
-  - **Mobile & Desktop Compatible** - PDF downloads work seamlessly on phones and laptops
-- ✅ **Privacy** - Applicants cannot see other applicants' information
+## How it works
 
-### Administration Dashboard
-- ✅ **Single Admin Account**:
-  - `fundadmin@garissa.go.ke`
-  - Password can be changed by administrator (see Help Guide for instructions)
-  - Contact system administrator for initial access credentials
-- ✅ **Budget Management System**:
-  - Total Budget: KSH 50,000,000
-  - **Immediate budget deduction** when awarding (no delays)
-  - Real-time budget tracking and updates
-  - Colorful budget display card (Total, Allocated, Balance, Utilization %)
-  - Budget alerts (Low budget warning at 80%, Exhausted alert at 0%)
-  - Prevents awarding when budget is insufficient
-  - Auto-syncs with existing awarded applications
-  - **Multi-device sync** via Firebase (if configured)
-- ✅ **Smart Application Counter** - Real-time updates when new applications are submitted
-- ✅ **Enhanced Filtering System**:
-  - Sub-County filter with all Garissa sub-counties + "Other" option
-  - Ward filter dynamically populated based on sub-county selection
-  - Shows all wards from all sub-counties when no sub-county selected
-  - "Other" option for custom entries
-  - Auto-applies filters when selections change
-- ✅ **Application Management**:
-  - View all applications with smart scrolling
-  - **Enhanced Filtering:**
-    - Filter by Sub-County (all sub-counties + "Other" option)
-    - Filter by Ward (all wards from selected sub-county, or all wards if no sub-county selected + "Other" option)
-    - Filter by Status (Pending, Awarded, Rejected)
-    - Filters apply automatically when selections change
-  - Review individual applications
-  - Approve/Award applications with amount and justification
-  - **Immediate budget deduction** when awarding
-  - Automatic serial number generation (GRS/Bursary/001, 002, 003...)
-  - Reject applications with reason
-  - **Auto-download** award/rejection letters to default downloads folder
-- ✅ **PDF Document Generation** (Professional Format):
-  - **Award Letters**: Professional receipt-style format with amount in words
-  - **Rejection Letters**: Official rejection notices with reasons
-  - **Status Letters**: Current status updates for pending applications
-  - **Application Summary**: Complete application details PDF
-  - **Document Features:**
-    - **Garissa County Logo** - Official branding
-    - **Digital Signature** - Fund Administrator signature image
-    - **Smart Stamp** - Auto-generated colorful official stamp
-    - **Serial Numbers** - Unique tracking (GRS/Bursary/001, etc.)
-    - **Professional Formatting** - Receipt-style award details table
-  - **Email Notifications**: Automatic email notifications to fundadmin@garissa.go.ke
-  - **Auto-Download**: Documents automatically download to default downloads folder when awarding/rejecting
-  - **Mobile & Desktop Compatible**: Works seamlessly on phones and laptops
-  - **View & Download**: Preview documents before downloading
-  - Print to PDF functionality
-  - Professional design with Garissa County branding
-- ✅ **Smart Reports & Analytics Dashboard**:
-  - **Summary Report** with comprehensive analytics
-    - Total applications, awarded count, and budget utilization
-    - Sub-county allocation breakdown with percentages
-    - Gender distribution statistics
-    - Average award amounts and ranges
-  - **Filterable Data Export**:
-    - Beneficiary List (CSV/Excel with digital signature)
-    - Financial Allocation Summary
-    - Demographics Report (Sub-County/Gender/Level)
-    - Budget Utilization Report
-  - **Digital Signatures**: All reports include Fund Administrator digital signature
-  - **Email Notifications**: Reports automatically notify fundadmin@garissa.go.ke
-  - One-click "Summary Report" button for instant insights
-- ✅ **Dashboard Metrics**:
-  - Total Applications
-  - Pending Review
-  - Total Awarded
-  - Funds Allocated (YTD)
-  - Budget Status (Total, Allocated, Remaining, Utilization %)
+```mermaid
+flowchart LR
+    A[Applicant<br/>register.html] --> B[application.html<br/>Parts A–D + auto-save]
+    B --> D[(Firestore 'applicants'<br/>or localStorage fallback)]
+    D --> E[applicant_dashboard.html<br/>own status + letters]
+    D --> F[admin_dashboard.html<br/>Firebase Auth sign-in]
+    F --> G[Review · award · reject<br/>budget check + serial no.]
+    G --> D
+    G --> H[jsPDF letters<br/>CSV reports · Chart.js]
+```
 
-### Technical Features
-- ✅ **Duplicate Registration Detection** - Prevents multiple registrations with same email/ID
-- ✅ **Incomplete Applications** - Track and continue draft applications
-- ✅ **Data Validation** - Clean data only saved
-- ✅ **Responsive Design** - Works on all devices
-- ✅ **Modern UI/UX** - Colorful, professional theme with Garissa County branding
-- ✅ **Enhanced Table Scrolling** - Smart scrolling with sticky headers
-- ✅ **PDF Generation** - Client-side PDF generation using jsPDF
-- ✅ **Serial Number System** - Auto-incrementing serial numbers (GRS/Bursary/001...)
-- ✅ **Budget Tracking** - Real-time budget management and alerts
-- ✅ **Password Reset** - For applicants (admin password change in dashboard)
-- ✅ **Demo Data System** - 10 realistic dummy records with different statuses (load via admin dashboard)
-- ✅ **Local Storage** - Demo mode (ready for Firebase integration)
-- ✅ **Public Access** - Anyone with GitHub link can access and apply
-- ✅ **Responsive Design** - Fully responsive on mobile, tablet, and desktop
+Firestore rules (`firestore.rules`) let anyone create an application, but only the authenticated fund administrator can read or update applications; deletions are blocked.
 
-## 🚀 Quick Start
+## Tech stack
 
-### Access the System
+| Layer | Tools |
+|---|---|
+| Frontend | HTML5, CSS3, Bootstrap 5.3, vanilla JavaScript |
+| Auth & data | Firebase Authentication, Cloud Firestore (compat SDK 9.23), `localStorage` fallback |
+| Documents & charts | jsPDF 2.5, Chart.js 4 |
+| Hosting | GitHub Pages via GitHub Actions (`.github/workflows/pages.yml`), `.nojekyll`, `404.html` |
 
-**🌐 Live System URL:**  
-👉 **https://jmsmuigai.github.io/Bursary/**
+## Getting started
 
-1. **Visit**: https://jmsmuigai.github.io/Bursary/
-2. **For Applicants**:
-   - Click "Read Instructions First"
-   - Register a new account
-   - Complete the application form
-   - View dashboard
-   - Print/Download award letter when approved
-3. **For Admins**:
-   - Email: `fundadmin@garissa.go.ke`
-   - Contact system administrator for access credentials
-   - Password can be changed after login (see Help Guide)
-   - **Load Demo Data**: Click "Load Demo Data" button in Reports section to see 10 sample applications
+**Use the live demo:** https://jmsmuigai.github.io/Bursary/
 
-### Local Testing (Optional)
+**Run locally:**
 
-1. **Clone or Download** this repository
-2. **Open** `index.html` in your web browser
-3. All features work offline (uses localStorage)
+```bash
+git clone https://github.com/jmsmuigai/Bursary.git
+cd Bursary
+python3 -m http.server 8080     # open http://localhost:8080
+```
 
-## 📁 Project Structure
+Without Firebase the app runs in demo mode on `localStorage` (data stays in that browser).
+
+**Connect your own Firebase project:**
+
+1. Create a project at https://console.firebase.google.com/ and enable **Email/Password** authentication and **Cloud Firestore**.
+2. Put your project's web config in `firebase_config.js`, and restrict the web API key to your domain in Google Cloud.
+3. Create the fund-administrator user in Firebase Authentication (set the password there, never in code).
+4. Deploy the rules in `firestore.rules` (replace `ADMIN_USER_ID_HERE` with the admin UID).
+
+### For applicants
+
+1. Open the site → **Read Instructions First** → **Register** (email, ID / birth-certificate number).
+2. Complete all four parts of the form (auto-saves; you can continue later).
+3. Submit, then follow your status on the dashboard and download your letter when awarded.
+
+### For administrators
+
+1. Sign in with the fund-administrator account.
+2. Filter and open applications → **View**.
+3. Award (amount + justification) or reject (reason); letters are generated as PDFs.
+4. Use **Reports** for the summary and CSV downloads.
+
+### Project structure
 
 ```
 Bursary/
-├── index.html                 # Login page (public access)
-├── instructions.html          # Application instructions
-├── register.html              # Applicant registration
-├── application.html           # Comprehensive application form
-├── applicant_dashboard.html   # Applicant's personal dashboard
-├── admin_dashboard.html       # Admin portal
-├── styles.css                 # Modern theme and styling
-├── firebase_config.js         # Firebase configuration template
-├── .nojekyll                  # GitHub Pages configuration
-├── 404.html                   # Error page redirect
-├── js/
-│   ├── data.js               # Garissa sub-counties/wards data
-│   ├── auth.js               # Authentication (2 admins + applicants)
-│   ├── admin.js              # Admin dashboard logic
-│   ├── application.js        # Application form handler with autosave
-│   └── utils.js              # Helper functions (CSV export, currency)
-├── assets/
-│   └── Garissa Logo.png      # County logo
-└── README.md                 # This file
+├── index.html, instructions.html, register.html, application.html
+├── applicant_dashboard.html, admin_dashboard.html, help.html
+├── styles.css, firebase_config.js, firestore.rules, firebase.json
+├── js/          auth, application, admin, budget, pdf-generator, data (sub-counties/wards), Firebase DB, utilities and test helpers
+├── assets/      signature, stamp and banner images
+└── .github/workflows/pages.yml
 ```
 
-## 🗺️ Garissa County Data
+### Application form sections
 
-The system includes all Garissa County sub-counties and wards:
-- **Garissa Township**: Waberi, Galbet, Township, Iftin
-- **Lagdera**: Modogashe, Benane, Goreale, Maalimin, Sabena, Baraki
-- **Dadaab**: Dertu, Dadaab, Labasigale, Damajale, Liboi, Abakaile
-- **Fafi**: Bura, Dekaharia, Jarajila, Fafi, Nanighi
-- **Balambala**: Balambala, Danyere, Jarajara, Saka, Sankuri
-- **Ijara**: Hulugho, Sangailu, Ijara, Masalani
+- **Part A – Student details:** names, gender, phone numbers (student and parent/guardian), institution, registration number, year/form, course and duration.
+- **Part B – Family information:** parent status, disability, parents'/guardian's names and occupations, siblings, previous bursaries.
+- **Part C – College/University:** principal/head details and comments, discipline rating, outstanding fees.
+- **Part D – Financial information:** monthly income, annual fees, fee balance, amount requested, justification.
 
-Users can select "Other (Specify)" if their location is not listed.
+### Garissa sub-counties and wards included
 
-## 🧪 System Testing
+- **Garissa Township:** Waberi, Galbet, Township, Iftin
+- **Lagdera:** Modogashe, Benane, Goreale, Maalimin, Sabena, Baraki
+- **Dadaab:** Dertu, Dadaab, Labasigale, Damajale, Liboi, Abakaile
+- **Fafi:** Bura, Dekaharia, Jarajila, Fafi, Nanighi
+- **Balambala:** Balambala, Danyere, Jarajara, Saka, Sankuri
+- **Ijara:** Hulugho, Sangailu, Ijara, Masalani
 
-The system includes a **comprehensive, phased testing framework** that continuously monitors all functionality:
+Applicants can choose "Other (Specify)" if their location is not listed.
 
-- **8 Testing Phases**: Registration, Admin Dashboard, Budget, Database, PDF, Visualization, Error Handling, UI
-- **Automatic Testing**: Tests run automatically on admin dashboard load
-- **Manual Testing**: Run `runComprehensiveSystemTest()` in browser console
-- **Test Reports**: Results displayed in console, dashboard, and stored in localStorage
-- **Auto-Fix**: System automatically detects and fixes common issues
+## Data & privacy
 
-For detailed testing information, see [SYSTEM_TESTING_GUIDE.md](SYSTEM_TESTING_GUIDE.md).
+- Applications contain **personal data** of students and families (names, ID numbers, phone numbers, family and financial details). With Firebase they are stored in the county's Firestore project; in demo mode they stay in the user's browser.
+- Applicant passwords for local accounts are stored as salted SHA-256 hashes, not plain text.
+- **No real applicant data is committed to this repository.** Built-in demo/test records are fictitious.
+- Applicants can see only their own application in the app.
 
-## 🔐 Security Features
+## Status & roadmap
 
-- **Role-Based Access Control**:
-  - Applicants can only see their own applications
-  - Admins have full access to all applications and reports
-- **Duplicate Detection**: Prevents multiple registrations
-- **Data Validation**: All required fields validated before submission
-- **Secure Storage**: Ready for Firebase integration
-- **Public Access**: Open to all Garissa County residents
+**Status:** working web app published on GitHub Pages and ready for a supervised pilot. It is client-side only, so security depends on correct Firebase Auth and Firestore rules configuration.
 
-## 📊 Application Form Sections
+Next steps:
+- [ ] Move applicant accounts fully to Firebase Authentication.
+- [ ] Server-side email/SMS notifications (currently `mailto:` drafts).
+- [ ] QR-code verification on letters.
+- [ ] Document uploads (fee structures, ID copies) with Firebase Storage.
+- [ ] Consolidate the many fix/test helper scripts in `js/`.
 
-### Part A: Student Personal Details
-- Names (First, Middle, Last)
-- Gender
-- Phone numbers (Student & Parent/Guardian)
-- Institution details
-- Registration number
-- Year/Form
-- Course nature and duration
+## Security
 
-### Part B: Family Information
-- Parent status (Both alive, One dead, Both dead)
-- Disability information
-- Father/Mother/Guardian names and occupations
-- Siblings information
-- Previous bursary benefits
+Please report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
 
-### Part C: College/University
-- Principal/Head information
-- Principal's comments
-- Student discipline rating
-- Outstanding fees
+## Contact
 
-### Part D: Financial Information
-- Monthly income
-- Total annual fees
-- Fee balance
-- Amount requested
-- Justification statement
-
-## 🔄 Roadmap to Production (Firebase Integration)
-
-1. **Firebase Setup**:
-   - Create Firebase project at https://console.firebase.google.com/
-   - Enable Authentication (Email/Password)
-   - Enable Firestore Database
-   - Enable Storage
-   - Update `firebase_config.js` with your credentials
-
-2. **Replace Local Storage**:
-   - Update `js/auth.js` to use Firebase Auth
-   - Update `js/application.js` to save to Firestore
-   - Update `js/admin.js` to read from Firestore
-
-3. **PDF Generation**:
-   - Implement server-side PDF generator (Python + ReportLab)
-   - Add QR codes for verification
-   - Include county logo and signatures
-
-4. **Email Notifications**:
-   - Send confirmation emails on registration
-   - Notify applicants of status changes
-   - Send award letters via email
-
-## 👥 Admin Account
-
-### Fund Administrator
-- **Email**: `fundadmin@garissa.go.ke`
-- **Password**: Contact system administrator for access credentials (can be changed after login)
-- **Role**: Fund Administrator
-
-The administrator has full access to:
-- All applications
-- Filtering and reports
-- Awarding/Rejecting applications
-- Excel/CSV exports
-- PDF offer letter generation
-- Password reset for applicants
-
-## 📝 User Manual
-
-### For Applicants
-
-1. **Access System**: Visit https://jmsmuigai.github.io/Bursary/
-2. **Read Instructions**: Click "Read Instructions First" on login page
-3. **Register**: Create account with email, ID/Birth Certificate number
-4. **Complete Application**: Fill all 4 parts of the form
-   - Form auto-saves every 2 seconds
-   - Click "Save Progress" to manually save
-   - You can continue later if incomplete
-5. **Submit**: Review and submit application
-6. **Track Status**: View your application status on dashboard
-
-### For Administrators
-
-1. **Access System**: Visit https://jmsmuigai.github.io/Bursary/
-2. **Login**: Use admin email and password
-3. **Dashboard**: View metrics and recent applications
-4. **Filter**: Use filters to find specific applications
-5. **Review**: Click "View" to see full application details
-6. **Action**: Approve with amount or reject with reason
-7. **Reports**: Generate and download Excel/CSV reports
-
-## 🛠️ Development
-
-### Technologies Used
-- **HTML5/CSS3** - Modern, responsive design
-- **Bootstrap 5** - UI framework
-- **Vanilla JavaScript** - No dependencies
-- **Local Storage** - Demo data storage (replace with Firebase)
-- **GitHub Pages** - Free hosting
-
-### Browser Support
-- Chrome (recommended)
-- Firefox
-- Safari
-- Edge
-
-### GitHub Pages Configuration
-- ✅ `.nojekyll` file included
-- ✅ `404.html` redirect configured
-- ✅ GitHub Actions workflow for auto-deployment
-- ✅ All paths are relative (work on GitHub Pages)
-
-## 📄 License
-
-This project is developed for Garissa County, Kenya.
-
-## 🎯 System Status
-
-✅ **Production Ready - Version 3.0**
-
-The system is fully functional, tested, and ready for production use with:
-- ✅ Complete application workflow (Registration → Login → Application → Award → View → Download)
-- ✅ Budget tracking (KSH 50,000,000 baseline)
-- ✅ PDF generation with colorful stamps and serial numbers
-- ✅ Real-time budget alerts and updates
-- ✅ Auto-download functionality for all document types
-- ✅ Email draft integration
-- ✅ Smart reports and analytics
-- ✅ Comprehensive help documentation
-- ✅ 10 test records (5 Rejected, 5 Pending Review) for system verification
-
-## 📝 Recent Updates (v3.0)
-
-- **Full System Testing**: Complete workflow tested (Registration → Login → Award → View → Download)
-- **Test Data**: 10 records auto-loaded (5 Rejected, 5 Pending Review)
-- **Auto-Download**: PDFs automatically save with unique applicant names
-- **Email Integration**: Automatic email drafts to fundadmin@garissa.go.ke
-- **Colorful Stamps**: Auto-generated blue stamps on all award letters
-- **Real-Time Updates**: Applications appear immediately after submission
-- **Budget Automation**: Automatic deduction on award, unchanged on rejection
-- **View & Download**: Working for all application statuses
-- **jsPDF Fixed**: All PDF generation errors resolved
-- **Production Ready**: System fully tested and ready for live use
-
-## 📧 Contact & Support
-
-For support or questions:
-- **Support Email**: `fundadmin@garissa.go.ke`
-- **GitHub Repository**: https://github.com/jmsmuigai/Bursary
-- **Live System**: https://jmsmuigai.github.io/Bursary/
-- **System Developer**: jmsmuigai@gmail.com (for technical support only)
-
-## 🎯 Future Enhancements
-
-- [ ] Firebase Authentication integration
-- [ ] Firestore database integration
-- [ ] PDF generator with QR codes
-- [ ] Email notifications
-- [ ] Document upload functionality
-- [ ] SMS notifications
-- [ ] Mobile app version
-- [ ] Advanced analytics and visualizations
+- Fund office: `fundadmin@garissa.go.ke`
+- Technical: intelligence@tovutech.com
 
 ---
 
-**Built with ❤️ for Garissa County**
-
-**Public Access**: Anyone with the GitHub link can access and use the system.
+<p align="center">
+  <b>Built by James M. Mburu · TovuTech Limited</b><br>
+  <a href="https://www.tovutech.com">https://www.tovutech.com</a> · <a href="mailto:intelligence@tovutech.com">intelligence@tovutech.com</a><br>
+  📖 Case study: <a href="https://www.tovutech.com/projects/bursary/">tovutech.com/projects/bursary</a>
+</p>
