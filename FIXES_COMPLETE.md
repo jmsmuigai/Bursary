@@ -80,7 +80,7 @@
 
 1. **Open Admin Dashboard:**
    - Go to: https://jmsmuigai.github.io/Bursary/admin_dashboard.html
-   - Login: `fundadmin@garissa.go.ke` / `@Omar.123!`
+   - Login: `fundadmin@garissa.go.ke` / `[removed: admin signs in with Firebase Authentication]`
 
 2. **Add Test Data:**
    - Press **F12** → **Console** tab

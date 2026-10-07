@@ -5,7 +5,7 @@
 ### 🔐 Single Admin Account
 - **Removed**: jmsmuigai@gmail.com and osmanmohamud60@gmail.com as admin accounts
 - **Added**: Single admin account `fundadmin@garissa.go.ke`
-- **Default Password**: `@Omar.123!` (can be changed)
+- **Default Password**: `[removed: admin signs in with Firebase Authentication]` (can be changed)
 - **Password Reset**: Available for both admin and applicants
 
 ### 📧 Email Updates
@@ -54,7 +54,7 @@
 
 **Admin:**
 - Email: `fundadmin@garissa.go.ke`
-- Default Password: `@Omar.123!`
+- Default Password: `[removed: admin signs in with Firebase Authentication]`
 - Can change password from admin dashboard
 
 **Applicants:**
@@ -67,7 +67,7 @@
 
 ## Next Steps
 
-1. **Test Login**: Login with fundadmin@garissa.go.ke / @Omar.123!
+1. **Test Login**: Login with fundadmin@garissa.go.ke / [removed: admin signs in with Firebase Authentication]
 2. **Change Password**: Use "Change Password" in admin dashboard
 3. **Test PDF**: Award an application to test PDF generation
 4. **Go Live**: System is ready for production use!

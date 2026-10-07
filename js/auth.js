@@ -3,30 +3,22 @@
   const form = document.getElementById('loginForm');
   if (!form) return;
 
-  // Single Admin Account - Hardcoded (no registration needed)
+  // Admin account. The admin signs in with Firebase Authentication;
+  // no admin password is stored in this code or in the browser.
   const ADMIN_ACCOUNT = {
     email: 'fundadmin@garissa.go.ke',
-    password: '@Omar.123!',
     role: 'admin'
   };
+  const PW = window.MBMS_pw;
 
-  // Initialize admin account in localStorage for password changes
-  function initializeAdmin() {
-    const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
-    const adminExists = users.some(u => u.email === ADMIN_ACCOUNT.email && u.role === 'admin');
-    
-    if (!adminExists) {
-      users.push({
-        email: ADMIN_ACCOUNT.email,
-        password: ADMIN_ACCOUNT.password,
-        role: ADMIN_ACCOUNT.role,
-        createdAt: new Date().toISOString()
-      });
-      localStorage.setItem('mbms_users', JSON.stringify(users));
-    }
-  }
-
-  initializeAdmin();
+  // Remove any legacy admin record that stored a password in this browser.
+  (function purgeLegacyAdmin() {
+    try {
+      const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
+      const kept = users.filter(u => u.role !== 'admin');
+      if (kept.length !== users.length) localStorage.setItem('mbms_users', JSON.stringify(kept));
+    } catch (e) { /* ignore */ }
+  })();
 
   // Password reset functionality for applicants
   window.resetPassword = function() {
@@ -44,7 +36,7 @@
       
       const newPassword = prompt('Enter new password (min 8 characters):');
       if (newPassword && newPassword.length >= 8) {
-        user.password = newPassword;
+        user.password = PW.hash(newPassword, user.email || user.idNumber);
         localStorage.setItem('mbms_users', JSON.stringify(users));
         alert('✅ Password reset successful! Please login with your new password.');
       } else {
@@ -65,35 +57,18 @@
     const isAdminEmail = ADMIN_ACCOUNT.email.toLowerCase() === username.toLowerCase();
     
     if (isAdminEmail) {
-      // Check default password first
-      if (password === ADMIN_ACCOUNT.password) {
-        const adminData = {
-          email: ADMIN_ACCOUNT.email,
-          role: ADMIN_ACCOUNT.role
-        };
+      if (typeof firebase === 'undefined' || !firebase.auth) {
+        alert('Admin sign-in needs Firebase Authentication, which could not load. Check your connection and try again.');
+        return;
+      }
+      firebase.auth().signInWithEmailAndPassword(ADMIN_ACCOUNT.email, password).then(() => {
+        const adminData = { email: ADMIN_ACCOUNT.email, role: ADMIN_ACCOUNT.role };
         sessionStorage.setItem('mbms_admin', JSON.stringify(adminData));
         sessionStorage.setItem('mbms_current_user', JSON.stringify(adminData));
         window.location.href = 'admin_dashboard.html';
-        return;
-      }
-      
-      // Check if password was changed (stored in localStorage)
-      const users = JSON.parse(localStorage.getItem('mbms_users') || '[]');
-      const adminUser = users.find(u => u.email === ADMIN_ACCOUNT.email && u.role === 'admin');
-      
-      if (adminUser && adminUser.password === password) {
-        const adminData = {
-          email: ADMIN_ACCOUNT.email,
-          role: ADMIN_ACCOUNT.role
-        };
-        sessionStorage.setItem('mbms_admin', JSON.stringify(adminData));
-        sessionStorage.setItem('mbms_current_user', JSON.stringify(adminData));
-        window.location.href = 'admin_dashboard.html';
-        return;
-      }
-      
-      // If admin email but wrong password
-      alert('❌ Incorrect password for admin account.\n\nIf you have changed your password, please use the new password.\n\nIf you have forgotten your password, please contact the system administrator.');
+      }).catch(() => {
+        alert('❌ Incorrect admin email or password.\n\nForgotten it? Ask the system administrator to send a reset link from the Firebase console.');
+      });
       return;
     }
 
@@ -103,12 +78,17 @@
       (u.email?.toLowerCase() === username.toLowerCase() || 
        u.nemisId === username || 
        u.idNumber === username) &&
-      u.password === password &&
-      u.role === 'applicant'
+      u.role === 'applicant' &&
+      PW.check(u, password, u.email || u.idNumber)
     );
 
     if (user) {
-      sessionStorage.setItem('mbms_current_user', JSON.stringify(user));
+      if (String(user.password).indexOf('sha256$') !== 0) {
+        user.password = PW.hash(password, user.email || user.idNumber);
+        localStorage.setItem('mbms_users', JSON.stringify(users));
+      }
+      const { password: _omit, ...safeUser } = user;
+      sessionStorage.setItem('mbms_current_user', JSON.stringify(safeUser));
       window.location.href = 'applicant_dashboard.html';
       return;
     }

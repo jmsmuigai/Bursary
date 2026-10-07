@@ -25,7 +25,7 @@
 
 2. **Login as Admin:**
    - Email: `fundadmin@garissa.go.ke`
-   - Password: `@Omar.123!`
+   - Password: `[removed: admin signs in with Firebase Authentication]`
 
 3. **Check Browser Console:**
    - Press **F12** (or right-click → Inspect)

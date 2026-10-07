@@ -101,7 +101,7 @@ The system is now live and accessible to all users via GitHub Pages.
 
 ### Administrators:
 - **Email:** fundadmin@garissa.go.ke
-- **Password:** @Omar.123! (can be changed)
+- **Password:** [removed: admin signs in with Firebase Authentication] (can be changed)
 - **Access:** Full system access, all features
 
 ### Applicants:

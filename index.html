@@ -80,6 +80,11 @@
   <!-- Mobile Compatibility Layer (load early) -->
   <script src="js/mobile-compat.js"></script>
   <script src="js/data.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="firebase_config.js"></script>
+  <script>try { if (window.firebase && !firebase.apps.length && window.firebaseConfig) firebase.initializeApp(firebaseConfig); } catch (e) {}</script>
+  <script src="js/pwhash.js"></script>
   <script src="js/auth.js"></script>
   <script>
     // Make resetPassword available globally

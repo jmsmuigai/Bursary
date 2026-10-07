@@ -69,7 +69,7 @@
 1. Visit: https://jmsmuigai.github.io/Bursary/
 2. Login with:
    - Email: `fundadmin@garissa.go.ke`
-   - Password: `@Omar.123!`
+   - Password: `[removed: admin signs in with Firebase Authentication]`
 3. View applications and budget status
 4. Award applications (budget auto-deducts)
 5. Generate reports

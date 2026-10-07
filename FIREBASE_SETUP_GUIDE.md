@@ -153,7 +153,7 @@ Or you can use:
 ## Step 6: Test It!
 
 1. **Open your system:** https://jmsmuigai.github.io/Bursary/
-2. **Login as admin:** `fundadmin@garissa.go.ke` / `@Omar.123!`
+2. **Login as admin:** `fundadmin@garissa.go.ke` / `[removed: admin signs in with Firebase Authentication]`
 3. **Check the browser console (F12):**
    - You should see: "✅ Firebase initialized successfully"
    - If you see this, it's working! 🎉

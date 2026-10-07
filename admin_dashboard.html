@@ -346,8 +346,22 @@
 
   <!-- Firebase SDK (optional - falls back to localStorage if not configured) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="firebase_config.js"></script>
+  <script>
+    // Admin guard: only a signed-in Firebase admin may stay on this page.
+    try { if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); } catch (e) {}
+    document.documentElement.style.visibility = 'hidden';
+    firebase.auth().onAuthStateChanged(function (u) {
+      if (!u || (u.email || '').toLowerCase() !== 'fundadmin@garissa.go.ke') {
+        sessionStorage.removeItem('mbms_admin');
+        window.location.replace('index.html');
+      } else {
+        document.documentElement.style.visibility = '';
+      }
+    });
+  </script>
   <script src="js/firebase-db.js"></script>
   <!-- EMERGENCY FIX FREEZE (loads FIRST - highest priority to prevent freezing) -->
   <script src="js/emergency-fix-freeze.js"></script>

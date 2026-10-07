@@ -65,7 +65,7 @@ Your `firebase_config.js` file has been updated with your Firebase credentials!
 
 1. **Go to your system:**
    - Open: https://jmsmuigai.github.io/Bursary/
-   - Login as admin: `fundadmin@garissa.go.ke` / `@Omar.123!`
+   - Login as admin: `fundadmin@garissa.go.ke` / `[removed: admin signs in with Firebase Authentication]`
 
 2. **Check if it's working:**
    - Press F12 (or right-click → Inspect)

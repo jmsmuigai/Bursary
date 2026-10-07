@@ -15,7 +15,7 @@
 
 ### Step 1: Open Admin Dashboard
 1. Go to: https://jmsmuigai.github.io/Bursary/admin_dashboard.html
-2. Login with: `fundadmin@garissa.go.ke` / `@Omar.123!`
+2. Login with: `fundadmin@garissa.go.ke` / `[removed: admin signs in with Firebase Authentication]`
 
 ### Step 2: Open Browser Console
 1. Press **F12** (or right-click → Inspect)

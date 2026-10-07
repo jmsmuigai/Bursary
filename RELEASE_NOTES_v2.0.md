@@ -33,7 +33,7 @@
 ### 👥 System Administrator
 
 - **Fund Administrator**: fundadmin@garissa.go.ke
-  - Default Password: @Omar.123! (can be changed)
+  - Default Password: [removed: admin signs in with Firebase Authentication] (can be changed)
   - Signs all offer letters
   - Full administrative access
   - Password reset capability

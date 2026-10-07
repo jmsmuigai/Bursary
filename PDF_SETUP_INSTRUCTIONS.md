@@ -75,7 +75,7 @@ Bursary/
 
 1. **Login as Admin**:
    - Email: `fundadmin@garissa.go.ke`
-   - Default Password: `@Omar.123!`
+   - Default Password: `[removed: admin signs in with Firebase Authentication]`
 
 2. **Award an Application**:
    - Go to Application Management

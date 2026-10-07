@@ -167,6 +167,7 @@
   <!-- Mobile Compatibility Layer (load early) -->
   <script src="js/mobile-compat.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/pwhash.js"></script>
   <script src="js/auth.js"></script>
   <!-- Registration Form Enhancer (activates all buttons, inputs, dropdowns, adds Save functionality) -->
   <script src="js/registration-enhancer.js"></script>
@@ -385,7 +386,7 @@
         ward: wardSelect.value === 'other_ward' ? otherWardInput.value.trim() : wardSelect.value,
         village: document.getElementById('village').value.trim(),
         role: 'applicant',
-        password: pwd, // In production, hash this
+        password: window.MBMS_pw.hash(pwd, email), // salted SHA-256, never plain text
         createdAt: new Date().toISOString()
       };
 
