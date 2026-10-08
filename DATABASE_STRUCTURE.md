@@ -10,7 +10,7 @@ This system uses **localStorage** for client-side data storage. For production d
 ```javascript
 {
   email: "user@example.com",
-  password: "hashed_password", // In production, use bcrypt or similar
+  password: "sha256$<salted hash — plain-text passwords are never stored>", // In production, use bcrypt or similar
   firstName: "John",
   lastName: "Doe",
   otherName: "Middle",

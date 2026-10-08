@@ -36,7 +36,7 @@ The system currently uses **localStorage** as the database. This is a browser-ba
     ward: "Waberi",
     village: "Village Name",
     role: "applicant",
-    password: "hashed_password",
+    password: "sha256$<salted hash — plain-text passwords are never stored>",
     createdAt: "2025-01-15T10:30:00.000Z"
   }
 ]
